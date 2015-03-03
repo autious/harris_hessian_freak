@@ -9,18 +9,19 @@ bool opencl_test_run()
     cl_int errcode_ret;
     cl_kernel kernel = clCreateKernel( program, "main", &errcode_ret );
 
+    const int TEST_SIZE = 1024*256;
     if( errcode_ret == CL_SUCCESS )
     {
-        cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * 128, NULL, &errcode_ret );
-        cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * 128, NULL, &errcode_ret );
+        cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
+        cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
 
 
         if( errcode_ret == CL_SUCCESS )
         {
             cl_event write_event;
-            cl_float inputValues[128];
-            cl_float outputValues[128];
-            for( int i = 0; i < 128; i++ )
+            cl_float inputValues[TEST_SIZE];
+            cl_float outputValues[TEST_SIZE];
+            for( int i = 0; i < TEST_SIZE; i++ )
                 inputValues[i] = i;
 
             errcode_ret = clEnqueueWriteBuffer( 
@@ -28,7 +29,7 @@ bool opencl_test_run()
                     mem_in, 
                     false, 
                     0, 
-                    sizeof( cl_float ) * 128, 
+                    sizeof( cl_float ) * TEST_SIZE, 
                     inputValues, 
                     0, 
                     NULL, 
@@ -39,7 +40,7 @@ bool opencl_test_run()
 
             cl_event waitfor[] = { write_event };
             cl_event kernel_event;
-            size_t global_work_size[] = { 128 };
+            size_t global_work_size[] = { TEST_SIZE };
             size_t local_work_size[] = { 16 };
 
             clSetKernelArg( kernel, 0, sizeof( cl_mem ), &mem_in );
@@ -63,7 +64,7 @@ bool opencl_test_run()
                     mem_out, 
                     false, 
                     0, 
-                    sizeof( cl_float ) * 128, 
+                    sizeof( cl_float ) * TEST_SIZE, 
                     outputValues, 
                     1, 
                     &kernel_event, 
@@ -74,11 +75,16 @@ bool opencl_test_run()
 
             clWaitForEvents( 1, &read_event ); 
 
-            for( int i = 0; i < 128; i++ )
-                LOGV( "%f\n", outputValues[i] );
-
             clReleaseMemObject( mem_in );
             clReleaseMemObject( mem_out );
+
+            cl_ulong start=0, end=0;
+            clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_START, sizeof( cl_ulong ), &start, NULL );
+            clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_END, sizeof( cl_ulong ), &end, NULL );
+            
+            LOGV( "Kernel execution time: %lu", end-start ); 
+
+
         }
         else
         {
