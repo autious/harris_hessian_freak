@@ -1,5 +1,5 @@
-CC=g++
-CFLAGS=-c -Wall
+CC=gcc
+CFLAGS=-c -std=c99 -Wall
 LDFLAGS= -lOpenCL
 SOURCES= main.c opencl_error.c opencl_handler.c opencl_test.c
 OBJECTS=$(SOURCES:.c=.o)
