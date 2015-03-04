@@ -597,3 +597,24 @@ cl_command_queue opencl_loader_get_command_queue()
 {
     return command_queue;
 }
+
+cl_kernel opencl_loader_load_kernel( const char* filename, const char* kernelname )
+{
+    cl_program program = opencl_loader_load_program( filename );
+    cl_kernel kernel = NULL;
+
+    if( program )
+    {
+        cl_int errcode_ret;
+        kernel = clCreateKernel( program, kernelname, &errcode_ret );
+
+        if( errcode_ret != CL_SUCCESS )
+        {
+            CLERR( ":Unable to create kernel from program", errcode_ret );
+        }
+
+        clReleaseProgram( program );
+    }
+
+    return kernel;
+}
