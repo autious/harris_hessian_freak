@@ -2,6 +2,7 @@
 #include "opencl_handler.h"
 #include "opencl_error.h"
 #include "log.h"
+#include "lodepng.h"
 
 bool opencl_test_run()
 {
@@ -101,4 +102,69 @@ bool opencl_test_run()
     clReleaseProgram( program );
 
     return true;
+}
+
+void opencl_test_desaturate_image( const char *input, const char* output )
+{
+   cl_kernel kernel_desaturate = opencl_loader_load_kernel( "kernels/gauss.cl", "desaturate" );
+
+   if( kernel_desaturate )
+   {
+       uint8_t *data;
+       unsigned width,height;
+       unsigned lode_error;
+
+       lode_error = lodepng_decode32_file( &data, &width, &height, input );
+
+       if( lode_error == 0 )
+       {
+           cl_uint errcode_ret;
+           cl_image_format image_format = {
+               CL_RGBA,
+               CL_UNSIGNED_INT8
+           };
+
+           cl_mem input_image = clCreateImage2D(
+                opencl_loader_get_context(),
+                CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+                image_format,
+                width,
+                height,
+                width*sizeof(uint8_t)*4,
+                data,
+                &errcode_ret 
+            );
+           CHKBUF(input_image, errcode_ret);
+
+           cl_mem output_buffer = clCreateBuffer(
+                opencl_loader_get_context(),
+                CL_MEM_WRITE_ONLY,
+                sizeof( float ) * width * height,
+                NULL,
+                &errcode_ret 
+           );
+           CHKBUF(output_buffer, errcode_ret);
+
+            if( input_image && output_buffer )
+            {
+                cl_int cl_width = width;
+                clSetKernelArg( kernel_desaturate, 0, sizeof( cl_mem ), &input_image );
+                clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &output_buffer );
+                clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
+
+                //TODO: Continue with calling stuff to execute kernel and then save image to disk.
+            }
+
+            clReleaseMemObject(input_image);
+            clReleaseMemObject(output_buffer);
+
+            free( data );
+        }
+        else
+        {
+            LOGE( __LINE__  ":Unable to load image: %s", input );
+        }
+
+        clReleaseKernel( kernel_desaturate );
+    }
 }
