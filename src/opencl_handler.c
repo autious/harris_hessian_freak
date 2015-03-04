@@ -14,7 +14,12 @@ static cl_device_id device = NULL;
 static cl_context context = NULL;
 static cl_command_queue command_queue = NULL;
 
-static void context_callback( const char* errinfo, const void *private_info, size_t cb, void *user_data )
+static void context_callback( 
+        const char* errinfo, 
+        const void *private_info, 
+        size_t cb, 
+        void *user_data
+    )
 {
     LOGE("Context callback error: %s", errinfo);
 }
@@ -34,7 +39,13 @@ static struct DeviceList* device_list = NULL;
 /*
  * Linked list construction
 */
-static struct DeviceList* device_list_add( cl_platform_id platform, cl_device_id device, uint32_t rank, int platform_index, int device_index )
+static struct DeviceList* device_list_add( 
+        cl_platform_id platform, 
+        cl_device_id device, 
+        uint32_t rank, 
+        int platform_index, 
+        int device_index
+    )
 {
     struct DeviceList **cur = &device_list;
 
@@ -146,16 +157,29 @@ static void generate_device_list()
                     clGetPlatformInfo( plat_ids[i], types[k], 0, NULL, &info_size );
                     char info[info_size];
                     clGetPlatformInfo( plat_ids[i], types[k], info_size, info, NULL );
-                    LOGV( "%s", info );
+                    LOGV( "%s:%s", opencl_platform_info_codename(types[k]), info );
                 }
 
                 cl_uint num_devices = 0;
-                cl_int device_err = clGetDeviceIDs( plat_ids[i], CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices );
+                cl_int device_err = clGetDeviceIDs( 
+                    plat_ids[i], 
+                    CL_DEVICE_TYPE_ALL, 
+                    0, 
+                    NULL, 
+                    &num_devices 
+                );
 
                 if( num_devices > 0 && device_err == CL_SUCCESS )
                 {
                     cl_device_id device_ids[num_devices];
-                    device_err = clGetDeviceIDs( plat_ids[i], CL_DEVICE_TYPE_ALL, num_devices, device_ids, NULL ); 
+                    device_err = clGetDeviceIDs( 
+                        plat_ids[i], 
+                        CL_DEVICE_TYPE_ALL, 
+                        num_devices, 
+                        device_ids, 
+                        NULL
+                    ); 
+
                     if( device_err == CL_SUCCESS )
                     {
                         for( cl_uint l = 0; l < num_devices; l++ )
@@ -163,6 +187,9 @@ static void generate_device_list()
                             cl_device_type device_type;
                             cl_bool unified_memory;
                             cl_bool compiler_available;
+                            cl_ulong max_constant_buffer_size;
+                            cl_uint max_constant_args;
+                            cl_bool image_support;
 
                             cl_device_info device_param_names[] = {
                                 CL_DEVICE_VENDOR,
@@ -170,7 +197,10 @@ static void generate_device_list()
                                 CL_DEVICE_PROFILE,
                                 CL_DEVICE_TYPE,
                                 CL_DEVICE_HOST_UNIFIED_MEMORY,
-                                CL_DEVICE_COMPILER_AVAILABLE
+                                CL_DEVICE_COMPILER_AVAILABLE,
+                                CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,
+                                CL_DEVICE_MAX_CONSTANT_ARGS,
+                                CL_DEVICE_IMAGE_SUPPORT
                             };
 
                             void* device_param_values[] = {
@@ -179,7 +209,10 @@ static void generate_device_list()
                                 NULL,
                                 &device_type,
                                 &unified_memory,
-                                &compiler_available
+                                &compiler_available,
+                                &max_constant_buffer_size,
+                                &max_constant_args,
+                                &image_support
                             };
 
                             size_t device_param_size[] = {
@@ -188,6 +221,9 @@ static void generate_device_list()
                                 0,
                                 sizeof( cl_device_type ),
                                 sizeof( cl_bool ),
+                                sizeof( cl_bool ),
+                                sizeof( cl_ulong ),
+                                sizeof( cl_uint ),
                                 sizeof( cl_bool )
                             };
 
@@ -195,9 +231,30 @@ static void generate_device_list()
                                 true,
                                 true,
                                 true,
-                                false,
-                                false,
-                                false
+                                true,
+                                true,
+                                true,
+                                true,
+                                true,
+                                true
+                            };
+
+                            const int N_STRING = 0;
+                            const int N_CL_DEVICE_TYPE = 1;
+                            const int N_BOOL = 2;
+                            const int N_ULONG = 3;
+                            const int N_UINT = 4;
+
+                            int print_type[] = {
+                                N_STRING,
+                                N_STRING,
+                                N_STRING,
+                                N_CL_DEVICE_TYPE,
+                                N_BOOL,
+                                N_BOOL,
+                                N_ULONG,
+                                N_UINT,
+                                N_BOOL
                             };
 
                             LOGV( "Device index %d", l );
@@ -215,12 +272,63 @@ static void generate_device_list()
                                 }
 
                                 char device_info_data[device_param_size[m]];
-                                void* d = device_param_values[m] == NULL ? device_info_data : device_param_values[m];
+                                void* d = 
+                                    device_param_values[m] == NULL 
+                                    ? device_info_data 
+                                    : device_param_values[m];
 
-                                clGetDeviceInfo( device_ids[l], device_param_names[m], device_param_size[m], d, NULL );
+                                clGetDeviceInfo( 
+                                        device_ids[l], 
+                                        device_param_names[m], 
+                                        device_param_size[m], 
+                                        d, 
+                                        NULL
+                                );
+
                                 if( device_param_print[m] )
                                 {
-                                    LOGV( "%s", (char*)d );
+                                    if( print_type[m] == N_STRING )
+                                    {
+                                        LOGV( 
+                                            "%s:%s", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            (char*)d
+                                        );
+                                    }
+                                    else if( print_type[m] == N_CL_DEVICE_TYPE )
+                                    {
+                                        LOGV( 
+                                            "%s:%s", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            opencl_device_type_codename(*(cl_device_type*)d) 
+                                        );
+                                    }
+                                    else if( print_type[m] == N_BOOL )
+                                    {
+                                    
+                                        LOGV( 
+                                            "%s:%s", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            *(cl_bool*)d ? "true" : "false" 
+                                        );
+                                    }
+                                    else if( print_type[m] == N_ULONG )
+                                    {
+                                        LOGV( 
+                                            "%s:%lu", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            *(cl_ulong*)d 
+                                        );
+                                    }
+                                    else if( print_type[m] == N_UINT )
+                                    {
+                                        LOGV( 
+                                            "%s:%u", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            *(cl_uint*)d
+                                        );
+                                    }
+
                                 }
                             }
 
@@ -243,9 +351,11 @@ static void generate_device_list()
                 }
                 else
                 {
-                    LOGV( "Platform lacks devices or is unable to retrieve, this is odd. CL_ERR_CODE: %s %d",
-                            opencl_error_codename( device_err ), 
-                            device_err );
+                    LOGV( 
+                        "Platform lacks devices or is unable to retrieve, "
+                        "this is odd. CL_ERR_CODE: %s %d",
+                        opencl_error_codename( device_err ), 
+                        device_err );
                 }
             }
         } 
@@ -282,28 +392,52 @@ bool opencl_loader_init()
             device
         };
 
-        LOGV( "Creating context on device p:%d d:%d", device_l->platform_index, device_l->device_index );
+        LOGV( 
+            "Creating context on device p:%d d:%d", 
+            device_l->platform_index, 
+            device_l->device_index 
+        );
+
         cl_int errcode_ret;
-        context = clCreateContext( props, NELEMS( devices ), devices, context_callback, NULL, &errcode_ret );
+        context = clCreateContext(
+                props, 
+                NELEMS( devices ), 
+                devices, 
+                context_callback, 
+                NULL, 
+                &errcode_ret 
+        );
         
         if( errcode_ret != CL_SUCCESS )
         {
-            LOGE( "Unable to create opencl context: %s", opencl_error_codename( errcode_ret ) ); 
+            LOGE(
+                "Unable to create opencl context: %s", 
+                opencl_error_codename( errcode_ret ) 
+            ); 
             return false;
         }
 
         LOGV( "Creating command queue" );
 
-        cl_command_queue_properties cq_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+        cl_command_queue_properties cq_props 
+            = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 #ifdef PROFILE
         cq_props |= CL_QUEUE_PROFILING_ENABLE;
 #endif
 
-        command_queue = clCreateCommandQueue( context, device, cq_props, &errcode_ret );
+        command_queue = clCreateCommandQueue( 
+                context, 
+                device, 
+                cq_props, 
+                &errcode_ret
+        );
 
         if( errcode_ret != CL_SUCCESS )
         {
-            LOGE( "Unable to create command queue: %s", opencl_error_codename( errcode_ret ) );
+            LOGE( 
+                "Unable to create command queue: %s", 
+                opencl_error_codename( errcode_ret ) 
+            );
             return false;
         }
 
@@ -384,7 +518,13 @@ cl_program opencl_loader_load_program( const char* name )
             free( outputstream );
 
             cl_int errcode_ret; 
-            program = clCreateProgramWithSource( context, 1, (const char**)&string, &read_bytes, &errcode_ret );
+            program = clCreateProgramWithSource( 
+                    context, 
+                    1, 
+                    (const char**)&string, 
+                    &read_bytes, 
+                    &errcode_ret 
+            );
     
             if( errcode_ret != CL_SUCCESS )
             {
@@ -392,7 +532,14 @@ cl_program opencl_loader_load_program( const char* name )
             }
             else
             {
-                errcode_ret = clBuildProgram( program, 1, &device, "-cl-fast-relaxed-math -cl-std=CL1.1", NULL, NULL );
+                errcode_ret = clBuildProgram( 
+                        program, 
+                        1, 
+                        &device, 
+                        "-cl-fast-relaxed-math -cl-std=CL1.1", 
+                        NULL, 
+                        NULL 
+                );
 
                 if( errcode_ret != CL_SUCCESS )
                 {
