@@ -1,5 +1,7 @@
 #pragma once
 
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS 1
+
 #include <stdbool.h>
 #include <CL/opencl.h>
 

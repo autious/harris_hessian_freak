@@ -118,7 +118,7 @@ void opencl_test_desaturate_image( const char *input, const char* output )
 
        if( lode_error == 0 )
        {
-           cl_uint errcode_ret;
+           cl_int errcode_ret;
            cl_image_format image_format = {
                CL_RGBA,
                CL_UNSIGNED_INT8
@@ -127,7 +127,7 @@ void opencl_test_desaturate_image( const char *input, const char* output )
            cl_mem input_image = clCreateImage2D(
                 opencl_loader_get_context(),
                 CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
-                image_format,
+                &image_format,
                 width,
                 height,
                 width*sizeof(uint8_t)*4,
@@ -162,7 +162,7 @@ void opencl_test_desaturate_image( const char *input, const char* output )
         }
         else
         {
-            LOGE( __LINE__  ":Unable to load image: %s", input );
+            LOGE(":Unable to load image: %s", input );
         }
 
         clReleaseKernel( kernel_desaturate );
