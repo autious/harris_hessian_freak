@@ -104,27 +104,33 @@ bool opencl_test_run()
     return true;
 }
 
-void opencl_test_desaturate_image( const char *input, const char* output )
+void opencl_test_desaturate_image( const char *input_filename, const char* output_filename )
 {
    cl_kernel kernel_desaturate = opencl_loader_load_kernel( "kernels/gauss.cl", "desaturate" );
 
    if( kernel_desaturate )
    {
-       uint8_t *data;
-       unsigned width,height;
-       unsigned lode_error;
+        uint8_t *data;
+        unsigned width,height;
+        unsigned lode_error;
 
-       lode_error = lodepng_decode32_file( &data, &width, &height, input );
+        lode_error = lodepng_decode32_file( &data, &width, &height, input_filename );
 
-       if( lode_error == 0 )
-       {
-           cl_int errcode_ret;
-           cl_image_format image_format = {
-               CL_RGBA,
-               CL_UNSIGNED_INT8
-           };
+        LOGV( "Picture dimensions: (%d,%d)", width, height );
 
-           cl_mem input_image = clCreateImage2D(
+        cl_float *output_desaturated_image = malloc( sizeof(cl_float) * width * height );
+        uint8_t *output_desaturated_image_rgba = malloc( sizeof(uint8_t) * 4 * width * height );
+        memset( output_desaturated_image, 0, sizeof(uint8_t) * 4 * width * height );
+
+        if( lode_error == 0 )
+        {
+            cl_int errcode_ret;
+            cl_image_format image_format = {
+                CL_RGBA,
+                CL_UNSIGNED_INT8
+            };
+
+            cl_mem input_image = clCreateImage2D(
                 opencl_loader_get_context(),
                 CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
                 &image_format,
@@ -139,11 +145,12 @@ void opencl_test_desaturate_image( const char *input, const char* output )
            cl_mem output_buffer = clCreateBuffer(
                 opencl_loader_get_context(),
                 CL_MEM_WRITE_ONLY,
-                sizeof( float ) * width * height,
+                sizeof( cl_float ) * width * height,
                 NULL,
                 &errcode_ret 
            );
            CHKBUF(output_buffer, errcode_ret);
+           CLERR( "Test", errcode_ret );
 
             if( input_image && output_buffer )
             {
@@ -152,7 +159,66 @@ void opencl_test_desaturate_image( const char *input, const char* output )
                 clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &output_buffer );
                 clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
 
-                //TODO: Continue with calling stuff to execute kernel and then save image to disk.
+                cl_command_queue command_queue = opencl_loader_get_command_queue();
+
+                const size_t global_work_offset[] = { 0,0 };
+                const size_t global_work_size[] = { width, height };
+                const size_t local_work_size[] = { 2, 2 };
+
+                cl_event kernel_event;
+
+                errcode_ret = clEnqueueNDRangeKernel( command_queue,
+                    kernel_desaturate,
+                    2,
+                    global_work_offset,
+                    global_work_size,
+                    local_work_size,
+                    0,
+                    NULL,
+                    &kernel_event 
+                );
+
+                if( errcode_ret == CL_SUCCESS )
+                {
+
+                    cl_event buffer_read_event;
+                    errcode_ret = clEnqueueReadBuffer( command_queue,
+                        output_buffer,
+                        true,
+                        0,
+                        sizeof( cl_float ) * width * height,
+                        output_desaturated_image,
+                        1,
+                        &kernel_event,
+                        &buffer_read_event
+                    );
+
+                    if( errcode_ret == CL_SUCCESS )
+                    {
+
+                        clWaitForEvents( 1, &buffer_read_event );
+
+                        for( int i = 0; i < width * height; i++ )
+                        {
+                            LOGV( "%f", output_desaturated_image[i] );
+                            output_desaturated_image_rgba[i*4+0] = output_desaturated_image[i];
+                            output_desaturated_image_rgba[i*4+1] = output_desaturated_image[i];
+                            output_desaturated_image_rgba[i*4+2] = output_desaturated_image[i];
+                            output_desaturated_image_rgba[i*4+3] = 255;
+                        } 
+
+                        lodepng_encode32_file( output_filename, output_desaturated_image_rgba, width, height );
+                    }
+                    else
+                    {
+                        CLERR( "Unable to read output buffer", errcode_ret );
+                    }
+                }
+                else
+                {
+                     CLERR( "Unable to enqueue kernel", errcode_ret );
+                }
+
             }
 
             clReleaseMemObject(input_image);
@@ -162,9 +228,11 @@ void opencl_test_desaturate_image( const char *input, const char* output )
         }
         else
         {
-            LOGE(":Unable to load image: %s", input );
+            LOGE(":Unable to load image: %s", input_filename );
         }
 
         clReleaseKernel( kernel_desaturate );
+        free( output_desaturated_image );
+        free( output_desaturated_image_rgba );
     }
 }
