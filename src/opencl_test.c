@@ -1,8 +1,13 @@
 #include "opencl_test.h"
+
+#include <assert.h>
+
 #include "opencl_handler.h"
 #include "opencl_error.h"
 #include "log.h"
 #include "lodepng.h"
+#include "gauss_kernel.h"
+
 
 bool opencl_test_run()
 {
@@ -106,10 +111,23 @@ bool opencl_test_run()
 
 void opencl_test_desaturate_image( const char *input_filename, const char* output_filename )
 {
-   cl_kernel kernel_desaturate = opencl_loader_load_kernel( "kernels/gauss.cl", "desaturate" );
+    cl_program program_gauss_cl = opencl_loader_load_program( "kernels/gauss.cl" );
+    cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
+    cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
+    cl_kernel kernel_gaussy      = opencl_loader_load_kernel( program_gauss_cl, "gaussy" );
 
-   if( kernel_desaturate )
-   {
+    size_t gauss_kernel_size;
+    cl_float* gauss_kernel_line = generate_gauss_kernel_line( &gauss_kernel_size, 4.0f );
+
+    for( int i = 0; i < gauss_kernel_size; i++ )
+    {
+        LOGV( "%f", gauss_kernel_line[i] );
+    }
+
+    LOGV( "Gauss kernel size %zd", gauss_kernel_size );
+
+    if( kernel_desaturate )
+    {
         uint8_t *data;
         unsigned width,height;
         unsigned lode_error;
@@ -140,89 +158,134 @@ void opencl_test_desaturate_image( const char *input_filename, const char* outpu
                 data,
                 &errcode_ret 
             );
-           CHKBUF(input_image, errcode_ret);
+            ASSERT_BUF(input_image, errcode_ret);
 
-           cl_mem output_buffer = clCreateBuffer(
+            cl_mem desaturated_image = clCreateBuffer(
                 opencl_loader_get_context(),
-                CL_MEM_WRITE_ONLY,
+                CL_MEM_READ_WRITE,
                 sizeof( cl_float ) * width * height,
                 NULL,
                 &errcode_ret 
-           );
-           CHKBUF(output_buffer, errcode_ret);
-           CLERR( "Test", errcode_ret );
+            );
+            ASSERT_BUF(output_buffer, errcode_ret);
+            //cl_mem gaussxy_image = desaturated_image;
 
-            if( input_image && output_buffer )
+            cl_mem gaussx_image = clCreateBuffer( 
+                opencl_loader_get_context(),
+                CL_MEM_READ_WRITE,
+                sizeof( cl_float ) * width * height,
+                NULL,
+                &errcode_ret
+            );
+            ASSERT_BUF(gaussx_image, errcode_ret);
+            
+            cl_mem gauss_kernel_buffer = clCreateBuffer(
+                    opencl_loader_get_context(),
+                    CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+                    sizeof( cl_float ) * gauss_kernel_size,
+                    gauss_kernel_line,
+                    &errcode_ret
+            );
+            ASSERT_BUF(gauss_kernel_buffer, errcode_ret);
+
+            cl_command_queue command_queue = opencl_loader_get_command_queue();
+            const size_t global_work_offset[] = { 0,0 };
+            const size_t global_work_size[] = { width, height };
+            const size_t local_work_size[] = { 2, 2 };
+            const cl_int cl_width = width;
+
+            clSetKernelArg( kernel_desaturate, 0, sizeof( cl_mem ), &input_image );
+            clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &desaturated_image );
+            clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
+            cl_event kernel_desaturate_event;
+            errcode_ret = clEnqueueNDRangeKernel( command_queue,
+                kernel_desaturate,
+                2,
+                global_work_offset,
+                global_work_size,
+                local_work_size,
+                0,
+                NULL,
+                &kernel_desaturate_event 
+            );
+            ASSERT_ENQ( kernel_desaturate, errcode_ret );
+
+            
+            cl_event kernel_gaussx_event;
+            const cl_int kernel_radius = gauss_kernel_size/2;
+            clSetKernelArg( kernel_gaussx, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
+            clSetKernelArg( kernel_gaussx, 1, sizeof( cl_int ), &kernel_radius );
+            clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &desaturated_image );
+            clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &gaussx_image );
+            clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
+            errcode_ret = clEnqueueNDRangeKernel( command_queue, 
+                kernel_gaussx, 
+                2,
+                global_work_offset,
+                global_work_size,
+                local_work_size,
+                1,
+                &kernel_desaturate_event,
+                &kernel_gaussx_event
+            );
+            ASSERT_ENQ( kernel_gaussx, errcode_ret );
+
+            cl_event kernel_gaussy_event;
+            cl_int cl_height = height;
+            clSetKernelArg( kernel_gaussy, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
+            clSetKernelArg( kernel_gaussy, 1, sizeof( cl_int ), &kernel_radius );
+            clSetKernelArg( kernel_gaussy, 2, sizeof( cl_mem ), &gaussx_image );
+            clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &desaturated_image );
+            clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
+            clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
+            errcode_ret = clEnqueueNDRangeKernel( command_queue, 
+                kernel_gaussy, 
+                2,
+                global_work_offset,
+                global_work_size,
+                local_work_size,
+                1,
+                &kernel_gaussx_event,
+                &kernel_gaussy_event
+            );
+            ASSERT_ENQ( kernel_gaussx, errcode_ret );
+
+            cl_event buffer_read_event;
+            errcode_ret = clEnqueueReadBuffer( command_queue,
+                desaturated_image,
+                false,
+                0,
+                sizeof( cl_float ) * width * height,
+                output_desaturated_image,
+                1,
+                &kernel_gaussy_event,
+                &buffer_read_event
+            );
+
+            if( errcode_ret == CL_SUCCESS )
             {
-                cl_int cl_width = width;
-                clSetKernelArg( kernel_desaturate, 0, sizeof( cl_mem ), &input_image );
-                clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &output_buffer );
-                clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
+                clWaitForEvents( 1, &buffer_read_event );
 
-                cl_command_queue command_queue = opencl_loader_get_command_queue();
-
-                const size_t global_work_offset[] = { 0,0 };
-                const size_t global_work_size[] = { width, height };
-                const size_t local_work_size[] = { 2, 2 };
-
-                cl_event kernel_event;
-
-                errcode_ret = clEnqueueNDRangeKernel( command_queue,
-                    kernel_desaturate,
-                    2,
-                    global_work_offset,
-                    global_work_size,
-                    local_work_size,
-                    0,
-                    NULL,
-                    &kernel_event 
-                );
-
-                if( errcode_ret == CL_SUCCESS )
+                for( int i = 0; i < width * height; i++ )
                 {
+                    LOGV( "%f", output_desaturated_image[i] );
+                    output_desaturated_image_rgba[i*4+0] = output_desaturated_image[i];
+                    output_desaturated_image_rgba[i*4+1] = output_desaturated_image[i];
+                    output_desaturated_image_rgba[i*4+2] = output_desaturated_image[i];
+                    output_desaturated_image_rgba[i*4+3] = 255;
+                } 
 
-                    cl_event buffer_read_event;
-                    errcode_ret = clEnqueueReadBuffer( command_queue,
-                        output_buffer,
-                        true,
-                        0,
-                        sizeof( cl_float ) * width * height,
-                        output_desaturated_image,
-                        1,
-                        &kernel_event,
-                        &buffer_read_event
-                    );
-
-                    if( errcode_ret == CL_SUCCESS )
-                    {
-
-                        clWaitForEvents( 1, &buffer_read_event );
-
-                        for( int i = 0; i < width * height; i++ )
-                        {
-                            LOGV( "%f", output_desaturated_image[i] );
-                            output_desaturated_image_rgba[i*4+0] = output_desaturated_image[i];
-                            output_desaturated_image_rgba[i*4+1] = output_desaturated_image[i];
-                            output_desaturated_image_rgba[i*4+2] = output_desaturated_image[i];
-                            output_desaturated_image_rgba[i*4+3] = 255;
-                        } 
-
-                        lodepng_encode32_file( output_filename, output_desaturated_image_rgba, width, height );
-                    }
-                    else
-                    {
-                        CLERR( "Unable to read output buffer", errcode_ret );
-                    }
-                }
-                else
-                {
-                     CLERR( "Unable to enqueue kernel", errcode_ret );
-                }
-
+                lodepng_encode32_file( output_filename, output_desaturated_image_rgba, width, height );
+            }
+            else
+            {
+                CLERR( "Unable to read output buffer", errcode_ret );
             }
 
             clReleaseMemObject(input_image);
-            clReleaseMemObject(output_buffer);
+            clReleaseMemObject(desaturated_image);
+            clReleaseMemObject(gaussx_image);
+            clReleaseMemObject(gauss_kernel_buffer);
 
             free( data );
         }

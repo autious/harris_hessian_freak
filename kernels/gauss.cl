@@ -9,7 +9,7 @@ __kernel void desaturate( __global image2d_t image, __global float* desaturated_
     //desaturated_out[coord.x+coord.y*width] = coord.x/(float)width * 255;
 }
 
-__kernel void gaussx( __constant float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width )
+__kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width )
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
@@ -17,13 +17,13 @@ __kernel void gaussx( __constant float* gauss_kernel, int kernel_radius, __globa
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += gauss_kernel[i+kernel_radius] * input[min(width,max(coord.x + i,0))+y*width];
+        sum += gauss_kernel[i+kernel_radius] * input[min(width,max(coord.x + i,0))+coord.y*width];
     }
 
     output[coord.x+coord.y*width] = sum;
 }
 
-__kernel void gaussy( __constant float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width)
+__kernel void gaussy( __constant float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, int height)
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
@@ -31,7 +31,7 @@ __kernel void gaussy( __constant float* gauss_kernel, int kernel_radius, __globa
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += gauss_kernel[i+kernel_radius] * input[min(width,max(coord.y + i,0))*width+coord.x];
+        sum += gauss_kernel[i+kernel_radius] * input[min(height,max(coord.y + i,0))*width+coord.x];
     }
 
     output[coord.x+coord.y*width] = sum;

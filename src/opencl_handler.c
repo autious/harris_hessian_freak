@@ -7,6 +7,7 @@
 #include "log.h"
 #include "util.h"
 #include "opencl_error.h"
+#include "gauss_kernel.h"
 
 static const char* lastCLError = "";
 
@@ -598,9 +599,8 @@ cl_command_queue opencl_loader_get_command_queue()
     return command_queue;
 }
 
-cl_kernel opencl_loader_load_kernel( const char* filename, const char* kernelname )
+cl_kernel opencl_loader_load_kernel( cl_program program, const char* kernelname )
 {
-    cl_program program = opencl_loader_load_program( filename );
     cl_kernel kernel = NULL;
 
     if( program )
