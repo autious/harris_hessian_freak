@@ -36,5 +36,3 @@ __kernel void gaussy( __constant float* gauss_kernel, int kernel_radius, __globa
 
     output[coord.x+coord.y*width] = sum;
 }
-
-

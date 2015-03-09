@@ -1,6 +1,8 @@
 #pragma once
 
 #include <CL/opencl.h>
+#include <assert.h>
+#include "log.h"
 
 const char* opencl_error_codename( cl_int err );
 const char* opencl_device_info_codename( cl_device_info devinfo );
@@ -23,6 +25,9 @@ const char* opencl_device_type_codename( cl_device_type devtype );
         assert( false );\
     }
 
-    
-
-
+#define ASSERT_PROF(buf, code)\
+    if(code != CL_SUCCESS)\
+    {\
+        CLERR( "Unable to profile" #buf, code );\
+        assert( false );\
+    }

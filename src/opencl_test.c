@@ -4,6 +4,7 @@
 
 #include "opencl_handler.h"
 #include "opencl_error.h"
+#include "opencl_util.h"
 #include "log.h"
 #include "lodepng.h"
 #include "gauss_kernel.h"
@@ -266,9 +267,15 @@ void opencl_test_desaturate_image( const char *input_filename, const char* outpu
             {
                 clWaitForEvents( 1, &buffer_read_event );
 
+                printf( "profile: %lu %lu %lu\n",
+                    opencl_util_getduration( kernel_desaturate_event ),
+                    opencl_util_getduration( kernel_gaussx_event ),
+                    opencl_util_getduration( kernel_gaussy_event ) 
+                );
+
                 for( int i = 0; i < width * height; i++ )
                 {
-                    LOGV( "%f", output_desaturated_image[i] );
+                    //LOGV( "%f", output_desaturated_image[i] );
                     output_desaturated_image_rgba[i*4+0] = output_desaturated_image[i];
                     output_desaturated_image_rgba[i*4+1] = output_desaturated_image[i];
                     output_desaturated_image_rgba[i*4+2] = output_desaturated_image[i];
