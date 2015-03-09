@@ -5,6 +5,7 @@
 #include "opencl_handler.h"
 #include "opencl_error.h"
 #include "opencl_util.h"
+#include "opencl_program.h"
 #include "log.h"
 #include "lodepng.h"
 #include "gauss_kernel.h"
@@ -12,7 +13,7 @@
 
 bool opencl_test_run()
 {
-    cl_program program = opencl_loader_load_program( "kernels/test_1.cl" );
+    cl_program program = opencl_program_load( "kernels/test_1.cl" );
     cl_int errcode_ret;
     cl_kernel kernel = clCreateKernel( program, "main", &errcode_ret );
 
@@ -110,9 +111,18 @@ bool opencl_test_run()
     return true;
 }
 
+void opencl_load_image( const char *input_filename, const char* output_filename )
+{
+
+}
+
+void opencl_test_run_gaussxy( cl_mem input, cl_mem output, int width, int height)
+{
+}
+
 void opencl_test_desaturate_image( const char *input_filename, const char* output_filename )
 {
-    cl_program program_gauss_cl = opencl_loader_load_program( "kernels/gauss.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
     cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
     cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
     cl_kernel kernel_gaussy      = opencl_loader_load_kernel( program_gauss_cl, "gaussy" );
@@ -211,7 +221,6 @@ void opencl_test_desaturate_image( const char *input_filename, const char* outpu
             );
             ASSERT_ENQ( kernel_desaturate, errcode_ret );
 
-            
             cl_event kernel_gaussx_event;
             const cl_int kernel_radius = gauss_kernel_size/2;
             clSetKernelArg( kernel_gaussx, 0, sizeof( cl_mem ), &gauss_kernel_buffer );

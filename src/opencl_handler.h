@@ -14,3 +14,4 @@ cl_kernel opencl_loader_load_kernel( cl_program program, const char* kernel );
 
 cl_context opencl_loader_get_context();
 cl_command_queue opencl_loader_get_command_queue();
+cl_device_id opencl_loader_get_device();

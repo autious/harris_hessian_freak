@@ -478,116 +478,6 @@ size_t opencl_loader_get_error_size()
     return strlen( lastCLError ) + 1;
 }
 
-cl_program opencl_loader_load_program( const char* name )
-{
-    cl_program program = 0; 
-
-    const int BUFSIZE = 128;
-    size_t size = 0;     
-    size_t read_bytes = 0;
-
-    char *string = NULL;
-
-    FILE* f = fopen( name, "r" ); 
-
-    if( f )
-    {
-        while( !feof( f ) && !ferror( f ) )
-        {
-            if( size < read_bytes + BUFSIZE )
-            {
-                size += BUFSIZE;
-                string = (char*)realloc( string, size );
-            }
-
-            if( string != NULL )
-            {
-                read_bytes += fread( string + read_bytes, 1, BUFSIZE, f );
-            }
-            else
-            {
-                LOGE( "Unable to allocate memory for opencl kernel temp string" );
-                break; //Unable to allocate more memory for string
-            }
-        }
-
-        if( !ferror( f ) && string != NULL )
-        {
-            char* outputstream = (char*)calloc( read_bytes + 1,1 );
-            memcpy( outputstream, string, read_bytes );
-            LOGV( "Program:%s,%zu,%zu\n%s", name, size, read_bytes, outputstream );
-            free( outputstream );
-
-            cl_int errcode_ret; 
-            program = clCreateProgramWithSource( 
-                    context, 
-                    1, 
-                    (const char**)&string, 
-                    &read_bytes, 
-                    &errcode_ret 
-            );
-    
-            if( errcode_ret != CL_SUCCESS )
-            {
-                CLERR( "Unable to load program:%s", errcode_ret);
-            }
-            else
-            {
-                errcode_ret = clBuildProgram( 
-                        program, 
-                        1, 
-                        &device, 
-                        "-cl-fast-relaxed-math -cl-std=CL1.1", 
-                        NULL, 
-                        NULL 
-                );
-
-                if( errcode_ret != CL_SUCCESS )
-                {
-                    CLERR( "Unable to compile program", errcode_ret );
-                }
-
-                LOGV( "Program compile output" );
-
-                size_t compile_output_size;
-
-                errcode_ret = clGetProgramBuildInfo( program, 
-                    device, 
-                    CL_PROGRAM_BUILD_LOG,
-                    0,
-                    NULL,
-                    &compile_output_size );
-
-                if( errcode_ret != CL_SUCCESS )
-                {
-                    CLERR( "Unable to get size of compile log", errcode_ret );
-                }
-                else
-                {
-                    char compile_log[compile_output_size];
-                    errcode_ret = clGetProgramBuildInfo( program, 
-                        device, 
-                        CL_PROGRAM_BUILD_LOG,
-                        compile_output_size,
-                        compile_log,
-                        NULL );
-                    LOGV( "%lu:%s", compile_output_size, compile_log );
-                }
-            }
-        }
-        else
-        {
-            LOGE( "Error reading file:\"%s\"", name );
-        }
-    }
-    else
-    {
-        LOGE( "Unable to open the file:\"%s\"", name );
-    }
-
-    free( string );
-    return program;
-}
 
 cl_context opencl_loader_get_context()
 {
@@ -597,6 +487,11 @@ cl_context opencl_loader_get_context()
 cl_command_queue opencl_loader_get_command_queue()
 {
     return command_queue;
+}
+
+cl_device_id opencl_loader_get_device()
+{
+    return device;
 }
 
 cl_kernel opencl_loader_load_kernel( cl_program program, const char* kernelname )
