@@ -279,10 +279,13 @@ const char* opencl_device_info_codename( cl_device_info devinfo )
             return "CL_DEVICE_PREFERRED_INTEROP_USER_SYNC";
         case CL_DEVICE_PRINTF_BUFFER_SIZE:
             return "CL_DEVICE_PRINTF_BUFFER_SIZE";
+/*
+ * These seem to be new, don't exist on opencl.h version on debian.
         case CL_DEVICE_IMAGE_PITCH_ALIGNMENT:
             return "CL_DEVICE_IMAGE_PITCH_ALIGNMENT";
         case CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT:
             return "CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT";
+*/
         default:
             return "UNKNOWN";
     }
