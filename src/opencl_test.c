@@ -248,7 +248,7 @@ void opencl_test_desaturate_image( const char *input_filename, const char* outpu
                 &kernel_gaussx_event,
                 &kernel_gaussy_event
             );
-            ASSERT_ENQ( kernel_gaussx, errcode_ret );
+            ASSERT_ENQ( kernel_gaussy, errcode_ret );
 
             cl_event buffer_read_event;
             errcode_ret = clEnqueueReadBuffer( command_queue,
