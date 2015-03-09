@@ -52,7 +52,7 @@ static cl_program opencl_program_get( const char* name )
     return NULL;
 }
 
-void opencl_program_free()
+void opencl_program_close()
 {
     struct ProgramList *cur = program_root, *next;
 
@@ -105,10 +105,7 @@ cl_program opencl_program_load( const char* name )
 
             if( !ferror( f ) && string != NULL )
             {
-                char* outputstream = (char*)calloc( read_bytes + 1,1 );
-                memcpy( outputstream, string, read_bytes );
-                LOGV( "Program:%s,%zu,%zu\n%s", name, size, read_bytes, outputstream );
-                free( outputstream );
+                LOGV( "Compiling -> program:%s,alloc:%zu,read:%zu\n", name, size, read_bytes );
 
                 cl_int errcode_ret; 
                 program = clCreateProgramWithSource( 
@@ -139,8 +136,6 @@ cl_program opencl_program_load( const char* name )
                         CLERR( "Unable to compile program", errcode_ret );
                     }
 
-                    LOGV( "Program compile output" );
-
                     size_t compile_output_size;
 
                     errcode_ret = clGetProgramBuildInfo( program, 
@@ -156,6 +151,7 @@ cl_program opencl_program_load( const char* name )
                     }
                     else
                     {
+                        LOGV( "Program compile output" );
                         char compile_log[compile_output_size];
                         errcode_ret = clGetProgramBuildInfo( program, 
                             device, 

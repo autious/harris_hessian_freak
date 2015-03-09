@@ -19,6 +19,7 @@ int main( int argc, const char ** argv )
         opencl_test_run();
     }
 
+    opencl_program_close();
     opencl_loader_close();
 
     return 0;
