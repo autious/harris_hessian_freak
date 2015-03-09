@@ -494,6 +494,9 @@ cl_device_id opencl_loader_get_device()
     return device;
 }
 
+/*
+ * Creates kernel from given program, need to be released using clReleaseKernel
+ */
 cl_kernel opencl_loader_load_kernel( cl_program program, const char* kernelname )
 {
     cl_kernel kernel = NULL;
@@ -507,8 +510,6 @@ cl_kernel opencl_loader_load_kernel( cl_program program, const char* kernelname 
         {
             CLERR( ":Unable to create kernel from program", errcode_ret );
         }
-
-        clReleaseProgram( program );
     }
 
     return kernel;

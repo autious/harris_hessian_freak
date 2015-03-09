@@ -66,6 +66,13 @@ void opencl_program_close()
     }
 }
 
+/*
+ * Compiles and loads given program name, contains a caching function
+ * meaning that a program is retained for subsequent loads.
+ *
+ * Progams aquired through this function need to be released
+ * using clReleaseProgram 
+ */
 cl_program opencl_program_load( const char* name )
 {
     cl_program program = opencl_program_get( name );
