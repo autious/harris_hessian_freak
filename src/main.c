@@ -21,7 +21,7 @@ int main( int argc, const char ** argv )
         opencl_fd_desaturate_image( &process, 0, NULL, &desaturate_event );
         opencl_fd_run_gaussxy( &process, 4.0f, 1, &desaturate_event, &gauss_event );
         opencl_fd_save_buffer_to_image( argv[2], &process, 1, &gauss_event );
-        //opencl_test_desaturate_image( argv[1], argv[2] );
+        opencl_fd_free( &process, 0, NULL );
     }
     else
     {

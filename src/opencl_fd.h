@@ -30,3 +30,8 @@ bool opencl_fd_run_gaussxy(
     cl_uint num_events_in_wait_list, 
     const cl_event* event_wait_list, 
     cl_event* event );
+
+void opencl_fd_free( struct FD* state, 
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list
+  );

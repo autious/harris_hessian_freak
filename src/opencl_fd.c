@@ -244,3 +244,25 @@ bool opencl_fd_desaturate_image(
     }
     return false;
 }
+
+void opencl_fd_free( struct FD* state, 
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list
+  )
+{
+    clWaitForEvents( num_events_in_wait_list, event_wait_list );
+    clReleaseMemObject( state->image_rgba_char );
+    free( state->rgba_host );
+    clReleaseMemObject( state->buffer_l_float_1 );
+    clReleaseMemObject( state->buffer_l_float_2 );
+
+    state->rgba_host = NULL;
+    state->image_rgba_char = NULL;
+    state->buffer_l_float_1 = NULL;
+    state->buffer_l_float_2 = NULL;
+    state->width = 0;
+    state->height = 0;
+
+
+}
+
