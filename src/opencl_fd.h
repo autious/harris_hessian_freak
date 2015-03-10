@@ -1,3 +1,4 @@
+#pragma once 
 #include "opencl_handler.h"
 
 struct FD
@@ -23,3 +24,9 @@ bool opencl_fd_desaturate_image(
     cl_event *event_wait_list,
     cl_event *event
 );
+bool opencl_fd_run_gaussxy( 
+    struct FD* state,
+    float sigma, 
+    cl_uint num_events_in_wait_list, 
+    const cl_event* event_wait_list, 
+    cl_event* event );
