@@ -41,7 +41,7 @@ bool opencl_fd_desaturate_image(
     cl_event *event
 );
 
-bool opencl_fd_derive_image( struct FD* state,
+bool opencl_fd_derivate_image( struct FD* state,
     cl_mem in,
     cl_mem ddxout,
     cl_mem ddyout,
