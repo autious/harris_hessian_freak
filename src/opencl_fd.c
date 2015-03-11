@@ -8,12 +8,9 @@
 #include "gauss_kernel.h"
 #include "lodepng.h"
 
-bool opencl_fd_load_image( const char *input_filename, struct FD* state )
+bool opencl_fd_load_png_file( const char *input_filename, struct FD* state )
 {
     unsigned lode_error;
-
-    state->buffer_l_float_1 = NULL;
-    state->buffer_l_float_2 = NULL;
 
     lode_error = lodepng_decode32_file( &state->rgba_host, &state->width, &state->height, input_filename );
 
@@ -39,24 +36,6 @@ bool opencl_fd_load_image( const char *input_filename, struct FD* state )
         );
         ASSERT_BUF(input_image, errcode_ret);
 
-        state->buffer_l_float_1 = clCreateBuffer(
-            opencl_loader_get_context(),
-            CL_MEM_READ_WRITE,
-            sizeof( cl_float ) * state->width * state->height,
-            NULL,
-            &errcode_ret 
-        );
-        ASSERT_BUF(state->buffer_l_float_1, errcode_ret);
-
-        state->buffer_l_float_2 = clCreateBuffer(
-            opencl_loader_get_context(),
-            CL_MEM_READ_WRITE,
-            sizeof( cl_float ) * state->width * state->height,
-            NULL,
-            &errcode_ret 
-        );
-        ASSERT_BUF(state->buffer_l_float_2, errcode_ret);
-
         return true;
     }
     else
@@ -69,6 +48,7 @@ bool opencl_fd_load_image( const char *input_filename, struct FD* state )
 void opencl_fd_save_buffer_to_image( 
     const char * name, 
     struct FD* state, 
+    cl_mem in,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list
     )
@@ -80,7 +60,7 @@ void opencl_fd_save_buffer_to_image(
     cl_float* output_desaturated_image = (cl_float*)malloc(state->width*state->height*sizeof(cl_float));
 
     errcode_ret = clEnqueueReadBuffer( command_queue,
-        state->buffer_l_float_1,
+        in,
         false,
         0,
         sizeof( cl_float ) * state->width * state->height,
@@ -109,6 +89,30 @@ void opencl_fd_save_buffer_to_image(
     }
 }
 
+void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count )
+{
+    cl_int errcode_ret;
+    for( int i = 0; i < count; i++ )
+    {
+        buffers[i] = clCreateBuffer(
+            opencl_loader_get_context(),
+            CL_MEM_READ_WRITE,
+            sizeof( cl_float ) * state->width * state->height,
+            NULL,
+            &errcode_ret 
+        );
+        ASSERT_BUF(create_image_buffers, errcode_ret);
+    }
+}
+
+void opencl_fd_release_image_buffers( struct FD* state, cl_mem* buffers, size_t count )
+{
+    for( int i = 0; i < count; i++ )
+    {
+        clReleaseMemObject( buffers[i] );
+    }
+}
+
 static void free_host_ptr_callback( 
     cl_event event, 
     cl_int event_command_exec_status, 
@@ -116,6 +120,158 @@ static void free_host_ptr_callback(
 )
 {
     free( user_data );
+}
+
+
+//Takes a monochrome single channel cl_float array and blurs it according to sigma
+bool opencl_fd_run_gaussxy( 
+    float sigma, 
+    struct FD* state,
+    cl_mem in,
+    cl_mem middle,
+    cl_mem out,
+    cl_uint num_events_in_wait_list, 
+    const cl_event* event_wait_list, 
+    cl_event* event )
+{
+    const size_t global_work_offset[] = { 0,0 };
+    const size_t global_work_size[] = { state->width, state->height };
+    const size_t local_work_size[] = { 2, 2 };
+
+    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
+    cl_kernel kernel_gaussy      = opencl_loader_load_kernel( program_gauss_cl, "gaussy" );
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+
+    const cl_int cl_width = state->width;
+    const cl_int cl_height = state->height;
+
+    size_t gauss_kernel_size;
+    cl_float* gauss_kernel_line = generate_gauss_kernel_line( &gauss_kernel_size, sigma );
+
+    /* Kernel output
+    for( int i = 0; i < gauss_kernel_size; i++ )
+    {
+        LOGV( "%f", gauss_kernel_line[i] );
+    }
+
+    LOGV( "Gauss kernel size %zd", gauss_kernel_size );
+    */
+
+    cl_int errcode_ret;
+    cl_mem gauss_kernel_buffer = clCreateBuffer(
+            opencl_loader_get_context(),
+            CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+            sizeof( cl_float ) * gauss_kernel_size,
+            gauss_kernel_line,
+            &errcode_ret
+    );
+    ASSERT_BUF(gauss_kernel_buffer, errcode_ret);
+
+    cl_event kernel_gaussx_event;
+    const cl_int kernel_radius = gauss_kernel_size/2;
+
+    clSetKernelArg( kernel_gaussx, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
+    clSetKernelArg( kernel_gaussx, 1, sizeof( cl_int ), &kernel_radius );
+    clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &in );
+    clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &middle );
+    clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
+    errcode_ret = clEnqueueNDRangeKernel( command_queue, 
+        kernel_gaussx, 
+        2,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        &kernel_gaussx_event
+    );
+    ASSERT_ENQ( kernel_gaussx, errcode_ret );
+
+    clSetKernelArg( kernel_gaussy, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
+    clSetKernelArg( kernel_gaussy, 1, sizeof( cl_int ), &kernel_radius );
+    clSetKernelArg( kernel_gaussy, 2, sizeof( cl_mem ), &middle );
+    clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &out );
+    clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
+    clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
+    errcode_ret = clEnqueueNDRangeKernel( command_queue, 
+        kernel_gaussy, 
+        2,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        1,
+        &kernel_gaussx_event,
+        event
+    );
+    ASSERT_ENQ( kernel_gaussy, errcode_ret );
+
+    clReleaseKernel( kernel_gaussx );
+    clReleaseKernel( kernel_gaussy );
+    clReleaseProgram( program_gauss_cl );
+    clReleaseMemObject( gauss_kernel_buffer );
+    //Free the kernel memory when done.
+    clSetEventCallback( *event, CL_COMPLETE, free_host_ptr_callback, gauss_kernel_line );
+
+    return true;
+}
+
+bool opencl_fd_desaturate_image( 
+    struct FD *state,
+    cl_mem out,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0,0 };
+    const size_t global_work_size[] = { state->width, state->height };
+    const size_t local_work_size[] = { 2, 2 };
+
+    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
+
+    if( kernel_desaturate )
+    {
+        cl_command_queue command_queue = opencl_loader_get_command_queue();
+
+        cl_int cl_width = state->width;
+        clSetKernelArg( kernel_desaturate, 0, sizeof( cl_mem ), &state->image_rgba_char );
+        clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &out );
+        clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
+
+        cl_int errcode_ret = clEnqueueNDRangeKernel( command_queue,
+            kernel_desaturate,
+            2,
+            global_work_offset,
+            global_work_size,
+            local_work_size,
+            num_events_in_wait_list,
+            event_wait_list,
+            event
+        );
+        ASSERT_ENQ( kernel_desaturate, errcode_ret );
+
+        clReleaseKernel( kernel_desaturate );
+
+        return true;
+    }
+    return false;
+}
+
+void opencl_fd_free( struct FD* state, 
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list
+  )
+{
+    clWaitForEvents( num_events_in_wait_list, event_wait_list );
+    clReleaseMemObject( state->image_rgba_char );
+    free( state->rgba_host );
+
+    state->rgba_host = NULL;
+    state->image_rgba_char = NULL;
+    state->width = 0;
+    state->height = 0;
 }
 
 /*
@@ -225,157 +381,3 @@ bool opencl_fd_run_gauss2d(
     return true;
 }
 */
-
-//Takes a monochrome single channel cl_float array and blurs it according to sigma
-bool opencl_fd_run_gaussxy( 
-    struct FD* state,
-    float sigma, 
-    cl_uint num_events_in_wait_list, 
-    const cl_event* event_wait_list, 
-    cl_event* event )
-{
-    const size_t global_work_offset[] = { 0,0 };
-    const size_t global_work_size[] = { state->width, state->height };
-    const size_t local_work_size[] = { 2, 2 };
-
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
-    cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
-    cl_kernel kernel_gaussy      = opencl_loader_load_kernel( program_gauss_cl, "gaussy" );
-    cl_command_queue command_queue = opencl_loader_get_command_queue();
-
-    const cl_int cl_width = state->width;
-    const cl_int cl_height = state->height;
-
-    size_t gauss_kernel_size;
-    cl_float* gauss_kernel_line = generate_gauss_kernel_line( &gauss_kernel_size, sigma );
-
-    /* Kernel output
-    for( int i = 0; i < gauss_kernel_size; i++ )
-    {
-        LOGV( "%f", gauss_kernel_line[i] );
-    }
-
-    LOGV( "Gauss kernel size %zd", gauss_kernel_size );
-    */
-
-    cl_int errcode_ret;
-    cl_mem gauss_kernel_buffer = clCreateBuffer(
-            opencl_loader_get_context(),
-            CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
-            sizeof( cl_float ) * gauss_kernel_size,
-            gauss_kernel_line,
-            &errcode_ret
-    );
-    ASSERT_BUF(gauss_kernel_buffer, errcode_ret);
-
-    cl_event kernel_gaussx_event;
-    const cl_int kernel_radius = gauss_kernel_size/2;
-
-    clSetKernelArg( kernel_gaussx, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
-    clSetKernelArg( kernel_gaussx, 1, sizeof( cl_int ), &kernel_radius );
-    clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &state->buffer_l_float_1 );
-    clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &state->buffer_l_float_2 );
-    clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
-    errcode_ret = clEnqueueNDRangeKernel( command_queue, 
-        kernel_gaussx, 
-        2,
-        global_work_offset,
-        global_work_size,
-        local_work_size,
-        num_events_in_wait_list,
-        event_wait_list,
-        &kernel_gaussx_event
-    );
-    ASSERT_ENQ( kernel_gaussx, errcode_ret );
-
-    clSetKernelArg( kernel_gaussy, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
-    clSetKernelArg( kernel_gaussy, 1, sizeof( cl_int ), &kernel_radius );
-    clSetKernelArg( kernel_gaussy, 2, sizeof( cl_mem ), &state->buffer_l_float_2 );
-    clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &state->buffer_l_float_1 );
-    clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
-    clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
-    errcode_ret = clEnqueueNDRangeKernel( command_queue, 
-        kernel_gaussy, 
-        2,
-        global_work_offset,
-        global_work_size,
-        local_work_size,
-        1,
-        &kernel_gaussx_event,
-        event
-    );
-    ASSERT_ENQ( kernel_gaussy, errcode_ret );
-
-    clReleaseKernel( kernel_gaussx );
-    clReleaseKernel( kernel_gaussy );
-    clReleaseProgram( program_gauss_cl );
-    clReleaseMemObject( gauss_kernel_buffer );
-    //Free the kernel memory when done.
-    clSetEventCallback( *event, CL_COMPLETE, free_host_ptr_callback, gauss_kernel_line );
-
-    return true;
-}
-
-bool opencl_fd_desaturate_image( 
-    struct FD *state,
-    cl_uint num_events_in_wait_list,
-    cl_event *event_wait_list,
-    cl_event *event
-)
-{
-    const size_t global_work_offset[] = { 0,0 };
-    const size_t global_work_size[] = { state->width, state->height };
-    const size_t local_work_size[] = { 2, 2 };
-
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
-    cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
-
-    if( kernel_desaturate )
-    {
-        cl_command_queue command_queue = opencl_loader_get_command_queue();
-
-        cl_int cl_width = state->width;
-        clSetKernelArg( kernel_desaturate, 0, sizeof( cl_mem ), &state->image_rgba_char );
-        clSetKernelArg( kernel_desaturate, 1, sizeof( cl_mem ), &state->buffer_l_float_1 );
-        clSetKernelArg( kernel_desaturate, 2, sizeof( cl_int ), &cl_width );
-
-        cl_int errcode_ret = clEnqueueNDRangeKernel( command_queue,
-            kernel_desaturate,
-            2,
-            global_work_offset,
-            global_work_size,
-            local_work_size,
-            num_events_in_wait_list,
-            event_wait_list,
-            event
-        );
-        ASSERT_ENQ( kernel_desaturate, errcode_ret );
-
-        clReleaseKernel( kernel_desaturate );
-
-        return true;
-    }
-    return false;
-}
-
-void opencl_fd_free( struct FD* state, 
-    cl_uint num_events_in_wait_list,
-    cl_event *event_wait_list
-  )
-{
-    clWaitForEvents( num_events_in_wait_list, event_wait_list );
-    clReleaseMemObject( state->image_rgba_char );
-    free( state->rgba_host );
-    clReleaseMemObject( state->buffer_l_float_1 );
-    clReleaseMemObject( state->buffer_l_float_2 );
-
-    state->rgba_host = NULL;
-    state->image_rgba_char = NULL;
-    state->buffer_l_float_1 = NULL;
-    state->buffer_l_float_2 = NULL;
-    state->width = 0;
-    state->height = 0;
-
-
-}
-
