@@ -109,10 +109,123 @@ void opencl_fd_save_buffer_to_image(
     }
 }
 
-static void free_host_ptr_callback(cl_event event, cl_int event_command_exec_status, void *user_data)
+static void free_host_ptr_callback( 
+    cl_event event, 
+    cl_int event_command_exec_status, 
+    void *user_data
+)
 {
     free( user_data );
 }
+
+/*
+bool opencl_fd_run_gauss2d(
+    struct FD* state,
+    float sigma, 
+    cl_uint num_events_in_wait_list, 
+    const cl_event* event_wait_list, 
+    cl_event* event )
+{
+    const size_t global_work_offset[] = { 0,0 };
+    const size_t global_work_size[] = { state->width, state->height };
+    const size_t local_work_size[] = { 2, 2 };
+
+    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_kernel kernel_gauss2d = opencl_loader_load_kernel( program_gauss_cl, "gauss2d" );
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+
+    size_t gauss_kernel_diameter;
+    cl_float * gauss_kernel_line = generate_gauss_kernel_2D( &gauss_kernel_diameter, sigma );
+    size_t gauss_kernel_size = gauss_kernel_diameter * gauss_kernel_diameter;
+    cl_int halfwidth = gauss_kernel_diameter/2;
+
+    printf( "Kernel contents %lu %lu %f\n", gauss_kernel_size, gauss_kernel_diameter, sigma);
+    for( int y = 0; y < gauss_kernel_diameter; y++ )
+    {
+        printf( "\n" );
+        for( int x = 0; x < gauss_kernel_diameter; x++ )
+        {
+            printf( "%f ", gauss_kernel_line[x+y*gauss_kernel_diameter]);
+        }
+    }
+
+    cl_int errcode_ret;
+    cl_mem gauss_kernel_buffer = clCreateBuffer(
+            opencl_loader_get_context(),
+            CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+            sizeof( cl_float ) * gauss_kernel_size,
+            gauss_kernel_line,
+            &errcode_ret
+    );
+    ASSERT_BUF(gauss_kernel_buffer, errcode_ret);
+
+    cl_mem debug = clCreateBuffer(
+            opencl_loader_get_context(),
+            CL_MEM_WRITE_ONLY,
+            sizeof( cl_float ) * gauss_kernel_size,
+            NULL,
+            &errcode_ret
+    );
+    ASSERT_BUF(debug, errcode_ret);
+
+    cl_int cl_width = state->width;
+    cl_int cl_height = state->height;
+    clSetKernelArg( kernel_gauss2d, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
+    clSetKernelArg( kernel_gauss2d, 1, sizeof( cl_int ), &halfwidth );
+    clSetKernelArg( kernel_gauss2d, 2, sizeof( cl_mem ), &state->buffer_l_float_1 );
+    clSetKernelArg( kernel_gauss2d, 3, sizeof( cl_mem ), &state->buffer_l_float_2 );
+    clSetKernelArg( kernel_gauss2d, 4, sizeof( cl_int ), &cl_width );
+    clSetKernelArg( kernel_gauss2d, 5, sizeof( cl_int ), &cl_height );
+    clSetKernelArg( kernel_gauss2d, 6, sizeof( cl_mem ), &debug );
+    errcode_ret = clEnqueueNDRangeKernel( command_queue, 
+        kernel_gauss2d, 
+        2,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( kernel_gauss2d, errcode_ret );
+
+    cl_float* output = malloc( sizeof( cl_float ) * gauss_kernel_size );
+    clEnqueueReadBuffer( command_queue,
+            debug,
+            true,
+            0,
+            gauss_kernel_size * sizeof( cl_float ),
+            output,
+            1,
+            event,
+            NULL
+    );
+
+    printf( "Kernel contents read %lu %f\n", gauss_kernel_diameter, sigma);
+    for( int y = 0; y < gauss_kernel_diameter; y++ )
+    {
+        for( int x = 0; x < gauss_kernel_diameter; x++ )
+        {
+            printf( "%f ", output[x+y*gauss_kernel_diameter]);
+        }
+        printf( "\n" );
+    }
+            
+
+    clReleaseKernel( kernel_gauss2d );
+    clReleaseProgram( program_gauss_cl );
+    clReleaseMemObject( gauss_kernel_buffer );
+    //Free the kernel memory when done.
+    clSetEventCallback( *event, CL_COMPLETE, free_host_ptr_callback, gauss_kernel_line );
+
+    //Swap buffer positions so that buffer_l_float_1 is still the "incoming" memory zone
+    cl_mem tmp = state->buffer_l_float_1;
+    state->buffer_l_float_1 = state->buffer_l_float_2;
+    state->buffer_l_float_2 = tmp;
+    return true;
+}
+*/
+
 //Takes a monochrome single channel cl_float array and blurs it according to sigma
 bool opencl_fd_run_gaussxy( 
     struct FD* state,

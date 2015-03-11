@@ -20,6 +20,7 @@ int main( int argc, const char ** argv )
         opencl_fd_load_image( argv[1], &process );
         opencl_fd_desaturate_image( &process, 0, NULL, &desaturate_event );
         opencl_fd_run_gaussxy( &process, 4.0f, 1, &desaturate_event, &gauss_event );
+        //opencl_fd_run_gauss2d( &process, 1.0f, 1, &desaturate_event, &gauss_event );
         opencl_fd_save_buffer_to_image( argv[2], &process, 1, &gauss_event );
         opencl_fd_free( &process, 0, NULL );
     }
