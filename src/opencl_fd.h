@@ -19,7 +19,9 @@ void opencl_fd_save_buffer_to_image(
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list );
 
+cl_mem opencl_fd_create_image_buffer( struct FD* state );
 void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
+void opencl_fd_release_image_buffer( struct FD* state );
 void opencl_fd_release_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
 
 bool opencl_fd_run_gaussxy( 

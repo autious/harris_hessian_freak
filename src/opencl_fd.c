@@ -89,6 +89,13 @@ void opencl_fd_save_buffer_to_image(
     }
 }
 
+cl_mem opencl_fd_create_image_buffer( struct FD* state )
+{
+    cl_mem ret;
+    opencl_fd_create_image_buffers( state, &ret, count );
+    return ret;
+}
+
 void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count )
 {
     cl_int errcode_ret;
@@ -103,6 +110,11 @@ void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t c
         );
         ASSERT_BUF(create_image_buffers, errcode_ret);
     }
+}
+
+void opencl_fd_release_image_buffer( struct FD* state, cl_mem buffer )
+{
+    opencl_fd_release_image_buffers( state, &buffer, 1 );
 }
 
 void opencl_fd_release_image_buffers( struct FD* state, cl_mem* buffers, size_t count )
