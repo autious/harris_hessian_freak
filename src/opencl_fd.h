@@ -21,7 +21,7 @@ void opencl_fd_save_buffer_to_image(
 
 cl_mem opencl_fd_create_image_buffer( struct FD* state );
 void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
-void opencl_fd_release_image_buffer( struct FD* state );
+void opencl_fd_release_image_buffer( struct FD* state, cl_mem buffer );
 void opencl_fd_release_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
 
 bool opencl_fd_run_gaussxy( 
@@ -47,6 +47,17 @@ bool opencl_fd_derivate_image( struct FD* state,
     cl_mem in,
     cl_mem ddxout,
     cl_mem ddyout,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
+);
+
+bool opencl_fd_second_moment_matrix_elements( struct FD* state,
+    cl_mem ddx,
+    cl_mem ddy,
+    cl_mem xx,
+    cl_mem xy,
+    cl_mem yy,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event

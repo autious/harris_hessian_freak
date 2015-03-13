@@ -92,7 +92,7 @@ void opencl_fd_save_buffer_to_image(
 cl_mem opencl_fd_create_image_buffer( struct FD* state )
 {
     cl_mem ret;
-    opencl_fd_create_image_buffers( state, &ret, count );
+    opencl_fd_create_image_buffers( state, &ret, 1 );
     return ret;
 }
 
@@ -316,6 +316,52 @@ bool opencl_fd_derivate_image( struct FD* state,
         return true;
     }
     return false;
+}
+
+bool opencl_fd_second_moment_matrix_elements( struct FD* state,
+    cl_mem ddx,
+    cl_mem ddy,
+    cl_mem xx,
+    cl_mem xy,
+    cl_mem yy,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0 };
+    const size_t global_work_size[] = { state->width * state->height };
+    const size_t local_work_size[] = { 16 };
+
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_program program = opencl_program_load( "kernels/smme.cl" );
+    cl_kernel smme_kernel 
+        = opencl_loader_load_kernel( program, "second_moment_matrix_elements" );
+
+    cl_int errcode_ret; 
+
+    clSetKernelArg( smme_kernel, 0, sizeof( cl_mem ), &ddx );
+    clSetKernelArg( smme_kernel, 1, sizeof( cl_mem ), &ddy );
+    clSetKernelArg( smme_kernel, 2, sizeof( cl_mem ), &xx );
+    clSetKernelArg( smme_kernel, 3, sizeof( cl_mem ), &xy );
+    clSetKernelArg( smme_kernel, 4, sizeof( cl_mem ), &yy );
+
+    errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        smme_kernel,
+        1,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( smme_kernel, errcode_ret );
+    
+    clReleaseProgram( program );
+    clReleaseKernel( smme_kernel );
+
+    return true;
 }
 
 void opencl_fd_free( struct FD* state, 
