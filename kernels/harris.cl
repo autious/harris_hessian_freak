@@ -1,4 +1,4 @@
-__kernel void harrisCornerResponse( 
+__kernel void harris_corner_response( 
         __global float* xx, 
         __global float* xy, 
         __global float* yy, 
