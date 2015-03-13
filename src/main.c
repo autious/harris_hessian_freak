@@ -54,12 +54,12 @@ int main( int argc, const char ** argv )
 
         clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
-        save_image( &process, "gauss_blur",   argv[1], gauss_blur,    0, NULL );
-        save_image( &process, "ddx",          argv[1], ddx,           0, NULL );
-        save_image( &process, "ddy",          argv[1], ddy,           0, NULL );
-        save_image( &process, "xx",           argv[1], xx,           0, NULL );
-        save_image( &process, "xy",           argv[1], xy,           0, NULL );
-        save_image( &process, "yy",           argv[1], yy,           0, NULL );
+        save_image( &process, "gauss_blur",   argv[1], gauss_blur,      0, NULL );
+        save_image( &process, "ddx",          argv[1], ddx,             0, NULL );
+        save_image( &process, "ddy",          argv[1], ddy,             0, NULL );
+        save_image( &process, "xx",           argv[1], xx,              0, NULL );
+        save_image( &process, "xy",           argv[1], xy,              0, NULL );
+        save_image( &process, "yy",           argv[1], yy,              0, NULL );
 
         opencl_fd_release_image_buffer( &process, gauss_blur );
         opencl_fd_release_image_buffer( &process, ddx );
