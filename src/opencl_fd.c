@@ -285,37 +285,54 @@ bool opencl_fd_derivate_image( struct FD* state,
     const size_t local_work_size[] = { 2, 2 };
 
     cl_program program_gauss_cl  = opencl_program_load( "kernels/derivate.cl" );
-    cl_kernel kernel_derivate  = opencl_loader_load_kernel( program_gauss_cl, "derivate" );
-
-    if( kernel_derivate )
+    cl_kernel kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate" );
+        
+    if( ddyout == NULL )
     {
-        cl_command_queue command_queue = opencl_loader_get_command_queue();
-
-        cl_int cl_width = state->width;
-        cl_int cl_height = state->height;
-        clSetKernelArg( kernel_derivate, 0, sizeof( cl_mem ), &in );
-        clSetKernelArg( kernel_derivate, 1, sizeof( cl_mem ), &ddxout );
-        clSetKernelArg( kernel_derivate, 2, sizeof( cl_mem ), &ddyout );
-        clSetKernelArg( kernel_derivate, 3, sizeof( cl_int ), &cl_width );
-        clSetKernelArg( kernel_derivate, 4, sizeof( cl_int ), &cl_height );
-
-        cl_int errcode_ret = clEnqueueNDRangeKernel( command_queue,
-            kernel_derivate,
-            2,
-            global_work_offset,
-            global_work_size,
-            local_work_size,
-            num_events_in_wait_list,
-            event_wait_list,
-            event
-        );
-        ASSERT_ENQ( kernel_desaturate, errcode_ret );
-
-        clReleaseKernel( kernel_derivate );
-
-        return true;
+        kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate_x" ); 
     }
-    return false;
+    
+    if( ddxout == NULL )
+    {
+        kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate_y" );
+    }
+
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+
+    cl_int cl_width = state->width;
+    cl_int cl_height = state->height;
+
+    int kernelIndex = 0;
+    clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_mem ), &in );
+
+    if( ddxout != NULL )
+    {
+        clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_mem ), &ddxout );
+    }
+
+    if( ddyout != NULL )
+    {
+        clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_mem ), &ddyout );
+    }
+
+    clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_int ), &cl_width );
+    clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_int ), &cl_height );
+
+    cl_int errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        kernel_derivate,
+        2,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( kernel_desaturate, errcode_ret );
+
+    clReleaseKernel( kernel_derivate );
+
+    return true;
 }
 
 bool opencl_fd_second_moment_matrix_elements( struct FD* state,

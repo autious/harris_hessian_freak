@@ -47,6 +47,11 @@ int main( int argc, const char ** argv )
         cl_mem harris_response = opencl_fd_create_image_buffer( &process );
         cl_mem harris_suppression = opencl_fd_create_image_buffer( &process );
 
+        //Double derivate
+        cl_mem ddxx = opencl_fd_create_image_buffer( &process );
+        cl_mem ddxy = opencl_fd_create_image_buffer( &process );
+        cl_mem ddyy = opencl_fd_create_image_buffer( &process );
+
         opencl_fd_desaturate_image( &process, gauss_blur, 0, NULL, &desaturate_event );
 
         //borrow ddx for temp storage
@@ -67,6 +72,11 @@ int main( int argc, const char ** argv )
         cl_event harris_suppression_event;
         opencl_fd_run_harris_corner_suppression( &process, harris_response, harris_suppression, 1, &harris_response_event, &harris_suppression_event );
 
+        //Get second derivates for hessian
+        cl_event second_derivate_events[2];
+        opencl_fd_derivate_image( &process, ddx, ddxx, ddxy, 1, &derivate_event, &second_derivate_events[0] );
+        opencl_fd_derivate_image( &process, ddy, NULL, ddyy, 1, &derivate_event, &second_derivate_events[1] );
+
         clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
         save_image( &process, "gauss_blur",   argv[1], gauss_blur,      0, NULL );
@@ -75,8 +85,13 @@ int main( int argc, const char ** argv )
         save_image( &process, "xx",           argv[1], xx,              0, NULL );
         save_image( &process, "xy",           argv[1], xy,              0, NULL );
         save_image( &process, "yy",           argv[1], yy,              0, NULL );
+
         save_image( &process, "harris_response", argv[1], harris_response, 0, NULL );
         save_image( &process, "harris_suppression", argv[1], harris_suppression, 0, NULL );
+
+        save_image( &process, "ddxx", argv[1], ddxx, 0, NULL );
+        save_image( &process, "ddxy", argv[1], ddxy, 0, NULL );
+        save_image( &process, "ddyy", argv[1], ddyy, 0, NULL );
 
         opencl_fd_release_image_buffer( &process, gauss_blur );
         opencl_fd_release_image_buffer( &process, ddx );
@@ -87,8 +102,13 @@ int main( int argc, const char ** argv )
         opencl_fd_release_image_buffer( &process, tempxx );
         opencl_fd_release_image_buffer( &process, tempxy );
         opencl_fd_release_image_buffer( &process, tempyy );
+
         opencl_fd_release_image_buffer( &process, harris_response );
         opencl_fd_release_image_buffer( &process, harris_suppression );
+
+        opencl_fd_release_image_buffer( &process, ddxx );
+        opencl_fd_release_image_buffer( &process, ddxy );
+        opencl_fd_release_image_buffer( &process, ddyy );
 
         opencl_fd_free( &process, 0, NULL );
     }
