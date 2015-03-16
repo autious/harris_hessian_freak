@@ -63,6 +63,18 @@ bool opencl_fd_second_moment_matrix_elements( struct FD* state,
     cl_event *event
 );
 
+bool opencl_fd_run_harris_corner_response( struct FD* state,
+        cl_mem xx,
+        cl_mem xy,
+        cl_mem yy,
+        cl_mem output,
+        cl_float sigmaD,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+);
+        
+
 void opencl_fd_free( struct FD* state, 
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list
