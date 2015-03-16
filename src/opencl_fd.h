@@ -73,6 +73,15 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
         cl_event *event_wait_list,
         cl_event *event
 );
+
+bool opencl_fd_run_harris_corner_suppression( struct FD* state,
+        cl_mem in,
+        cl_mem out,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+);
+
         
 
 void opencl_fd_free( struct FD* state, 

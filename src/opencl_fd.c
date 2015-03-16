@@ -410,6 +410,50 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
     return true;
 }
 
+bool opencl_fd_run_harris_corner_suppression( struct FD* state,
+        cl_mem in,
+        cl_mem out,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0,0 };
+    const size_t global_work_size[] = { state->width, state->height };
+    const size_t local_work_size[] = { 2,2 };
+
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_program program = opencl_program_load( "kernels/harris.cl" );
+    cl_kernel harris_corner_suppression
+        = opencl_loader_load_kernel( program, "harris_corner_suppression" );
+
+    cl_int errcode_ret; 
+
+    cl_int cl_width = state->width;
+    cl_int cl_height = state->height;
+    clSetKernelArg( harris_corner_suppression, 0, sizeof( cl_mem ), &in );
+    clSetKernelArg( harris_corner_suppression, 1, sizeof( cl_mem ), &out );
+    clSetKernelArg( harris_corner_suppression, 2, sizeof( cl_int ), &cl_width );
+    clSetKernelArg( harris_corner_suppression, 3, sizeof( cl_int ), &cl_height );
+
+    errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        harris_corner_suppression,
+        2,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( harris_corner_suppression, errcode_ret );
+    
+    clReleaseProgram( program );
+    clReleaseKernel( harris_corner_suppression );
+
+    return true;
+}
+
 void opencl_fd_free( struct FD* state, 
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list

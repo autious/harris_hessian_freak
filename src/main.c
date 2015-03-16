@@ -45,6 +45,7 @@ int main( int argc, const char ** argv )
         cl_mem tempxy = opencl_fd_create_image_buffer( &process );
         cl_mem tempyy = opencl_fd_create_image_buffer( &process );
         cl_mem harris_response = opencl_fd_create_image_buffer( &process );
+        cl_mem harris_suppression = opencl_fd_create_image_buffer( &process );
 
         opencl_fd_desaturate_image( &process, gauss_blur, 0, NULL, &desaturate_event );
 
@@ -63,6 +64,9 @@ int main( int argc, const char ** argv )
         cl_event harris_response_event;
         opencl_fd_run_harris_corner_response( &process, xx, xy, yy, harris_response, sigmaD, 3, moment_gauss, &harris_response_event );
 
+        cl_event harris_suppression_event;
+        opencl_fd_run_harris_corner_suppression( &process, harris_response, harris_suppression, 1, &harris_response_event, &harris_suppression_event );
+
         clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
         save_image( &process, "gauss_blur",   argv[1], gauss_blur,      0, NULL );
@@ -72,6 +76,7 @@ int main( int argc, const char ** argv )
         save_image( &process, "xy",           argv[1], xy,              0, NULL );
         save_image( &process, "yy",           argv[1], yy,              0, NULL );
         save_image( &process, "harris_response", argv[1], harris_response, 0, NULL );
+        save_image( &process, "harris_suppression", argv[1], harris_suppression, 0, NULL );
 
         opencl_fd_release_image_buffer( &process, gauss_blur );
         opencl_fd_release_image_buffer( &process, ddx );
@@ -83,6 +88,7 @@ int main( int argc, const char ** argv )
         opencl_fd_release_image_buffer( &process, tempxy );
         opencl_fd_release_image_buffer( &process, tempyy );
         opencl_fd_release_image_buffer( &process, harris_response );
+        opencl_fd_release_image_buffer( &process, harris_suppression );
 
         opencl_fd_free( &process, 0, NULL );
     }
