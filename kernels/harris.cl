@@ -39,6 +39,9 @@ __kernel void harris_corner_suppression(
         }
     }
 
-    if( m > in[c.x+c.y*width] )
-        in[c.x+c.y*width] = 0;
+    float in_value = in[c.x+c.y*width];
+    if( m > in_value )
+        out[c.x+c.y*width] = 0;
+    else
+        out[c.x+c.y*width] = in_value;
 }
