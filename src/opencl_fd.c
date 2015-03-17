@@ -471,6 +471,141 @@ bool opencl_fd_run_harris_corner_suppression( struct FD* state,
     return true;
 }
 
+bool opencl_fd_run_hessian( struct FD* state,
+        cl_mem xx,
+        cl_mem xy,
+        cl_mem yy,
+        cl_mem out,
+        cl_float sigmaD,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0 };
+    const size_t global_work_size[] = { state->width * state->height };
+    const size_t local_work_size[] = { 16 };
+
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_program program = opencl_program_load( "kernels/hessian.cl" );
+    cl_kernel hessian
+        = opencl_loader_load_kernel( program, "hessian" );
+
+    cl_int errcode_ret; 
+
+    clSetKernelArg( hessian, 0, sizeof( cl_mem ), &xx );
+    clSetKernelArg( hessian, 1, sizeof( cl_mem ), &xy );
+    clSetKernelArg( hessian, 2, sizeof( cl_mem ), &yy );
+    clSetKernelArg( hessian, 3, sizeof( cl_mem ), &out );
+    clSetKernelArg( hessian, 4, sizeof( cl_float ), &sigmaD );
+
+    errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        hessian,
+        1,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( hessian, errcode_ret );
+    
+    clReleaseProgram( program );
+    clReleaseKernel( hessian );
+
+    return true;
+        
+}
+
+bool opencl_fd_harris_corner_count( struct FD* state,
+        cl_mem corners_in,
+        cl_int * strong_response_out,
+        cl_int * response_count_out,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0 };
+    const size_t global_work_size[] = { state->width * state->height };
+    const size_t local_work_size[] = { 16 };
+
+    cl_context context = opencl_loader_get_context();
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_program program = opencl_program_load( "kernels/harris.cl" );
+    cl_kernel harris_count
+        = opencl_loader_load_kernel( program, "harris_count" );
+
+    cl_int errcode_ret; 
+
+    cl_mem strong_arr_buf = clCreateBuffer( context,
+                    CL_MEM_WRITE_ONLY,
+                    sizeof( cl_int ) * state->width * state->height,
+                    NULL,
+                    &errcode_ret
+    );
+    ASSERT_BUF( strong_arr_buf, errcode_ret );
+
+    cl_int count_val = 0;
+    cl_mem count_buf = clCreateBuffer( context,
+                CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                sizeof( cl_int ),
+                &count_val,
+                &errcode_ret
+    );
+    ASSERT_BUF( count_buf, errcode_ret );
+                    
+    clSetKernelArg( harris_count, 0, sizeof( cl_mem ), &corners_in );
+    clSetKernelArg( harris_count, 1, sizeof( cl_mem ), &strong_arr_buf );
+    clSetKernelArg( harris_count, 2, sizeof( cl_mem ), &count_buf );
+
+    cl_event kernel_event;
+    errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        harris_count,
+        1,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        &kernel_event
+    );
+    ASSERT_ENQ( harris_count, errcode_ret );
+
+    cl_event memory_read_event;
+    errcode_ret = clEnqueueReadBuffer( command_queue,
+            strong_arr_buf,
+            true,
+            0,
+            sizeof( cl_int ) * state->width * state->height,
+            strong_response_out,
+            1,
+            &kernel_event,
+            &memory_read_event
+    );
+    ASSERT_READ( strong_arr_buf, errcode_ret );
+
+    errcode_ret = clEnqueueReadBuffer( command_queue,
+            count_buf,
+            false,
+            0,
+            sizeof( cl_int ),
+            response_count_out,
+            1,
+            &memory_read_event,
+            event
+    );
+    ASSERT_READ( count_buf, errcode_ret );
+    
+    clReleaseProgram( program );
+    clReleaseKernel( harris_count );
+    clReleaseMemObject( strong_arr_buf );
+    clReleaseMemObject( count_buf );
+
+    return true;
+}
+
 void opencl_fd_free( struct FD* state, 
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list

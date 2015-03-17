@@ -25,6 +25,13 @@ const char* opencl_device_type_codename( cl_device_type devtype );
         assert( false );\
     }
 
+#define ASSERT_READ(buf, code)\
+    if(code != CL_SUCCESS)\
+    {\
+        CLERR( "Unable to read buffer" #buf, code );\
+        assert( false );\
+    }
+
 #define ASSERT_PROF(buf, code)\
     if(code != CL_SUCCESS)\
     {\

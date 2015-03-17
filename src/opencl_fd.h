@@ -82,7 +82,25 @@ bool opencl_fd_run_harris_corner_suppression( struct FD* state,
         cl_event *event
 );
 
-        
+bool opencl_fd_run_hessian( struct FD* state,
+        cl_mem xx,
+        cl_mem xy,
+        cl_mem yy,
+        cl_mem out,
+        cl_float sigmaD,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+);
+
+bool opencl_fd_harris_corner_count( struct FD* state,
+        cl_mem corners_in,
+        cl_int * strong_response_out,
+        cl_int * response_count_out,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+);
 
 void opencl_fd_free( struct FD* state, 
     cl_uint num_events_in_wait_list,
