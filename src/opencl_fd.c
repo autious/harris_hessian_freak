@@ -8,41 +8,30 @@
 #include "gauss_kernel.h"
 #include "lodepng.h"
 
-bool opencl_fd_load_png_file( const char *input_filename, struct FD* state )
+bool opencl_fd_load_rgba( uint8_t* data, int width, int height, struct FD* state )
 {
-    unsigned lode_error;
+    cl_int errcode_ret;
+    cl_image_format image_format = {
+        CL_RGBA,
+        CL_UNSIGNED_INT8
+    };
 
-    lode_error = lodepng_decode32_file( &state->rgba_host, &state->width, &state->height, input_filename );
+    state->image_rgba_char = clCreateImage2D(
+        opencl_loader_get_context(),
+        CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+        &image_format,
+        width,
+        height,
+        width*sizeof(uint8_t)*4,
+        data,
+        &errcode_ret 
+    );
+    ASSERT_BUF(input_image, errcode_ret);
 
-    LOGV( "Picture dimensions: (%d,%d)", state->width, state->height );
+    state->width = width;
+    state->height = height;
 
-    if( lode_error == 0 )
-    {
-        cl_int errcode_ret;
-        cl_image_format image_format = {
-            CL_RGBA,
-            CL_UNSIGNED_INT8
-        };
-
-        state->image_rgba_char = clCreateImage2D(
-            opencl_loader_get_context(),
-            CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
-            &image_format,
-            state->width,
-            state->height,
-            state->width*sizeof(uint8_t)*4,
-            state->rgba_host,
-            &errcode_ret 
-        );
-        ASSERT_BUF(input_image, errcode_ret);
-
-        return true;
-    }
-    else
-    {
-        LOGE("Unable to load image: %s", input_filename );
-        return false;
-    }
+    return true;
 }
 
 void opencl_fd_save_buffer_to_image( 
@@ -520,8 +509,8 @@ bool opencl_fd_run_hessian( struct FD* state,
 
 bool opencl_fd_harris_corner_count( struct FD* state,
         cl_mem corners_in,
-        cl_int * strong_response_out,
-        cl_int * response_count_out,
+        cl_mem strong_responses,
+        cl_mem corner_count,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event
@@ -531,7 +520,6 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     const size_t global_work_size[] = { state->width * state->height };
     const size_t local_work_size[] = { 16 };
 
-    cl_context context = opencl_loader_get_context();
     cl_command_queue command_queue = opencl_loader_get_command_queue();
     cl_program program = opencl_program_load( "kernels/harris.cl" );
     cl_kernel harris_count
@@ -539,26 +527,9 @@ bool opencl_fd_harris_corner_count( struct FD* state,
 
     cl_int errcode_ret; 
 
-    cl_mem strong_arr_buf = clCreateBuffer( context,
-                    CL_MEM_WRITE_ONLY,
-                    sizeof( cl_int ) * state->width * state->height,
-                    NULL,
-                    &errcode_ret
-    );
-    ASSERT_BUF( strong_arr_buf, errcode_ret );
-
-    cl_int count_val = 0;
-    cl_mem count_buf = clCreateBuffer( context,
-                CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                sizeof( cl_int ),
-                &count_val,
-                &errcode_ret
-    );
-    ASSERT_BUF( count_buf, errcode_ret );
-                    
     clSetKernelArg( harris_count, 0, sizeof( cl_mem ), &corners_in );
-    clSetKernelArg( harris_count, 1, sizeof( cl_mem ), &strong_arr_buf );
-    clSetKernelArg( harris_count, 2, sizeof( cl_mem ), &count_buf );
+    clSetKernelArg( harris_count, 1, sizeof( cl_mem ), &strong_responses );
+    clSetKernelArg( harris_count, 2, sizeof( cl_mem ), &corner_count );
 
     cl_event kernel_event;
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
@@ -573,35 +544,8 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     );
     ASSERT_ENQ( harris_count, errcode_ret );
 
-    cl_event memory_read_event;
-    errcode_ret = clEnqueueReadBuffer( command_queue,
-            strong_arr_buf,
-            true,
-            0,
-            sizeof( cl_int ) * state->width * state->height,
-            strong_response_out,
-            1,
-            &kernel_event,
-            &memory_read_event
-    );
-    ASSERT_READ( strong_arr_buf, errcode_ret );
-
-    errcode_ret = clEnqueueReadBuffer( command_queue,
-            count_buf,
-            false,
-            0,
-            sizeof( cl_int ),
-            response_count_out,
-            1,
-            &memory_read_event,
-            event
-    );
-    ASSERT_READ( count_buf, errcode_ret );
-    
     clReleaseProgram( program );
     clReleaseKernel( harris_count );
-    clReleaseMemObject( strong_arr_buf );
-    clReleaseMemObject( count_buf );
 
     return true;
 }
@@ -613,9 +557,7 @@ void opencl_fd_free( struct FD* state,
 {
     clWaitForEvents( num_events_in_wait_list, event_wait_list );
     clReleaseMemObject( state->image_rgba_char );
-    free( state->rgba_host );
 
-    state->rgba_host = NULL;
     state->image_rgba_char = NULL;
     state->width = 0;
     state->height = 0;

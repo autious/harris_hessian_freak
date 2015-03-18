@@ -3,14 +3,11 @@
 
 struct FD
 {
-    uint8_t *rgba_host; //Memory of image_rgba_char
     cl_mem image_rgba_char; // "Image source buffer"
     //Following buffers are use when filters are applied to the greyscale image.
     cl_uint width;
     cl_uint height;
 };
-
-bool opencl_fd_load_png_file( const char *input_filename, struct FD* state );
 
 void opencl_fd_save_buffer_to_image( 
     const char * name, 
@@ -18,6 +15,8 @@ void opencl_fd_save_buffer_to_image(
     cl_mem in,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list );
+
+bool opencl_fd_load_rgba( uint8_t* data, int width, int height, struct FD* state );
 
 cl_mem opencl_fd_create_image_buffer( struct FD* state );
 void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
@@ -64,42 +63,42 @@ bool opencl_fd_second_moment_matrix_elements( struct FD* state,
 );
 
 bool opencl_fd_run_harris_corner_response( struct FD* state,
-        cl_mem xx,
-        cl_mem xy,
-        cl_mem yy,
-        cl_mem output,
-        cl_float sigmaD,
-        cl_uint num_events_in_wait_list,
-        cl_event *event_wait_list,
-        cl_event *event
+    cl_mem xx,
+    cl_mem xy,
+    cl_mem yy,
+    cl_mem output,
+    cl_float sigmaD,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
 );
 
 bool opencl_fd_run_harris_corner_suppression( struct FD* state,
-        cl_mem in,
-        cl_mem out,
-        cl_uint num_events_in_wait_list,
-        cl_event *event_wait_list,
-        cl_event *event
+    cl_mem in,
+    cl_mem out,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
 );
 
 bool opencl_fd_run_hessian( struct FD* state,
-        cl_mem xx,
-        cl_mem xy,
-        cl_mem yy,
-        cl_mem out,
-        cl_float sigmaD,
-        cl_uint num_events_in_wait_list,
-        cl_event *event_wait_list,
-        cl_event *event
+    cl_mem xx,
+    cl_mem xy,
+    cl_mem yy,
+    cl_mem out,
+    cl_float sigmaD,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
 );
 
 bool opencl_fd_harris_corner_count( struct FD* state,
-        cl_mem corners_in,
-        cl_int * strong_response_out,
-        cl_int * response_count_out,
-        cl_uint num_events_in_wait_list,
-        cl_event *event_wait_list,
-        cl_event *event
+    cl_mem corners_in,
+    cl_mem strong_responses,
+    cl_mem corner_count,
+    cl_uint num_events_in_wait_list,
+    cl_event *event_wait_list,
+    cl_event *event
 );
 
 void opencl_fd_free( struct FD* state, 
