@@ -10,7 +10,6 @@
 #include <string.h>
 
 //Decided for the H-H method.
-//static float sigmaIs[] = { 0.7, 2, 4, 6, 8, 12, 16, 20, 24 };
 
 struct BufferMemory
 {
@@ -31,8 +30,6 @@ struct BufferMemory
     cl_mem ddxx;
     cl_mem ddxy;
     cl_mem ddyy;
-    
-    cl_mem hessian_out;
 };
 
 void harris_hessian_init()
@@ -178,9 +175,11 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     LOGV("Running desaturation");
     struct FD state;
     struct BufferMemory harris_data;
+    float sigmaIs[] = { 0.7, 2, 4, 6, 8, 12, 16, 20, 24 };
+    size_t buffer_count = NELEMS(sigmaIs) + 2;
 
     cl_context context = opencl_loader_get_context();
-    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    //cl_command_queue command_queue = opencl_loader_get_command_queue();
 
     opencl_fd_load_rgba( rgba_data, width, height, &state );
     init_harris_buffers( &state, &harris_data );
@@ -189,44 +188,60 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     opencl_fd_desaturate_image( &state, harris_data.gauss_blur, 0, NULL, &desaturate_event );
     
     cl_int errcode_ret;
-    cl_mem hessian_determinants = clCreateBuffer( context,
-                    CL_MEM_WRITE_ONLY,
-                    sizeof( cl_float ) * state.width * state.height,
-                    NULL,
-                    &errcode_ret
-    );
-    ASSERT_BUF( strong_arr_buf, errcode_ret );
+    cl_mem hessian_determinants[buffer_count];
+    cl_mem strong_responses[buffer_count];
+    cl_mem corner_count[buffer_count];
+    cl_event harris_queue[buffer_count];
 
-    cl_mem strong_responses = clCreateBuffer( context,
-                    CL_MEM_WRITE_ONLY,
-                    sizeof( cl_int ) * state.width * state.height,
-                    NULL,
-                    &errcode_ret
-    );
-    ASSERT_BUF( strong_arr_buf, errcode_ret );
+    for( int i = 0; i < buffer_count; i++ )
+    {
     
-    cl_int value = 0;
-    cl_mem corner_count = clCreateBuffer( context,
-                    CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
-                    sizeof( cl_int ),
-                    &value,
-                    &errcode_ret
-    );
-    ASSERT_BUF( strong_arr_buf, errcode_ret );
+        hessian_determinants[i] = clCreateBuffer( context,
+                        CL_MEM_WRITE_ONLY,
+                        sizeof( cl_float ) * state.width * state.height,
+                        NULL,
+                        &errcode_ret
+        );
+        ASSERT_BUF( strong_arr_buf, errcode_ret );
 
-    cl_event hh_event;
-    float sigmaI = 4.0f;
-    do_harris( &state, &harris_data, hessian_determinants, strong_responses, corner_count, sigmaI, 1, &desaturate_event, &hh_event );
+        strong_responses[i] = clCreateBuffer( context,
+                        CL_MEM_WRITE_ONLY,
+                        sizeof( cl_int ) * state.width * state.height,
+                        NULL,
+                        &errcode_ret
+        );
+        ASSERT_BUF( strong_arr_buf, errcode_ret );
+        
+        cl_int value = 0;
+        corner_count[i] = clCreateBuffer( context,
+                        CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
+                        sizeof( cl_int ),
+                        &value,
+                        &errcode_ret
+        );
+        ASSERT_BUF( strong_arr_buf, errcode_ret );
 
+        do_harris( &state, 
+                &harris_data, 
+                hessian_determinants[i], 
+                strong_responses[i], 
+                corner_count[i], 
+                sigmaIs[i], 
+                i == 0 ? 0 : 1, 
+                i == 0 ? NULL : &harris_queue[i-1], &harris_queue[i] );
+    }
+
+    /*
     cl_int *strong_corner_counts = malloc( sizeof(cl_int) * state.width * state.height );
-    clEnqueueReadBuffer( command_queue,
+    clEnqueueReadBuffer( 
+            command_queue,
             strong_responses,
             false,
             0,
             sizeof( cl_int ) * state.width * state.height,
             strong_corner_counts,
-            1,
-            &hh_event,
+            buffer_count,
+            harris_queue,
             NULL
     );
 
@@ -238,13 +253,15 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         0,
         sizeof( cl_int ) * 1,
         &count,
-        1,
-        &hh_event,
+        buffer_count,
+        harris_queue,
         NULL
     );
+    */
 
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
+    /*
     for( int x = 0; x < state.width; x++ )
     {
         for( int y = 0; y < state.height; y++ )
@@ -254,8 +271,9 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
                 printf( "%d,%d:%d\n", x,y,c );
         }
     }
+    */
 
-    printf( "Total count:%d\n", count );
+    //printf( "Total count:%d\n", count );
 
     save_image( &state, "gauss_blur",           "out.png", harris_data.gauss_blur,            0, NULL );
     save_image( &state, "ddx",                  "out.png", harris_data.ddx,                   0, NULL );
@@ -270,15 +288,21 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     save_image( &state, "ddxx",                 "out.png", harris_data.ddxx,                  0, NULL );
     save_image( &state, "ddxy",                 "out.png", harris_data.ddxy,                  0, NULL );
     save_image( &state, "ddyy",                 "out.png", harris_data.ddyy,                  0, NULL );
-    save_image( &state, "hessian",              "out.png", hessian_determinants,           0, NULL );
+    //save_image( &state, "hessian",              "out.png", hessian_determinants,           0, NULL );
+
+
+    for( int i = 0; i < buffer_count; i++ )
+    {
+        clReleaseMemObject( hessian_determinants[i] );
+        clReleaseMemObject( corner_count[i] );
+        clReleaseMemObject( strong_responses[i] );
+    }
 
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );
-    free( strong_corner_counts );
+    //free( strong_corner_counts );
 
-    clReleaseMemObject( hessian_determinants );
-    clReleaseMemObject( corner_count );
-    clReleaseMemObject( strong_responses );
+
 
 }
 
