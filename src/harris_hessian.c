@@ -195,7 +195,6 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
 
     for( int i = 0; i < buffer_count; i++ )
     {
-    
         hessian_determinants[i] = clCreateBuffer( context,
                         CL_MEM_WRITE_ONLY,
                         sizeof( cl_float ) * state.width * state.height,
@@ -221,6 +220,11 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         );
         ASSERT_BUF( strong_arr_buf, errcode_ret );
 
+    }
+
+    for( int i = 0; i < buffer_count-2; i++ )
+    {
+        printf( "dispatch Harris sigma:%f\n", sigmaIs[i] );
         do_harris( &state, 
                 &harris_data, 
                 hessian_determinants[i], 
@@ -301,9 +305,6 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );
     //free( strong_corner_counts );
-
-
-
 }
 
 void harris_hessian_close()
