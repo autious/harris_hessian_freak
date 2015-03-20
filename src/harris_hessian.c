@@ -200,15 +200,28 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     cl_int errcode_ret;
     struct HarrisHessianScale harris_hessian_scales[buffer_count];
 
+    cl_mem hessian_determinant_buffer = clCreateBuffer( context,
+        CL_MEM_READ_WRITE,
+        sizeof( cl_float ) * state.width * state.height * buffer_count,
+        NULL,
+        &errcode_ret
+    );
+
     for( int i = 0; i < buffer_count; i++ )
     {
         harris_hessian_scales[i].sigma = HHSIGMAS[i];
 
-        harris_hessian_scales[i].hessian_determinant = clCreateBuffer( context,
-                        CL_MEM_WRITE_ONLY,
-                        sizeof( cl_float ) * state.width * state.height,
-                        NULL,
-                        &errcode_ret
+        cl_buffer_region det_region = { 
+            .origin = (sizeof( cl_float ) * state.width * state.height)*i,
+            .size = sizeof( cl_float ) * state.width * state.height
+        };
+
+        harris_hessian_scales[i].hessian_determinant = clCreateSubBuffer( 
+            hessian_determinant_buffer,
+            CL_MEM_WRITE_ONLY,
+            CL_BUFFER_CREATE_TYPE_REGION,
+            &det_region,
+            &errcode_ret
         );
         ASSERT_BUF( strong_arr_buf, errcode_ret );
 
@@ -344,6 +357,8 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         clReleaseMemObject( harris_hessian_scales[i].corner_count );
 
     }
+
+    clReleaseMemObject( hessian_determinant_buffer );
 
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );
