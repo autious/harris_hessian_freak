@@ -8,8 +8,10 @@
 #include "util.h"
 
 #include <string.h>
+#include <math.h>
 
 //Decided for the H-H method.
+static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 0.0f, 0.0f };
 
 struct BufferMemory
 {
@@ -30,6 +32,15 @@ struct BufferMemory
     cl_mem ddxx;
     cl_mem ddxy;
     cl_mem ddyy;
+};
+
+struct HarrisHessianScale
+{
+    float sigma;
+    cl_mem hessian_determinant;
+    cl_mem strong_responses;
+    cl_mem corner_count;
+    cl_event execution_event;
 };
 
 void harris_hessian_init()
@@ -175,11 +186,10 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     LOGV("Running desaturation");
     struct FD state;
     struct BufferMemory harris_data;
-    float sigmaIs[] = { 0.7, 2, 4, 6, 8, 12, 16, 20, 24 };
-    size_t buffer_count = NELEMS(sigmaIs) + 2;
+    size_t buffer_count = NELEMS(HHSIGMAS);
 
     cl_context context = opencl_loader_get_context();
-    //cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
 
     opencl_fd_load_rgba( rgba_data, width, height, &state );
     init_harris_buffers( &state, &harris_data );
@@ -188,14 +198,13 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     opencl_fd_desaturate_image( &state, harris_data.gauss_blur, 0, NULL, &desaturate_event );
     
     cl_int errcode_ret;
-    cl_mem hessian_determinants[buffer_count];
-    cl_mem strong_responses[buffer_count];
-    cl_mem corner_count[buffer_count];
-    cl_event harris_queue[buffer_count];
+    struct HarrisHessianScale harris_hessian_scales[buffer_count];
 
     for( int i = 0; i < buffer_count; i++ )
     {
-        hessian_determinants[i] = clCreateBuffer( context,
+        harris_hessian_scales[i].sigma = HHSIGMAS[i];
+
+        harris_hessian_scales[i].hessian_determinant = clCreateBuffer( context,
                         CL_MEM_WRITE_ONLY,
                         sizeof( cl_float ) * state.width * state.height,
                         NULL,
@@ -203,7 +212,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         );
         ASSERT_BUF( strong_arr_buf, errcode_ret );
 
-        strong_responses[i] = clCreateBuffer( context,
+        harris_hessian_scales[i].strong_responses = clCreateBuffer( context,
                         CL_MEM_WRITE_ONLY,
                         sizeof( cl_int ) * state.width * state.height,
                         NULL,
@@ -212,73 +221,107 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         ASSERT_BUF( strong_arr_buf, errcode_ret );
         
         cl_int value = 0;
-        corner_count[i] = clCreateBuffer( context,
+        harris_hessian_scales[i].corner_count = clCreateBuffer( context,
                         CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
                         sizeof( cl_int ),
                         &value,
                         &errcode_ret
         );
         ASSERT_BUF( strong_arr_buf, errcode_ret );
-
     }
 
+    //Run harris-hessian on all the standard scalespaces
     for( int i = 0; i < buffer_count-2; i++ )
     {
-        printf( "dispatch Harris sigma:%f\n", sigmaIs[i] );
+        printf( "dispatch Harris sigma:%f\n", HHSIGMAS[i] );
         do_harris( &state, 
                 &harris_data, 
-                hessian_determinants[i], 
-                strong_responses[i], 
-                corner_count[i], 
-                sigmaIs[i], 
+                harris_hessian_scales[i].hessian_determinant,
+                harris_hessian_scales[i].strong_responses,
+                harris_hessian_scales[i].corner_count,
+                harris_hessian_scales[i].sigma,
                 i == 0 ? 0 : 1, 
-                i == 0 ? NULL : &harris_queue[i-1], &harris_queue[i] );
+                i == 0 ? NULL : &harris_hessian_scales[i-1].execution_event,
+                &harris_hessian_scales[i].execution_event );
     }
 
-    /*
-    cl_int *strong_corner_counts = malloc( sizeof(cl_int) * state.width * state.height );
-    clEnqueueReadBuffer( 
+    int max_corner_count = 0;
+    int max_corner_count_index = 0;
+    int total_corner_count = 0;
+    //Find the characteristic scale-space
+    //This becomes the first explicit sync-point between GPU and CPU
+    for( int i = 0; i < buffer_count-2; i++ )
+    {
+        LOGV( "Reading corner..." );
+        cl_int read_corner_count;
+        cl_int errcode_ret = clEnqueueReadBuffer( 
             command_queue,
-            strong_responses,
-            false,
+            harris_hessian_scales[i].corner_count,
+            true,
             0,
-            sizeof( cl_int ) * state.width * state.height,
-            strong_corner_counts,
-            buffer_count,
-            harris_queue,
+            sizeof( cl_int ),
+            &read_corner_count,
+            1,
+            &harris_hessian_scales[i].execution_event,
             NULL
-    );
+        );
+        ASSERT_READ( harris_hessian_scales[i].corner_count, errcode_ret );
 
-    cl_int count;
+        if( read_corner_count > max_corner_count )
+        {
+            max_corner_count = read_corner_count;
+            max_corner_count_index = i;
+        }
+        total_corner_count += read_corner_count;
+    }
 
-    clEnqueueReadBuffer( command_queue,
-        corner_count,
-        false,
-        0,
-        sizeof( cl_int ) * 1,
-        &count,
-        buffer_count,
-        harris_queue,
-        NULL
-    );
-    */
+
+    struct HarrisHessianScale scale_before  = harris_hessian_scales[buffer_count-1];
+    struct HarrisHessianScale scale_after   = harris_hessian_scales[buffer_count-2];
+    scale_before.sigma   = HHSIGMAS[max_corner_count_index] / sqrt(2.0);
+    scale_after.sigma  = HHSIGMAS[max_corner_count_index] * sqrt(2.0);
+
+    //insert the two extra scale-spaces
+    for( int i = buffer_count-3; i > max_corner_count_index ; i-- )
+    {
+        harris_hessian_scales[i+2] = harris_hessian_scales[i];
+    }
+
+    harris_hessian_scales[max_corner_count_index+1] = harris_hessian_scales[max_corner_count_index];
+
+    cl_event event_marker, event_before, event_after;
+    clEnqueueMarker( command_queue, &event_marker );
+    printf( "dispatch Harris sigma:%f\n", scale_before.sigma );
+    do_harris( &state, 
+            &harris_data, 
+            scale_before.hessian_determinant,
+            scale_before.strong_responses,
+            scale_before.corner_count,
+            scale_before.sigma,
+            1,
+            &event_marker,
+            &event_before );
+    printf( "dispatch Harris sigma:%f\n", scale_after.sigma );
+    do_harris( &state, 
+            &harris_data, 
+            scale_after.hessian_determinant,
+            scale_after.strong_responses,
+            scale_after.corner_count,
+            scale_after.sigma,
+            1,
+            &event_before,
+            &event_after );
+
+    //Insert the two new surrounding scales
+    harris_hessian_scales[max_corner_count_index] = scale_before;
+    harris_hessian_scales[max_corner_count_index+2] = scale_after;
 
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
+    printf( "Total count:%d\n", total_corner_count );
+    //printf( "Characteristic scale:%f\n",  );
+
     /*
-    for( int x = 0; x < state.width; x++ )
-    {
-        for( int y = 0; y < state.height; y++ )
-        {
-            int c = strong_corner_counts[x+y*state.width];
-            if( c > 0 )
-                printf( "%d,%d:%d\n", x,y,c );
-        }
-    }
-    */
-
-    //printf( "Total count:%d\n", count );
-
     save_image( &state, "gauss_blur",           "out.png", harris_data.gauss_blur,            0, NULL );
     save_image( &state, "ddx",                  "out.png", harris_data.ddx,                   0, NULL );
     save_image( &state, "ddy",                  "out.png", harris_data.ddy,                   0, NULL );
@@ -292,14 +335,14 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     save_image( &state, "ddxx",                 "out.png", harris_data.ddxx,                  0, NULL );
     save_image( &state, "ddxy",                 "out.png", harris_data.ddxy,                  0, NULL );
     save_image( &state, "ddyy",                 "out.png", harris_data.ddyy,                  0, NULL );
-    //save_image( &state, "hessian",              "out.png", hessian_determinants,           0, NULL );
-
+    */
 
     for( int i = 0; i < buffer_count; i++ )
     {
-        clReleaseMemObject( hessian_determinants[i] );
-        clReleaseMemObject( corner_count[i] );
-        clReleaseMemObject( strong_responses[i] );
+        clReleaseMemObject( harris_hessian_scales[i].hessian_determinant );
+        clReleaseMemObject( harris_hessian_scales[i].strong_responses );
+        clReleaseMemObject( harris_hessian_scales[i].corner_count );
+
     }
 
     free_harris_buffers( &state, &harris_data );

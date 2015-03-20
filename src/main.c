@@ -38,6 +38,8 @@ int main( int argc, const char ** argv )
         {
             LOGE("Unable to load image: %s", argv[1] );
         }
+
+        free( data );
     }
     else
     {
