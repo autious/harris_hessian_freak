@@ -16,7 +16,7 @@ __kernel void find_keypoints( __global float *source_determinants,
         __global struct KeyPoint* keypoints, 
         int keypoint_limit,
         int width, 
-        int height );
+        int height )
 {
     int i = get_global_id(0);
     int keypoint_id = 0;

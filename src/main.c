@@ -14,8 +14,6 @@
 
 int main( int argc, const char ** argv )
 {
-    opencl_loader_init();
-
     if( argc == 2 )
     {
         LOGV("Running harris hessian on %s\n", argv[1] );
@@ -43,12 +41,8 @@ int main( int argc, const char ** argv )
     }
     else
     {
-        LOGV("Doing test run");
-        opencl_test_run();
+        LOGE( "Program needs exactly one argument" );
     }
-
-    opencl_program_close();
-    opencl_loader_close();
 
     return 0;
 }

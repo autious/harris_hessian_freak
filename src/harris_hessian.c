@@ -45,7 +45,17 @@ struct HarrisHessianScale
 
 void harris_hessian_init()
 {
-    opencl_program_add_define_integer( "SCALE_COUNT", 100 );
+    opencl_loader_init();
+
+    opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
+    opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
+    opencl_program_add_define_integer( "SCALE_COUNT", NELEMS(HHSIGMAS) );
+}
+
+void harris_hessian_close()
+{
+    opencl_program_close();
+    opencl_loader_close();
 }
 
 static void init_harris_buffers( struct FD* state, struct BufferMemory* mem )
@@ -366,7 +376,3 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     //free( strong_corner_counts );
 }
 
-void harris_hessian_close()
-{
-
-}

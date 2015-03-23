@@ -57,18 +57,37 @@ static char* compile_macro = NULL;
 int compile_macro_count = 0;
 int compile_macro_size = 0;
 
-void opencl_program_add_define_integer( const char* name, int value )
+static void resize( size_t additional_len )
 {
-    size_t additional_len = strlen( " -D " ) + strlen( name ) + 1 + count_base_10_digits( value ) + 1;
-    if( compile_macro_count + additional_len > compile_macro_size )
+    if( compile_macro_count + additional_len + 1 > compile_macro_size )
     {
-        compile_macro_size = compile_macro_count + additional_len;
+        compile_macro_size = compile_macro_count + additional_len + 1;
         compile_macro = realloc( compile_macro, sizeof( char ) * compile_macro_size );
     }
+}
 
-    snprintf( compile_macro + compile_macro_count, additional_len, " -D %s=%d", name, value );
+void opencl_program_add_define_integer( const char* name, int value )
+{
+    size_t additional_len = strlen( " -D " ) + strlen( name ) + 1 + count_base_10_digits( value );
+
+    resize( additional_len );
+
+    snprintf( compile_macro + compile_macro_count, additional_len + 1, " -D %s=%d", name, value );
+    compile_macro_count += additional_len;
    
     LOGV( "new define string, %lu digits: \"%s\"", count_base_10_digits( value ), compile_macro );
+}
+
+void opencl_program_add_compiler_flag( const char* value )
+{
+    size_t additional_len = strlen(" ") + strlen( value );
+
+    resize( additional_len );
+
+    snprintf( compile_macro + compile_macro_count, additional_len + 1, " %s", value );
+    compile_macro_count += additional_len;
+
+    LOGV( "new define string: \"%s\"", compile_macro );
 }
 
 void opencl_program_close()
@@ -154,7 +173,7 @@ cl_program opencl_program_load( const char* name )
                             program, 
                             1, 
                             &device, 
-                            "-cl-fast-relaxed-math -cl-std=CL1.1", 
+                            compile_macro, 
                             NULL, 
                             NULL 
                     );
