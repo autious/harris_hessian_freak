@@ -531,7 +531,6 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     clSetKernelArg( harris_count, 1, sizeof( cl_mem ), &strong_responses );
     clSetKernelArg( harris_count, 2, sizeof( cl_mem ), &corner_count );
 
-    cl_event kernel_event;
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
         harris_count,
         1,
@@ -540,12 +539,64 @@ bool opencl_fd_harris_corner_count( struct FD* state,
         local_work_size,
         num_events_in_wait_list,
         event_wait_list,
-        &kernel_event
+        event
     );
     ASSERT_ENQ( harris_count, errcode_ret );
 
     clReleaseProgram( program );
     clReleaseKernel( harris_count );
+
+    return true;
+}
+
+bool opencl_fd_find_keypoints( 
+        struct FD* state,
+        cl_mem source_det, 
+        cl_mem corner_counts, 
+        cl_mem keypoints_data, 
+        cl_mem keypoint_count,
+        cl_int keypoint_limit,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
+)
+{
+    const size_t global_work_offset[] = { 0 };
+    const size_t global_work_size[] = { state->width * state->height };
+    const size_t local_work_size[] = { 32 };
+
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_program program = opencl_program_load( "kernels/hessian.cl" );
+    cl_kernel find_keypoints
+        = opencl_loader_load_kernel( program, "find_keypoints" );
+
+    cl_int errcode_ret; 
+
+    cl_int width = state->width;
+    cl_int height = state->height;
+
+    clSetKernelArg( find_keypoints, 0, sizeof( cl_mem ), &source_det );
+    clSetKernelArg( find_keypoints, 1, sizeof( cl_mem ), &corner_counts );
+    clSetKernelArg( find_keypoints, 2, sizeof( cl_mem ), &keypoints_data );
+    clSetKernelArg( find_keypoints, 3, sizeof( cl_mem ), &keypoint_count );
+    clSetKernelArg( find_keypoints, 4, sizeof( cl_int ), &keypoint_limit );
+    clSetKernelArg( find_keypoints, 5, sizeof( cl_int ), &width );
+    clSetKernelArg( find_keypoints, 6, sizeof( cl_int ), &height );
+
+    errcode_ret = clEnqueueNDRangeKernel( command_queue,
+        find_keypoints,
+        1,
+        global_work_offset,
+        global_work_size,
+        local_work_size,
+        num_events_in_wait_list,
+        event_wait_list,
+        event
+    );
+    ASSERT_ENQ( harris_count, errcode_ret );
+
+    clReleaseProgram( program );
+    clReleaseKernel( find_keypoints  );
 
     return true;
 }

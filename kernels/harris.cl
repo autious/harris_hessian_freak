@@ -46,19 +46,18 @@ __kernel void harris_corner_suppression(
         out[c.x+c.y*width] = in_value;
 }
 
-__kernel void harris_count( __global float* in, volatile __global int* strong, volatile __global int* count ) 
+__kernel void harris_count( __global float* in, volatile __global uint* strong, volatile __global int* count ) 
 {
     int i = get_global_id(0);
 
     float value = in[i];
-    strong[i] = 0;
 
     if( value > 0 )
     {
         atomic_inc( count );
         if( value > 10000 )
         {
-           strong[i] = 1;
+           strong[i] += 1;
         }
     }
 }

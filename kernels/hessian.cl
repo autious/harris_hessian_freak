@@ -11,9 +11,11 @@ __kernel void hessian( __global float *xx, __global float* xy, __global float* y
     out[i] = ( xx[i] * yy[i] - pow(xy[i],2) / sigmaD );
 }
 
-__kernel void find_keypoints( __global float *source_determinants, 
+__kernel void find_keypoints( 
+        __global float *source_determinants, 
         __global int* corner_counts,
         __global struct KeyPoint* keypoints, 
+        __global int* keypoint_count,
         int keypoint_limit,
         int width, 
         int height )
@@ -41,7 +43,7 @@ __kernel void find_keypoints( __global float *source_determinants,
 
             if( current > before && current > after && current > 10.0f )
             {
-                keypoint_id = atomic_inc( corner_counts ); 
+                keypoint_id = atomic_inc( keypoint_count ); 
 
                 if( keypoint_id < keypoint_limit )
                 {

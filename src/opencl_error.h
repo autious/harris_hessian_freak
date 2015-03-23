@@ -38,3 +38,9 @@ const char* opencl_device_type_codename( cl_device_type devtype );
         CLERR( "Unable to profile" #buf, code );\
         assert( false );\
     }
+#define ASSERT_MAP(buf, code)\
+    if(code != CL_SUCCESS)\
+    {\
+        CLERR( "Unable to memmap" #buf, code );\
+        assert( false );\
+    }

@@ -16,7 +16,12 @@ void opencl_fd_save_buffer_to_image(
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list );
 
-bool opencl_fd_load_rgba( uint8_t* data, int width, int height, struct FD* state );
+bool opencl_fd_load_rgba( 
+        uint8_t* data, 
+        int width, 
+        int height, 
+        struct FD* state 
+);
 
 cl_mem opencl_fd_create_image_buffer( struct FD* state );
 void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t count );
@@ -99,6 +104,17 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event
+);
+
+bool opencl_fd_find_keypoints( struct FD* state,
+        cl_mem source_det, 
+        cl_mem corner_counts, 
+        cl_mem keypoints_data, 
+        cl_mem keypoint_count,
+        cl_int keypoint_limit,
+        cl_uint num_events_in_wait_list,
+        cl_event *event_wait_list,
+        cl_event *event
 );
 
 void opencl_fd_free( struct FD* state, 
