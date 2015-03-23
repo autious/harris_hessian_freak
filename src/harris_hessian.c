@@ -50,6 +50,18 @@ void harris_hessian_init()
     opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
     opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
     opencl_program_add_define_integer( "SCALE_COUNT", NELEMS(HHSIGMAS) );
+
+    const char *programs[] = 
+    {
+       "kernels/derivate.cl",
+       "kernels/gauss.cl",
+       "kernels/harris.cl",
+       "kernels/hessian.cl",
+       "kernels/smme.cl",
+       NULL
+    };
+
+    opencl_program_compile( programs );
 }
 
 void harris_hessian_close()
