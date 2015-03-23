@@ -7,6 +7,7 @@
 #include "log.h"
 #include "opencl_handler.h"
 #include "opencl_error.h"
+#include "util.h"
 
 struct ProgramList
 {
@@ -52,6 +53,24 @@ static cl_program opencl_program_get( const char* name )
     return NULL;
 }
 
+static char* compile_macro = NULL;
+int compile_macro_count = 0;
+int compile_macro_size = 0;
+
+void opencl_program_add_define_integer( const char* name, int value )
+{
+    size_t additional_len = strlen( " -D " ) + strlen( name ) + 1 + count_base_10_digits( value ) + 1;
+    if( compile_macro_count + additional_len > compile_macro_size )
+    {
+        compile_macro_size = compile_macro_count + additional_len;
+        compile_macro = realloc( compile_macro, sizeof( char ) * compile_macro_size );
+    }
+
+    snprintf( compile_macro + compile_macro_count, additional_len, " -D %s=%d", name, value );
+   
+    LOGV( "new define string, %lu digits: \"%s\"", count_base_10_digits( value ), compile_macro );
+}
+
 void opencl_program_close()
 {
     struct ProgramList *cur = program_root, *next;
@@ -64,6 +83,8 @@ void opencl_program_close()
         free(cur);
         cur = next;
     }
+
+    free( compile_macro );
 }
 
 /*

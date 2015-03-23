@@ -45,6 +45,7 @@ struct HarrisHessianScale
 
 void harris_hessian_init()
 {
+    opencl_program_add_define_integer( "SCALE_COUNT", 100 );
 }
 
 static void init_harris_buffers( struct FD* state, struct BufferMemory* mem )
