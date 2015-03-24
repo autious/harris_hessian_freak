@@ -1,10 +1,3 @@
-struct KeyPoint
-{
-    int x;
-    int y;
-    int scale_id;
-};
-
 __kernel void hessian( __global float *xx, __global float* xy, __global float* yy, __global float* out, float sigmaD )
 {
     int i = get_global_id(0); 
@@ -14,14 +7,13 @@ __kernel void hessian( __global float *xx, __global float* xy, __global float* y
 __kernel void find_keypoints( 
         __global float *source_determinants, 
         __global int* corner_counts,
-        __global struct KeyPoint* keypoints, 
-        __global int* keypoint_count,
-        int keypoint_limit,
+        __global short* keypoints, 
         int width, 
         int height )
 {
     int i = get_global_id(0);
     int keypoint_id = 0;
+    keypoints[i] = 0;
 
     if( corner_counts[i] )
     {
@@ -33,28 +25,17 @@ __kernel void find_keypoints(
 
             if( j > 0 )
             {
-                before  = source_determinants[(j-1) * width * height * sizeof( float ) + i];
+                before = source_determinants[(j-1) * width * height * sizeof( float ) + i];
             }
 
             if( j < SCALE_COUNT - 1 )
             {
-                after   = source_determinants[(j+1) * width * height * sizeof( float ) + i];
+                after = source_determinants[(j+1) * width * height * sizeof( float ) + i];
             }
 
             if( current > before && current > after && current > 10.0f )
             {
-                keypoint_id = atomic_inc( keypoint_count ); 
-
-                if( keypoint_id < keypoint_limit )
-                {
-                    struct KeyPoint new_keypoint;
-                    
-                    new_keypoint.x = i % width;
-                    new_keypoint.y = i / width;
-                    new_keypoint.scale_id = j;
-
-                    keypoints[keypoint_id] = new_keypoint;
-                }
+                keypoints[i] |= 1UL << j;
             } 
         }
     }

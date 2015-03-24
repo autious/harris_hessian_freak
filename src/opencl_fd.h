@@ -110,8 +110,6 @@ bool opencl_fd_find_keypoints( struct FD* state,
         cl_mem source_det, 
         cl_mem corner_counts, 
         cl_mem keypoints_data, 
-        cl_mem keypoint_count,
-        cl_int keypoint_limit,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event

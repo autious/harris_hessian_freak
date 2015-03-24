@@ -42,20 +42,15 @@ struct HarrisHessianScale
     cl_event execution_event;
 };
 
-struct KeyPoint
-{
-    cl_int x;
-    cl_int y;
-    cl_int scale_id;
-};
-
 void harris_hessian_init()
 {
     opencl_loader_init();
 
+    assert( 16 >= NELEMS( HHSIGMAS ) ); //Verification that the short we're using for keypoints is sufficient.
+
     opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
     opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
-    opencl_program_add_define_integer( "SCALE_COUNT", NELEMS(HHSIGMAS) );
+    opencl_program_add_define_integer( "SCALE_COUNT", 3 );
 
     const char *programs[] = 
     {
@@ -218,30 +213,6 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
 
     clFinish( command_queue );
 
-    errcode_ret = clEnqueueReadBuffer( command_queue,
-        keypoints_count,
-        true,
-        0,
-        sizeof( cl_uint ),
-        &keypoints_count_value,
-        0,
-        NULL,
-        NULL
-    );
-    ASSERT_ENQ( keypoints_count, errcode_ret );
-
-    struct KeyPoint *keypoints_map = (struct KeyPoint*)clEnqueueMapBuffer( command_queue,
-        keypoints,
-        true,
-        CL_MAP_READ,
-        0,
-        sizeof( struct KeyPoint ) * keypoints_count_value,
-        0,
-        NULL,
-        NULL,
-        &errcode_ret 
-    );
-    ASSERT_MAP( strong_responses, errcode_ret  );
 
     int filenamelen = strlen(filename)+strlen(".kpts")+1;
     char name[filenamelen];
@@ -249,21 +220,8 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
     snprintf( name, filenamelen, "%s.kpts", filename );
     
     FILE* f = fopen( name, "w" );
-    for( int i = 0; i < keypoints_count_value; i++ )
-    {
-        fprintf( f, "x:%d y:%d i:%d\n", keypoints_map[i].x, keypoints_map[i].y, keypoints_map[i].scale_id );
-    }
-    fclose( f );
 
-    errcode_ret = clEnqueueUnmapMemObject( command_queue,
-        keypoints,
-        keypoints_map,
-        0,
-        NULL,
-        NULL
-    );
-    ASSERT_MAP( strong_responses, errcode_ret  );
-    
+    fclose( f );
 }
 
 void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
@@ -289,14 +247,6 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         CL_MEM_READ_WRITE,
         sizeof( cl_float ) * state.width * state.height * buffer_count,
         NULL,
-        &errcode_ret
-    );
-
-    cl_int keypoints_count = 0;
-    cl_mem keypoints_count_buf = clCreateBuffer( context,
-        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, //TODO fix faster load
-        sizeof( cl_int ),
-        &keypoints_count,
         &errcode_ret
     );
 
@@ -330,6 +280,14 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
         &strong_responses_unmap_event
     );
     ASSERT_MAP( strong_responses, errcode_ret  );
+
+    cl_mem keypoints_buf = clCreateBuffer( context,
+        CL_MEM_WRITE_ONLY,
+        sizeof( cl_short ) * state.width * state.height, 
+        NULL,
+        &errcode_ret 
+    ); 
+    ASSERT_BUF( keypoints_buf, errcode_ret );
 
     for( int i = 0; i < buffer_count; i++ )
     {
@@ -446,19 +404,9 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     harris_hessian_scales[max_corner_count_index] = scale_before;
     harris_hessian_scales[max_corner_count_index+2] = scale_after;
 
-    size_t keypoints_limit = 5*total_corner_count;
-
-    cl_mem keypoints_buf = clCreateBuffer( context,
-        CL_MEM_WRITE_ONLY,
-        keypoints_limit*sizeof( struct KeyPoint ), //Arbitrary 5 TODO: calculate or something
-        NULL,
-        &errcode_ret 
-    ); 
-    ASSERT_BUF( keypoints_buf, errcode_ret );
-
     //
     cl_event find_keypoints_event;
-    opencl_fd_find_keypoints( &state, hessian_determinant_buffer, strong_responses, keypoints_buf, keypoints_count_buf, keypoints_limit, 1, &event_after, &find_keypoints_event );
+    //opencl_fd_find_keypoints( &state, hessian_determinant_buffer, strong_responses, keypoints_buf,  1, &event_after, &find_keypoints_event );
 
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
@@ -480,7 +428,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     save_image( &state, "ddxy",                 "out.png", harris_data.ddxy,                  0, NULL );
     save_image( &state, "ddyy",                 "out.png", harris_data.ddyy,                  0, NULL );
     */
-    //save_keypoints( &state, "out.png", keypoints_buf, 
+    //save_keypoints( &state, "out.png", keypoints_buf, keypoints_count_buf );
 
     for( int i = 0; i < buffer_count; i++ )
     {
@@ -491,10 +439,8 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     clReleaseMemObject( strong_responses );
     clReleaseMemObject( hessian_determinant_buffer );
     clReleaseMemObject( keypoints_buf );
-    clReleaseMemObject( keypoints_count_buf );
 
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );
     //free( strong_corner_counts );
 }
-
