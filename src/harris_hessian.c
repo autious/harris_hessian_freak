@@ -7,6 +7,7 @@
 #include "log.h"
 #include "util.h"
 
+#include <errno.h>
 #include <string.h>
 #include <math.h>
 
@@ -37,6 +38,7 @@ struct BufferMemory
 struct HarrisHessianScale
 {
     float sigma;
+    int hessian_determinant_index;
     cl_mem hessian_determinant;
     cl_mem corner_count;
     cl_event execution_event;
@@ -205,23 +207,82 @@ static void save_image( struct FD* state, const char* prefix, const char* filena
     opencl_fd_save_buffer_to_image( buf, state, mem, count, events );
 }
 
-static void save_keypoints( struct FD* state, const char* filename, cl_mem keypoints, cl_mem keypoints_count )
+static void save_keypoints( struct FD* state, const char* filename, cl_mem keypoints )
 {
     cl_command_queue command_queue = opencl_loader_get_command_queue();
     cl_int errcode_ret;
-    cl_uint keypoints_count_value;
 
     clFinish( command_queue );
 
+    /*
+    cl_short* buf = clEnqueueMapBuffer( command_queue,
+            keypoints,
+            true,
+            CL_MAP_READ,
+            0,
+            sizeof( cl_short ) * state->width * state->height,
+            0,
+            NULL,
+            NULL,
+            &errcode_ret
+    );
+    ASSERT_MAP( keypoints, errcode_ret );
+    */
 
-    int filenamelen = strlen(filename)+strlen(".kpts")+1;
-    char name[filenamelen];
+    cl_short *buf = malloc( sizeof( cl_short ) * state->width * state->height );
+   
+    if( buf )
+    { 
+        errcode_ret = clEnqueueReadBuffer( command_queue,
+                keypoints,
+                true,
+                0,
+                sizeof( cl_short ) * state->width * state->height,
+                buf,
+                0,
+                NULL,
+                NULL );
+        ASSERT_READ( keypoints, errcode_ret );
 
-    snprintf( name, filenamelen, "%s.kpts", filename );
-    
-    FILE* f = fopen( name, "w" );
+        int filenamelen = strlen(filename)+strlen(".kpts")+1;
+        char name[filenamelen];
+        snprintf( name, filenamelen, "%s.kpts", filename );
+        FILE* f = fopen( name, "w" );
 
-    fclose( f );
+        LOGV( "Outputting\n" );
+
+        for( int y = 0; y < state->height; y++ )
+        {
+            for( int x = 0; x < state->width; x++ )
+            {
+                cl_short val = buf[y*state->width+x];
+                for( int i = 0; i < NELEMS(HHSIGMAS); i++ )
+                {
+                    if( val & ( 1U << i ) )
+                    {
+                        fprintf( f, "x:%d,y:%d,i:%d\n",x,y,i);
+                    }
+                }
+            }
+        }
+        fclose( f );
+    }
+    else
+    {
+        LOGE( "Failed malloc" );
+    }
+
+    /*
+    clEnqueueUnmapMemObject( command_queue,
+            keypoints,
+            buf,
+            0,
+            NULL,
+            NULL
+    );
+    */
+
+    clFinish( command_queue );
 }
 
 void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
@@ -298,6 +359,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
             .size = sizeof( cl_float ) * state.width * state.height
         };
 
+        harris_hessian_scales[i].hessian_determinant_index = i; //Used later when the buffers change places.
         harris_hessian_scales[i].hessian_determinant = clCreateSubBuffer( 
             hessian_determinant_buffer,
             CL_MEM_READ_WRITE,
@@ -404,11 +466,48 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     harris_hessian_scales[max_corner_count_index] = scale_before;
     harris_hessian_scales[max_corner_count_index+2] = scale_after;
 
-    //
+    cl_int hessian_determinant_indices[buffer_count];
+
+    for( int i = 0; i < buffer_count; i++ )
+    {
+        hessian_determinant_indices[i] = harris_hessian_scales[i].hessian_determinant_index;
+    }
+
+    cl_mem hessian_determinant_indices_buffer = clCreateBuffer( context,
+            CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+            sizeof( cl_int ) * buffer_count,
+            hessian_determinant_indices,
+            &errcode_ret
+    );
+    ASSERT_BUF( hessian_determinant_indices_buffer, errcode_ret );
+
     cl_event find_keypoints_event;
-    //opencl_fd_find_keypoints( &state, hessian_determinant_buffer, strong_responses, keypoints_buf,  1, &event_after, &find_keypoints_event );
+    printf( "dispatch keypoints search\n" );
+    opencl_fd_find_keypoints( 
+            &state, 
+            hessian_determinant_buffer, 
+            strong_responses, 
+            keypoints_buf, 
+            hessian_determinant_indices_buffer,  
+            1, 
+            &event_after, 
+            &find_keypoints_event );
 
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
+
+    for( int i = 0; i < buffer_count; i++ )
+    {
+        clReleaseMemObject( harris_hessian_scales[i].hessian_determinant );
+        clReleaseMemObject( harris_hessian_scales[i].corner_count );
+    }
+    
+    clReleaseMemObject( strong_responses );
+    clReleaseMemObject( hessian_determinant_buffer );
+    clReleaseMemObject( hessian_determinant_indices_buffer );
+
+    save_keypoints( &state, "out.png", keypoints_buf );
+
+    clReleaseMemObject( keypoints_buf );
 
     printf( "Total count:%d\n", total_corner_count );
     //printf( "Characteristic scale:%f\n",  );
@@ -428,17 +527,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     save_image( &state, "ddxy",                 "out.png", harris_data.ddxy,                  0, NULL );
     save_image( &state, "ddyy",                 "out.png", harris_data.ddyy,                  0, NULL );
     */
-    //save_keypoints( &state, "out.png", keypoints_buf, keypoints_count_buf );
 
-    for( int i = 0; i < buffer_count; i++ )
-    {
-        clReleaseMemObject( harris_hessian_scales[i].hessian_determinant );
-        clReleaseMemObject( harris_hessian_scales[i].corner_count );
-    }
-    
-    clReleaseMemObject( strong_responses );
-    clReleaseMemObject( hessian_determinant_buffer );
-    clReleaseMemObject( keypoints_buf );
 
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );

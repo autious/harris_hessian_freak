@@ -8,34 +8,40 @@ __kernel void find_keypoints(
         __global float *source_determinants, 
         __global int* corner_counts,
         __global short* keypoints, 
+        __global int* hessian_determinant_indices,
         int width, 
         int height )
 {
     int i = get_global_id(0);
-    int keypoint_id = 0;
+    //keypoints[i] = 0;
+
     keypoints[i] = 0;
+    keypoints[i] = hessian_determinant_indices[0];
 
     if( corner_counts[i] )
     {
-        for( int j = 0; j < SCALE_COUNT; j++ )
+        
+        for( int j = 0; j < 1; j++ )
         {
             float before = 0;
             float after = 0;
-            float current = source_determinants[(j) * width * height * sizeof( float ) + i];
+            float current = source_determinants[hessian_determinant_indices[j] * width * height * sizeof( float ) + i];
 
+            /*
             if( j > 0 )
             {
-                before = source_determinants[(j-1) * width * height * sizeof( float ) + i];
+                before = source_determinants[hessian_determinant_indices[j-1] * width * height * sizeof( float ) + i];
             }
 
             if( j < SCALE_COUNT - 1 )
             {
-                after = source_determinants[(j+1) * width * height * sizeof( float ) + i];
+                after = source_determinants[hessian_determinant_indices[j+1] * width * height * sizeof( float ) + i];
             }
+            */
 
             if( current > before && current > after && current > 10.0f )
             {
-                keypoints[i] |= 1UL << j;
+                //keypoints[i] |= 1UL << j;
             } 
         }
     }

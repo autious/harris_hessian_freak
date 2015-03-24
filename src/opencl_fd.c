@@ -554,6 +554,7 @@ bool opencl_fd_find_keypoints(
         cl_mem source_det, 
         cl_mem corner_counts, 
         cl_mem keypoints_data, 
+        cl_mem hessian_determinant_indices,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event
@@ -576,8 +577,9 @@ bool opencl_fd_find_keypoints(
     clSetKernelArg( find_keypoints, 0, sizeof( cl_mem ), &source_det );
     clSetKernelArg( find_keypoints, 1, sizeof( cl_mem ), &corner_counts );
     clSetKernelArg( find_keypoints, 2, sizeof( cl_mem ), &keypoints_data );
-    clSetKernelArg( find_keypoints, 3, sizeof( cl_int ), &width );
-    clSetKernelArg( find_keypoints, 4, sizeof( cl_int ), &height );
+    clSetKernelArg( find_keypoints, 3, sizeof( cl_mem ), &hessian_determinant_indices);
+    clSetKernelArg( find_keypoints, 4, sizeof( cl_int ), &width );
+    clSetKernelArg( find_keypoints, 5, sizeof( cl_int ), &height );
 
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
         find_keypoints,
