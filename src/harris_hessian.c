@@ -285,6 +285,67 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
     clFinish( command_queue );
 }
 
+keyPoints* generate_keypoints_list( 
+    struct FD* state, 
+    struct HarrisHessianScale* scales, 
+    cl_mem keypoints, 
+    size_t* size, 
+    cl_uint event_count, 
+    cl_event *event_wait_list, 
+    cl_event* event 
+)
+{
+
+    int size = 0;
+    int count = 0;
+    const int step_size = 1024;
+    keyPoints * keypoints = NULL;
+
+
+    cl_short* buf = clEnqueueMapBuffer( command_queue,
+            keypoints,
+            true,
+            CL_MAP_READ,
+            0,
+            sizeof( cl_ushort ) * state->width * state->height,
+            0,
+            NULL,
+            NULL,
+            &errcode_ret
+    );
+    ASSERT_MAP( keypoints, errcode_ret );
+
+    for( int y = 0; y < state->height; y++ )
+    {
+        for( int x = 0; x < state->width; x++ )
+        {
+            cl_ushort val = buf[y*state->width+x];
+            for( int i = 0; i < NELEMS(HHSIGMAS); i++ )
+            {
+                if( val & ( 1U << i ) )
+                {
+                    if( size < count + 1 )
+                    {
+                        size += step_size;
+                        keypoints = realloc( keypoints, sizeof( keyPoints ) * size );
+                    } 
+
+                    keypoints[count++] = { .x = x, .y = y, .sigma = sigmas[i] }
+                }
+            }
+        }
+    }
+
+    clEnqueueUnmapMemObject( command_queue,
+            keypoints,
+            buf,
+            0,
+            NULL,
+            NULL
+    );
+    
+}
+
 void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
 {
     LOGV("Running desaturation");
@@ -493,6 +554,8 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
             &event_after, 
             &find_keypoints_event );
 
+     
+
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
     for( int i = 0; i < buffer_count; i++ )
@@ -527,7 +590,6 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     save_image( &state, "ddxy",                 "out.png", harris_data.ddxy,                  0, NULL );
     save_image( &state, "ddyy",                 "out.png", harris_data.ddyy,                  0, NULL );
     */
-
 
     free_harris_buffers( &state, &harris_data );
     opencl_fd_free( &state, 0, NULL );
