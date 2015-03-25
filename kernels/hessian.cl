@@ -7,7 +7,7 @@ __kernel void hessian( __global float *xx, __global float* xy, __global float* y
 __kernel void find_keypoints( 
         __global float *source_determinants, 
         __global int* corner_counts,
-        __global short* keypoints, 
+        __global ushort* keypoints, 
         __global int* hessian_determinant_indices,
         int width, 
         int height )
@@ -18,7 +18,6 @@ __kernel void find_keypoints(
 
     if( corner_counts[i] )
     {
-        
         for( int j = 0; j < SCALE_COUNT; j++ )
         {
             float before = 0;

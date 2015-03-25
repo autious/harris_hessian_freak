@@ -220,7 +220,7 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
             true,
             CL_MAP_READ,
             0,
-            sizeof( cl_short ) * state->width * state->height,
+            sizeof( cl_ushort ) * state->width * state->height,
             0,
             NULL,
             NULL,
@@ -229,7 +229,7 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
     ASSERT_MAP( keypoints, errcode_ret );
     */
 
-    cl_short *buf = malloc( sizeof( cl_short ) * state->width * state->height );
+    cl_ushort *buf = malloc( sizeof( cl_ushort ) * state->width * state->height );
    
     if( buf )
     { 
@@ -237,7 +237,7 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
                 keypoints,
                 true,
                 0,
-                sizeof( cl_short ) * state->width * state->height,
+                sizeof( cl_ushort ) * state->width * state->height,
                 buf,
                 0,
                 NULL,
@@ -255,7 +255,7 @@ static void save_keypoints( struct FD* state, const char* filename, cl_mem keypo
         {
             for( int x = 0; x < state->width; x++ )
             {
-                cl_short val = buf[y*state->width+x];
+                cl_ushort val = buf[y*state->width+x];
                 for( int i = 0; i < NELEMS(HHSIGMAS); i++ )
                 {
                     if( val & ( 1U << i ) )
@@ -344,7 +344,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
 
     cl_mem keypoints_buf = clCreateBuffer( context,
         CL_MEM_READ_WRITE,
-        sizeof( cl_short ) * state.width * state.height, 
+        sizeof( cl_ushort ) * state.width * state.height, 
         NULL,
         &errcode_ret 
     ); 
