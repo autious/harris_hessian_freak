@@ -52,7 +52,7 @@ void harris_hessian_init()
 
     opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
     opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
-    opencl_program_add_define_integer( "SCALE_COUNT", 3 );
+    opencl_program_add_define_integer( "SCALE_COUNT", NELEMS( HHSIGMAS ) );
 
     const char *programs[] = 
     {
@@ -343,7 +343,7 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     ASSERT_MAP( strong_responses, errcode_ret  );
 
     cl_mem keypoints_buf = clCreateBuffer( context,
-        CL_MEM_WRITE_ONLY,
+        CL_MEM_READ_WRITE,
         sizeof( cl_short ) * state.width * state.height, 
         NULL,
         &errcode_ret 

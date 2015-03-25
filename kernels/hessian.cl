@@ -13,35 +13,31 @@ __kernel void find_keypoints(
         int height )
 {
     int i = get_global_id(0);
-    //keypoints[i] = 0;
 
     keypoints[i] = 0;
-    keypoints[i] = hessian_determinant_indices[0];
 
     if( corner_counts[i] )
     {
         
-        for( int j = 0; j < 1; j++ )
+        for( int j = 0; j < SCALE_COUNT; j++ )
         {
             float before = 0;
             float after = 0;
-            float current = source_determinants[hessian_determinant_indices[j] * width * height * sizeof( float ) + i];
+            float current = source_determinants[hessian_determinant_indices[j] * width * height + i];
 
-            /*
             if( j > 0 )
             {
-                before = source_determinants[hessian_determinant_indices[j-1] * width * height * sizeof( float ) + i];
+                before = source_determinants[hessian_determinant_indices[j-1] * width * height + i];
             }
 
             if( j < SCALE_COUNT - 1 )
             {
-                after = source_determinants[hessian_determinant_indices[j+1] * width * height * sizeof( float ) + i];
+                after = source_determinants[hessian_determinant_indices[j+1] * width * height + i];
             }
-            */
 
             if( current > before && current > after && current > 10.0f )
             {
-                //keypoints[i] |= 1UL << j;
+                keypoints[i] |= (1UL << j);
             } 
         }
     }
