@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327
+#endif
+
 struct patternPoint {
 	float x; // coordinates relative to keypoint center
 	float y;
@@ -120,12 +124,14 @@ static int bs_offset(int b) { return b % WORD_SIZE; }
 static void bs_set_bit(int b, word_t* words) {
 	words[bs_index(b)] |= 1 << (bs_offset(b));
 }
+/* UNUSED
 static void bs_clear_bit(int b, word_t* words) {
 	words[bs_index(b)] &= ~(1 << (bs_offset(b)));
 }
 static uint8_t bs_get_bit(int b, const word_t* words) {
 	return words[bs_index(b)] & (1 << (bs_offset(b)));
 }
+*/
 
 
 
@@ -294,7 +300,7 @@ descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoi
 		descriptors[k].x = keyPoints[k].x;
 		descriptors[k].y = keyPoints[k].y;
 
-		int cnt = 0;
+		//int cnt = 0;
 		for (size_t m = FREAK_NB_PAIRS; m--;)  {
 			if (pointsValue[descriptionPairs[m].i] > pointsValue[descriptionPairs[m].j]) bs_set_bit(m, descriptors[k].data);
 		}

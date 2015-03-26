@@ -6,6 +6,7 @@
 #include "opencl_fd.h"
 #include "log.h"
 #include "util.h"
+#include "freak.h"
 
 #include <errno.h>
 #include <string.h>
@@ -207,89 +208,31 @@ static void save_image( struct FD* state, const char* prefix, const char* filena
     opencl_fd_save_buffer_to_image( buf, state, mem, count, events );
 }
 
-static void save_keypoints( struct FD* state, const char* filename, cl_mem keypoints )
+static void save_keypoints( struct FD* state, const char* filename, keyPoint* keypoints, size_t count   )
 {
-    cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_int errcode_ret;
+    int filenamelen = strlen(filename)+strlen(".kpts")+1;
+    char name[filenamelen];
+    snprintf( name, filenamelen, "%s.kpts", filename );
+    FILE* f = fopen( name, "w" );
 
-    clFinish( command_queue );
+    LOGV( "Outputting\n" );
 
-    /*
-    cl_short* buf = clEnqueueMapBuffer( command_queue,
-            keypoints,
-            true,
-            CL_MAP_READ,
-            0,
-            sizeof( cl_ushort ) * state->width * state->height,
-            0,
-            NULL,
-            NULL,
-            &errcode_ret
-    );
-    ASSERT_MAP( keypoints, errcode_ret );
-    */
-
-    cl_ushort *buf = malloc( sizeof( cl_ushort ) * state->width * state->height );
-   
-    if( buf )
-    { 
-        errcode_ret = clEnqueueReadBuffer( command_queue,
-                keypoints,
-                true,
-                0,
-                sizeof( cl_ushort ) * state->width * state->height,
-                buf,
-                0,
-                NULL,
-                NULL );
-        ASSERT_READ( keypoints, errcode_ret );
-
-        int filenamelen = strlen(filename)+strlen(".kpts")+1;
-        char name[filenamelen];
-        snprintf( name, filenamelen, "%s.kpts", filename );
-        FILE* f = fopen( name, "w" );
-
-        LOGV( "Outputting\n" );
-
-        for( int y = 0; y < state->height; y++ )
-        {
-            for( int x = 0; x < state->width; x++ )
-            {
-                cl_ushort val = buf[y*state->width+x];
-                for( int i = 0; i < NELEMS(HHSIGMAS); i++ )
-                {
-                    if( val & ( 1U << i ) )
-                    {
-                        fprintf( f, "x:%d,y:%d,i:%d\n",x,y,i);
-                    }
-                }
-            }
-        }
-        fclose( f );
-    }
-    else
+    for( int i = 0; i < count; i++ )
     {
-        LOGE( "Failed malloc" );
+        int x = keypoints[i].x;
+        int y = keypoints[i].y;
+        float scale = keypoints[i].size;
+        fprintf( f, "x:%d,y:%d,s:%f\n",x,y,scale);
     }
 
-    /*
-    clEnqueueUnmapMemObject( command_queue,
-            keypoints,
-            buf,
-            0,
-            NULL,
-            NULL
-    );
-    */
-
-    clFinish( command_queue );
+    fclose( f );
 }
 
-keyPoints* generate_keypoints_list( 
+static keyPoint* generate_keypoint_list( 
     struct FD* state, 
     struct HarrisHessianScale* scales, 
     cl_mem keypoints, 
-    size_t* size, 
+    size_t* in_size, 
     cl_uint event_count, 
     cl_event *event_wait_list, 
     cl_event* event 
@@ -299,7 +242,9 @@ keyPoints* generate_keypoints_list(
     int size = 0;
     int count = 0;
     const int step_size = 1024;
-    keyPoints * keypoints = NULL;
+    keyPoint * kps = NULL;
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_int errcode_ret;
 
 
     cl_short* buf = clEnqueueMapBuffer( command_queue,
@@ -313,7 +258,7 @@ keyPoints* generate_keypoints_list(
             NULL,
             &errcode_ret
     );
-    ASSERT_MAP( keypoints, errcode_ret );
+    ASSERT_MAP( kps, errcode_ret );
 
     for( int y = 0; y < state->height; y++ )
     {
@@ -327,10 +272,10 @@ keyPoints* generate_keypoints_list(
                     if( size < count + 1 )
                     {
                         size += step_size;
-                        keypoints = realloc( keypoints, sizeof( keyPoints ) * size );
+                        kps = realloc( kps, sizeof( keyPoint ) * size );
                     } 
-
-                    keypoints[count++] = { .x = x, .y = y, .sigma = sigmas[i] }
+                    keyPoint kp = { .x = x, .y = y, .size = scales[i].sigma };
+                    kps[count++] = kp;
                 }
             }
         }
@@ -341,9 +286,11 @@ keyPoints* generate_keypoints_list(
             buf,
             0,
             NULL,
-            NULL
+            event
     );
-    
+
+    *in_size = count;
+    return kps;
 }
 
 void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
@@ -555,8 +502,23 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
             &find_keypoints_event );
 
      
+    cl_event generate_keypoint_list_event;
+    size_t keypoints_count;
+    keyPoint* keypoints_list = generate_keypoint_list( &state,
+            harris_hessian_scales,
+            keypoints_buf,
+            &keypoints_count,
+            1,
+            &find_keypoints_event,
+            &generate_keypoint_list_event
+    );
+
 
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
+
+    save_keypoints( &state, "out.png", keypoints_list, keypoints_count );
+
+    free( keypoints_list );
 
     for( int i = 0; i < buffer_count; i++ )
     {
@@ -567,9 +529,6 @@ void harris_hessian_detection( uint8_t *rgba_data, int width, int height )
     clReleaseMemObject( strong_responses );
     clReleaseMemObject( hessian_determinant_buffer );
     clReleaseMemObject( hessian_determinant_indices_buffer );
-
-    save_keypoints( &state, "out.png", keypoints_buf );
-
     clReleaseMemObject( keypoints_buf );
 
     printf( "Total count:%d\n", total_corner_count );

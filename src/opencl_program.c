@@ -226,7 +226,7 @@ void opencl_program_compile( const char** programs )
         i++;
     }
 
-    clUnloadCompiler(); //Hint to the program that we are done using the compiler.
+    //clUnloadCompiler(); //Hint to the program that we are done using the compiler.
 }
 
 /*

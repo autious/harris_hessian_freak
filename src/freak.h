@@ -1,20 +1,21 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 
 typedef uint8_t word_t;
 
-struct keyPoint {
+struct keyPoint_t {
 	int x; // pixel coordinates
 	int y;
 	float size; // gaussian sigma
-}; typedef struct keyPoint keyPoint;
+}; typedef struct keyPoint_t keyPoint;
 
-struct descriptor {
+struct descriptor_t {
 	word_t* data;
 	uint32_t x;
 	uint32_t y;
-}; typedef struct descriptor descriptor;
+}; typedef struct descriptor_t descriptor;
 
 void freak_buildPattern();
 descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount);
