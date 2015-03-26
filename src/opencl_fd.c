@@ -608,8 +608,6 @@ void opencl_fd_free( struct FD* state,
     clReleaseMemObject( state->image_rgba_char );
 
     state->image_rgba_char = NULL;
-    state->width = 0;
-    state->height = 0;
 }
 
 /*

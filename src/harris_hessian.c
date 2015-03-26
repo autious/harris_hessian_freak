@@ -39,19 +39,21 @@ struct BufferMemory
     cl_mem strong_responses;
     cl_mem keypoints_buf;
     cl_mem hessian_determinant_indices_buffer;
+
+    cl_mem hessian_determinants[NELEMS( HHSIGMAS )];
+    cl_mem hessian_corner_counts[NELEMS( HHSIGMAS )];
 };
 
 struct HarrisHessianScale
 {
     float sigma;
     int hessian_determinant_index;
-    cl_mem hessian_determinant;
-    cl_mem corner_count;
     cl_event execution_event;
 };
 
 static struct BufferMemory mem;
 static struct FD state;
+static struct HarrisHessianScale harris_hessian_scales[NELEMS( HHSIGMAS )];
 
 static void init_harris_buffers( )
 {
@@ -110,6 +112,34 @@ static void init_harris_buffers( )
     );
     ASSERT_BUF( hessian_determinant_indices_buffer, errcode_ret );
 
+    for( int i = 0; i < NELEMS( HHSIGMAS ); i++ )
+    {
+        harris_hessian_scales[i].sigma = HHSIGMAS[i];
+
+        cl_buffer_region det_region = { 
+            .origin = (sizeof( cl_float ) * state.width * state.height)*i,
+            .size = sizeof( cl_float ) * state.width * state.height
+        };
+
+        mem.hessian_determinants[i] = clCreateSubBuffer( 
+            mem.hessian_determinant_buffer,
+            CL_MEM_READ_WRITE,
+            CL_BUFFER_CREATE_TYPE_REGION,
+            &det_region,
+            &errcode_ret
+        );
+        ASSERT_BUF( strong_arr_buf, errcode_ret );
+        
+        cl_int value = 0;
+        mem.hessian_corner_counts[i] = clCreateBuffer( context,
+                        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                        sizeof( cl_int ),
+                        &value,
+                        &errcode_ret
+        );
+        ASSERT_BUF( strong_arr_buf, errcode_ret );
+    }
+
 }
 
 static void free_harris_buffers( )
@@ -130,6 +160,12 @@ static void free_harris_buffers( )
     opencl_fd_release_image_buffer( &state, mem.ddxx );
     opencl_fd_release_image_buffer( &state, mem.ddxy );
     opencl_fd_release_image_buffer( &state, mem.ddyy );
+
+    for( int i = 0; i < NELEMS( HHSIGMAS ); i++ )
+    {
+        clReleaseMemObject( mem.hessian_determinants[i] );
+        clReleaseMemObject( mem.hessian_corner_counts[i] );
+    }
 
     clReleaseMemObject( mem.strong_responses );
     clReleaseMemObject( mem.hessian_determinant_buffer );
@@ -424,12 +460,15 @@ static keyPoint* generate_keypoint_list(
     return kps;
 }
 
-void harris_hessian_detection( uint8_t *rgba_data )
+void harris_hessian_detection( 
+    uint8_t *rgba_data, 
+    cl_uint event_count, 
+    cl_event* event_wait_list, 
+    cl_event *event 
+)
 {
     LOGV("Running desaturation");
-    size_t buffer_count = NELEMS(HHSIGMAS);
 
-    cl_context context = opencl_loader_get_context();
     cl_command_queue command_queue = opencl_loader_get_command_queue();
 
     opencl_fd_load_rgba( rgba_data, state.width, state.height, &state );
@@ -439,7 +478,6 @@ void harris_hessian_detection( uint8_t *rgba_data )
     opencl_fd_desaturate_image( &state, mem.gauss_blur, 0, NULL, &desaturate_event );
     
     cl_int errcode_ret;
-    struct HarrisHessianScale harris_hessian_scales[buffer_count];
 
     void* strong_responses_map = clEnqueueMapBuffer( command_queue,
         mem.strong_responses,
@@ -464,46 +502,44 @@ void harris_hessian_detection( uint8_t *rgba_data )
     );
     ASSERT_MAP( strong_responses, errcode_ret  );
 
-    for( int i = 0; i < buffer_count; i++ )
+    cl_event hessian_write_null_events[NELEMS( HHSIGMAS )];
+
+    //For potential debugging reasons.
+    memset( &harris_hessian_scales, 0, sizeof( struct HarrisHessianScale ) * NELEMS( HHSIGMAS ) );
+
+    for( int i = 0; i < NELEMS( HHSIGMAS ); i++ )
     {
         harris_hessian_scales[i].sigma = HHSIGMAS[i];
+        harris_hessian_scales[i].hessian_determinant_index = i;
 
-        cl_buffer_region det_region = { 
-            .origin = (sizeof( cl_float ) * state.width * state.height)*i,
-            .size = sizeof( cl_float ) * state.width * state.height
-        };
-
-        harris_hessian_scales[i].hessian_determinant_index = i; //Used later when the buffers change places.
-        harris_hessian_scales[i].hessian_determinant = clCreateSubBuffer( 
-            mem.hessian_determinant_buffer,
-            CL_MEM_READ_WRITE,
-            CL_BUFFER_CREATE_TYPE_REGION,
-            &det_region,
-            &errcode_ret
+        cl_int zero_value = 0;
+        errcode_ret = clEnqueueWriteBuffer( 
+            command_queue,
+            mem.hessian_corner_counts[i],
+            false,
+            0,
+            sizeof( cl_int ),
+            &zero_value,
+            1,
+            &strong_responses_unmap_event,
+            &hessian_write_null_events[i]
         );
-        ASSERT_BUF( strong_arr_buf, errcode_ret );
-        
-        cl_int value = 0;
-        harris_hessian_scales[i].corner_count = clCreateBuffer( context,
-                        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                        sizeof( cl_int ),
-                        &value,
-                        &errcode_ret
-        );
-        ASSERT_BUF( strong_arr_buf, errcode_ret );
+        ASSERT_BUF( hessian_corner_counts, errcode_ret );
     }
 
+
+    const int buffer_count = NELEMS( HHSIGMAS );
     //Run harris-hessian on all the standard scalespaces
     for( int i = 0; i < buffer_count-2; i++ )
     {
         printf( "dispatch Harris sigma:%f\n", HHSIGMAS[i] );
         do_harris( 
-                harris_hessian_scales[i].hessian_determinant,
+                mem.hessian_determinants[harris_hessian_scales[i].hessian_determinant_index],
                 mem.strong_responses,
-                harris_hessian_scales[i].corner_count,
+                mem.hessian_corner_counts[harris_hessian_scales[i].hessian_determinant_index],
                 harris_hessian_scales[i].sigma,
-                i == 0 ? 0 : 1, 
-                i == 0 ? &strong_responses_unmap_event : &harris_hessian_scales[i-1].execution_event,
+                i == 0 ? NELEMS( HHSIGMAS ) : 1, 
+                i == 0 ? hessian_write_null_events : &harris_hessian_scales[i-1].execution_event,
                 &harris_hessian_scales[i].execution_event );
     }
 
@@ -518,7 +554,7 @@ void harris_hessian_detection( uint8_t *rgba_data )
         cl_int read_corner_count;
         cl_int errcode_ret = clEnqueueReadBuffer( 
             command_queue,
-            harris_hessian_scales[i].corner_count,
+            mem.hessian_corner_counts[harris_hessian_scales[i].hessian_determinant_index],
             true,
             0,
             sizeof( cl_int ),
@@ -543,7 +579,7 @@ void harris_hessian_detection( uint8_t *rgba_data )
     scale_after.sigma  = HHSIGMAS[max_corner_count_index] * sqrt(2.0);
 
     //insert the two extra scale-spaces
-    for( int i = buffer_count-3; i > max_corner_count_index ; i-- )
+    for( int i = buffer_count-3; i > max_corner_count_index; i-- )
     {
         harris_hessian_scales[i+2] = harris_hessian_scales[i];
     }
@@ -554,9 +590,9 @@ void harris_hessian_detection( uint8_t *rgba_data )
     clEnqueueMarker( command_queue, &event_marker );
     printf( "dispatch Harris sigma:%f\n", scale_before.sigma );
     do_harris(
-            scale_before.hessian_determinant,
+            mem.hessian_determinants[scale_before.hessian_determinant_index],
             mem.strong_responses,
-            scale_before.corner_count,
+            mem.hessian_corner_counts[scale_before.hessian_determinant_index],
             scale_before.sigma,
             1,
             &event_marker,
@@ -564,9 +600,9 @@ void harris_hessian_detection( uint8_t *rgba_data )
     );
     printf( "dispatch Harris sigma:%f\n", scale_after.sigma );
     do_harris(
-            scale_after.hessian_determinant,
+            mem.hessian_determinants[scale_after.hessian_determinant_index],
             mem.strong_responses,
-            scale_after.corner_count,
+            mem.hessian_corner_counts[scale_after.hessian_determinant_index],
             scale_after.sigma,
             1,
             &event_before,
@@ -611,31 +647,6 @@ void harris_hessian_detection( uint8_t *rgba_data )
         &find_keypoints_event 
     );
 
-     
-    cl_event generate_keypoint_list_event;
-    size_t keypoints_count;
-    keyPoint* keypoints_list = generate_keypoint_list(
-            harris_hessian_scales,
-            mem.keypoints_buf,
-            &keypoints_count,
-            1,
-            &find_keypoints_event,
-            &generate_keypoint_list_event
-    );
-
-
-    clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
-
-    save_keypoints( "out.png", keypoints_list, keypoints_count );
-
-    free( keypoints_list );
-
-    for( int i = 0; i < buffer_count; i++ )
-    {
-        clReleaseMemObject( harris_hessian_scales[i].hessian_determinant );
-        clReleaseMemObject( harris_hessian_scales[i].corner_count );
-    }
-
     printf( "Total count:%d\n", total_corner_count );
     //printf( "Characteristic scale:%f\n",  );
 
@@ -657,4 +668,28 @@ void harris_hessian_detection( uint8_t *rgba_data )
 
     opencl_fd_free( &state, 0, NULL );
     //free( strong_corner_counts );
+}
+
+void harris_hessian_build_descriptor( 
+    cl_uint event_count, 
+    cl_event* event_wait_list, 
+    cl_event* event 
+)
+{
+    cl_event generate_keypoint_list_event;
+    size_t keypoints_count;
+    keyPoint* keypoints_list = generate_keypoint_list(
+            harris_hessian_scales,
+            mem.keypoints_buf,
+            &keypoints_count,
+            1,
+            event_wait_list,
+            &generate_keypoint_list_event
+    );
+
+    clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
+
+    save_keypoints( "out.png", keypoints_list, keypoints_count );
+
+    free( keypoints_list );
 }
