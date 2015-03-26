@@ -59,6 +59,8 @@ static void init_harris_buffers( )
 {
     cl_context context = opencl_loader_get_context();
 
+    freak_buildPattern();
+
     mem.gauss_blur = opencl_fd_create_image_buffer( &state );
     mem.ddx = opencl_fd_create_image_buffer( &state );
     mem.ddy = opencl_fd_create_image_buffer( &state );
@@ -670,7 +672,9 @@ void harris_hessian_detection(
     //free( strong_corner_counts );
 }
 
-void harris_hessian_build_descriptor( 
+descriptor* harris_hessian_build_descriptor( 
+    uint8_t *rgba_data, 
+    int *desc_count,
     cl_uint event_count, 
     cl_event* event_wait_list, 
     cl_event* event 
@@ -687,9 +691,20 @@ void harris_hessian_build_descriptor(
             &generate_keypoint_list_event
     );
 
+    descriptor* desc = freak_compute( 
+        rgba_data, 
+        state.width, 
+        state.height, 
+        keypoints_list, 
+        keypoints_count, 
+        desc_count
+    );
+
     clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
     save_keypoints( "out.png", keypoints_list, keypoints_count );
 
     free( keypoints_list );
+
+    return desc;
 }

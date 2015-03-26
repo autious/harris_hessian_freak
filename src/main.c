@@ -9,8 +9,12 @@
 #include "log.h"
 #include "util.h"
 #include "lodepng.h"
+#include "freak.h"
 
 #ifndef __ANDROID__
+
+const int FREAK_NB_PAIRS = 512;
+const int WORD_SIZE = 8;
 
 int main( int argc, const char ** argv )
 {
@@ -31,8 +35,27 @@ int main( int argc, const char ** argv )
             cl_event detection_event;
             harris_hessian_init( width, height ); 
             harris_hessian_detection( data, 0, NULL, &detection_event );
-            harris_hessian_build_descriptor( 1, &detection_event, NULL );
+            int desc_count;
+            //FETCH GRAYSCALE IMAGE
+            /*
+            descriptor * descriptors = harris_hessian_build_descriptor( GRAYSCALE_IMAGE, &desc_count, 1, &detection_event, NULL );
             harris_hessian_close( );
+
+            FILE* fp = fopen("out.desc", "wb+");
+            if (fp) {
+                fwrite(&desc_count, sizeof(int), 1, fp);
+                for (int i = 0; i < desc_count; ++i) {
+                    fwrite(descriptors[i].data, sizeof(*descriptors[i].data), FREAK_NB_PAIRS / WORD_SIZE, fp);
+                    fwrite(&descriptors[i].x, sizeof(descriptors[i].x), 1, fp);
+                    fwrite(&descriptors[i].y, sizeof(descriptors[i].y), 1, fp);
+                }
+                fclose(fp);
+            }
+            else printf("Can't create descriptor file\n");
+
+            free( descriptors );
+            */
+
         }
         else
         {

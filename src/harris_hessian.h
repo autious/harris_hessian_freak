@@ -1,6 +1,7 @@
 #pragma once
 
 #include "opencl_handler.h"
+#include "freak.h"
 
 void harris_hessian_init( int width, int height );
 void harris_hessian_detection( 
@@ -10,7 +11,9 @@ void harris_hessian_detection(
     cl_event *event 
 );
 
-void harris_hessian_build_descriptor( 
+descriptor* harris_hessian_build_descriptor( 
+    uint8_t *rgba_data, 
+    int *desc_count,
     cl_uint event_count, 
     cl_event* event_wait_list, 
     cl_event* event 
