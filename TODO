@@ -1,0 +1,3 @@
+Make HH init take w and h and prealloc all data.
+Make compile take a structure with compile flags.
+Return an object from opencl_program_compile with the compiled programs.

@@ -28,8 +28,8 @@ int main( int argc, const char ** argv )
         {
             LOGV( "Picture dimensions: (%u,%u)", width, height );
 
-            harris_hessian_init(); 
-            harris_hessian_detection(data, width, height);
+            harris_hessian_init(width, height); 
+            harris_hessian_detection(data);
             harris_hessian_close();
         }
         else
