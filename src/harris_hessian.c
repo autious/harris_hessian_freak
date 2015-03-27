@@ -17,6 +17,7 @@ static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20
 
 struct BufferMemory
 {
+    cl_mem desaturated_image;
     cl_mem gauss_blur;
     cl_mem ddx;
     cl_mem ddy;
@@ -61,6 +62,7 @@ static void init_harris_buffers( )
 
     freak_buildPattern();
 
+    mem.desaturated_image = opencl_fd_create_image_buffer( &state );
     mem.gauss_blur = opencl_fd_create_image_buffer( &state );
     mem.ddx = opencl_fd_create_image_buffer( &state );
     mem.ddy = opencl_fd_create_image_buffer( &state );
@@ -146,6 +148,7 @@ static void init_harris_buffers( )
 
 static void free_harris_buffers( )
 {
+    opencl_fd_release_image_buffer( &state, mem.desaturated_image );
     opencl_fd_release_image_buffer( &state, mem.gauss_blur );
     opencl_fd_release_image_buffer( &state, mem.ddx );
     opencl_fd_release_image_buffer( &state, mem.ddy );
@@ -231,7 +234,7 @@ static bool do_harris(
     opencl_fd_run_gaussxy( 
         sigmaD, 
         &state, 
-        mem.gauss_blur, 
+        mem.desaturated_image, 
         mem.ddx, 
         mem.gauss_blur, 
         wait_for_event_count, 
@@ -477,7 +480,7 @@ void harris_hessian_detection(
     init_harris_buffers( );
     
     cl_event desaturate_event;
-    opencl_fd_desaturate_image( &state, mem.gauss_blur, 0, NULL, &desaturate_event );
+    opencl_fd_desaturate_image( &state, mem.desaturated_image, 0, NULL, &desaturate_event );
     
     cl_int errcode_ret;
 
@@ -700,7 +703,6 @@ descriptor* harris_hessian_build_descriptor(
         desc_count
     );
 
-    clFinish( opencl_loader_get_command_queue() ); //Finish doing all the calculations before saving.
 
     save_keypoints( "out.png", keypoints_list, keypoints_count );
 
