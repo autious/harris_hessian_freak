@@ -683,25 +683,45 @@ descriptor* harris_hessian_build_descriptor(
     cl_event* event 
 )
 {
+
+    cl_event grayscale_map_event;
+    cl_float *grayscale_data = clEnqueueMapBuffer( 
+        command_queue
+        mem.desaturated_image,
+        false,
+        CL_MAP_READ,
+        0,
+        sizeof( float ) * state.width * state.height,
+        event_count,
+        event_wait_list,
+        &grayscale_map_event,
+        &errcode_ret
+    );
+
     cl_event generate_keypoint_list_event;
     size_t keypoints_count;
     keyPoint* keypoints_list = generate_keypoint_list(
-            harris_hessian_scales,
-            mem.keypoints_buf,
-            &keypoints_count,
-            1,
-            event_wait_list,
-            &generate_keypoint_list_event
+        harris_hessian_scales,
+        mem.keypoints_buf,
+        &keypoints_count,
+        event_count,
+        &event_wait_list,
+        &generate_keypoint_list_event
     );
 
+    clWaitForEvents( 1, &generate_keypoints_list_event );
+    clWaitForEvents( 1, &grayscale_map_event );
+
     descriptor* desc = freak_compute( 
-        rgba_data, 
+        grayscale_data, 
         state.width, 
         state.height, 
         keypoints_list, 
         keypoints_count, 
         desc_count
     );
+
+    clEnqueueUnMapBuffer(
 
 
     save_keypoints( "out.png", keypoints_list, keypoints_count );
