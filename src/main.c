@@ -36,9 +36,8 @@ int main( int argc, const char ** argv )
             harris_hessian_init( width, height ); 
             harris_hessian_detection( data, 0, NULL, &detection_event );
             int desc_count;
-            //FETCH GRAYSCALE IMAGE
-            /*
-            descriptor * descriptors = harris_hessian_build_descriptor( GRAYSCALE_IMAGE, &desc_count, 1, &detection_event, NULL );
+
+            descriptor * descriptors = harris_hessian_build_descriptor( &desc_count, 1, &detection_event, NULL );
             harris_hessian_close( );
 
             FILE* fp = fopen("out.desc", "wb+");
@@ -54,7 +53,6 @@ int main( int argc, const char ** argv )
             else printf("Can't create descriptor file\n");
 
             free( descriptors );
-            */
 
         }
         else

@@ -639,7 +639,6 @@ void harris_hessian_detection(
     );
                
 
-    cl_event find_keypoints_event;
     printf( "dispatch keypoints search\n" );
     opencl_fd_find_keypoints( 
         &state, 
@@ -649,7 +648,7 @@ void harris_hessian_detection(
         mem.hessian_determinant_indices_buffer,  
         1, 
         &write_indices_event, 
-        &find_keypoints_event 
+        event
     );
 
     printf( "Total count:%d\n", total_corner_count );
@@ -676,7 +675,6 @@ void harris_hessian_detection(
 }
 
 descriptor* harris_hessian_build_descriptor( 
-    uint8_t *rgba_data, 
     int *desc_count,
     cl_uint event_count, 
     cl_event* event_wait_list, 
@@ -684,29 +682,33 @@ descriptor* harris_hessian_build_descriptor(
 )
 {
 
+    cl_command_queue command_queue = opencl_loader_get_command_queue();
+    cl_int errcode_ret;
+
     cl_event grayscale_map_event;
     cl_float *grayscale_data = clEnqueueMapBuffer( 
-        command_queue
+        command_queue,
         mem.desaturated_image,
         false,
         CL_MAP_READ,
         0,
-        sizeof( float ) * state.width * state.height,
+        sizeof( cl_float ) * state.width * state.height,
         event_count,
         event_wait_list,
         &grayscale_map_event,
         &errcode_ret
     );
+    ASSERT_MAP( grayscale_data, errcode_ret );
 
-    cl_event generate_keypoint_list_event;
+    cl_event generate_keypoints_list_event;
     size_t keypoints_count;
     keyPoint* keypoints_list = generate_keypoint_list(
         harris_hessian_scales,
         mem.keypoints_buf,
         &keypoints_count,
         event_count,
-        &event_wait_list,
-        &generate_keypoint_list_event
+        event_wait_list,
+        &generate_keypoints_list_event
     );
 
     clWaitForEvents( 1, &generate_keypoints_list_event );
@@ -721,8 +723,13 @@ descriptor* harris_hessian_build_descriptor(
         desc_count
     );
 
-    clEnqueueUnMapBuffer(
-
+    clEnqueueUnmapMemObject( command_queue,
+        mem.desaturated_image,
+        grayscale_data,
+        0,
+        NULL,
+        event 
+    );
 
     save_keypoints( "out.png", keypoints_list, keypoints_count );
 
