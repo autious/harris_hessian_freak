@@ -18,5 +18,5 @@ struct descriptor_t {
 }; typedef struct descriptor_t descriptor;
 
 void freak_buildPattern();
-descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount);
-double freak_meanIntensity(const double* src, size_t width, size_t height, const double* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point);
+descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount);
+float freak_meanIntensity(const float* src, size_t width, size_t height, const float* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point);

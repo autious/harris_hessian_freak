@@ -80,29 +80,29 @@ int patternSizes[FREAK_NB_SCALES];
 descriptionPair descriptionPairs[FREAK_NB_PAIRS];
 orientationPair orientationPairs[FREAK_NB_ORIENTATION_PAIRS];
 
-void makeIntegral(const double* src, size_t width, size_t height, double* outIntegral) {
+void makeIntegral(const float* src, size_t width, size_t height, float* outIntegral) {
 	for (size_t y = 0; y < height; ++y) {
 		for (size_t x = 0; x < width; ++x) {
-			double val = (x % width != 0) ? outIntegral[width * y + x - 1] : 0.0;
+			float val = (x % width != 0) ? outIntegral[width * y + x - 1] : 0.0;
 			outIntegral[width * y + x] = val + src[width * y + x];
 		}
 	}
 
 	for (size_t x = 0; x < width; ++x) {
 		for (size_t y = 0; y < height; ++y) {
-			double val = (y % height != 0) ? outIntegral[width * (y - 1) + x] : 0.0;
+			float val = (y % height != 0) ? outIntegral[width * (y - 1) + x] : 0.0;
 			outIntegral[width * y + x] += val;
 		}
 	}
 }
-double integralBlur(const double* integral, size_t width, size_t height, int x, int y, double sigma) {
+float integralBlur(const float* integral, size_t width, size_t height, int x, int y, float sigma) {
 	int farX = (x + sigma < width) ? (int)(x + sigma) : (int)(width - 1);
 	int nearX = (x - sigma >= 0) ? (int)(x - sigma) : 0;
 
 	int farY = (y + sigma < height) ? (int)(y + sigma) : (int)(height - 1);
 	int nearY = (y - sigma >= 0) ? (int)(y - sigma) : 0;
 
-	double result = integral[width * farY + farX];
+	float result = integral[width * farY + farX];
 	if (nearX > 0 && nearY > 0) {
 		return (result - integral[width * nearY + farX] - integral[width * farY + nearX] + integral[width * nearY + nearX]) / ((farX - nearX) * (farY - nearY));
 	}
@@ -137,18 +137,18 @@ static uint8_t bs_get_bit(int b, const word_t* words) {
 
 void freak_buildPattern() {
 	patternLookup = (patternPoint*)malloc(sizeof(patternPoint)* FREAK_NB_SCALES * FREAK_NB_ORIENTATION * FREAK_NB_POINTS);
-	double scaleStep = pow(2.0, (double)(FREAK_NB_OCTAVES) / FREAK_NB_SCALES);
-	double scalingFactor, alpha, beta, theta = 0;
+	float scaleStep = pow(2.0, (float)(FREAK_NB_OCTAVES) / FREAK_NB_SCALES);
+	float scalingFactor, alpha, beta, theta = 0;
 
 	// Pattern definition, radius normalized to 1.0
 	const int n[8] = { 6, 6, 6, 6, 6, 6, 6, 1 }; // Number of points on each concentric circle, outer to inner
-	const double bigR = 2.0 / 3.0;
-	const double smallR = 2.0 / 24.0;
-	const double unitSpace = (bigR - smallR) / 21.0; // Spaces between concentric circles
+	const float bigR = 2.0 / 3.0;
+	const float smallR = 2.0 / 24.0;
+	const float unitSpace = (bigR - smallR) / 21.0; // Spaces between concentric circles
 	// Radii of the concentric circles, again outer to inner
-	const double radius[8] = { bigR, bigR - 6 * unitSpace, bigR - 11 * unitSpace, bigR - 15 * unitSpace, bigR - 18 * unitSpace, bigR - 20 * unitSpace, smallR, 0.0 };
+	const float radius[8] = { bigR, bigR - 6 * unitSpace, bigR - 11 * unitSpace, bigR - 15 * unitSpace, bigR - 18 * unitSpace, bigR - 20 * unitSpace, smallR, 0.0 };
 	// Sigmas of pattern points, proportional to radii (sigma can't be zero so last one is same as second to last)
-	const double sigma[8] = { radius[0] / 2.0, radius[1] / 2.0, radius[2] / 2.0, radius[3] / 2.0, radius[4] / 2.0, radius[5] / 2.0, radius[6] / 2.0, radius[6] / 2.0 };
+	const float sigma[8] = { radius[0] / 2.0, radius[1] / 2.0, radius[2] / 2.0, radius[3] / 2.0, radius[4] / 2.0, radius[5] / 2.0, radius[6] / 2.0, radius[6] / 2.0 };
 
 	// Now let's fill the lookup table
 	for (size_t scaleIdx = 0; scaleIdx < FREAK_NB_SCALES; ++scaleIdx) {
@@ -156,13 +156,13 @@ void freak_buildPattern() {
 		scalingFactor = pow(scaleStep, scaleIdx);
 
 		for (int orientationIdx = 0; orientationIdx < FREAK_NB_ORIENTATION; ++orientationIdx) {
-			theta = (double)orientationIdx * 2 * M_PI / (double)FREAK_NB_ORIENTATION;
+			theta = (float)orientationIdx * 2 * M_PI / (float)FREAK_NB_ORIENTATION;
 			int pointIdx = 0;
 
 			for (size_t i = 0; i < 8; ++i) {
 				for (int k = 0; k < n[i]; ++k) {
 					beta = M_PI / n[i] * (i % 2); // Orientation offset to stagger points on each circle
-					alpha = (double)k * 2 * M_PI / (double)n[i] + beta + theta;
+					alpha = (float)k * 2 * M_PI / (float)n[i] + beta + theta;
 
 					// Finally add stuff to the look-up table
 					int INDEX = scaleIdx * FREAK_NB_ORIENTATION * FREAK_NB_POINTS + orientationIdx * FREAK_NB_POINTS + pointIdx;
@@ -228,14 +228,14 @@ void freak_buildPattern() {
 }
 
 // Returns an ALLOCATED pointer to <descriptorCount> descriptors. Note that descriptorCount is an out variable
-descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount) {
-	double* integral = (double*)malloc(width * height * sizeof(double));
+descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount) {
+	float* integral = (float*)malloc(width * height * sizeof(float));
 	makeIntegral(src, width, height, integral);
 	int* kpScaleIdx = (int*)malloc(kpCount * sizeof(int));
 	int* kpScaleIdx_TEMP = (int*)malloc(kpCount * sizeof(int));
 	keyPoint* keyPoints_TEMP = (keyPoint*)malloc(kpCount * sizeof(keyPoint));
 	const float sizeCst = FREAK_NB_SCALES / (FREAK_LOG2 * FREAK_NB_OCTAVES);
-	double pointsValue[FREAK_NB_POINTS];
+	float pointsValue[FREAK_NB_POINTS];
 	int thetaIdx = 0;
 	int direction0;
 	int direction1;
@@ -285,7 +285,7 @@ descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoi
 			direction1 += delta * orientationPairs[m].weight_dy / 2048;
 		}
 
-		double angle = atan2((double)direction1, (double)direction0) * 180.0 / M_PI;
+		float angle = atan2((float)direction1, (float)direction0) * 180.0 / M_PI;
 		thetaIdx = (int)(FREAK_NB_ORIENTATION * angle * (1 / 360.0) + 0.5);
 
 		if (thetaIdx < 0) thetaIdx += FREAK_NB_ORIENTATION;
@@ -313,7 +313,7 @@ descriptor* freak_compute(const double* src, size_t width, size_t height, keyPoi
 }
 
 // FREAK paper says Gaussian blur, implementation does box filter with integral image.
-double freak_meanIntensity(const double* src, size_t width, size_t height, const double* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point) {
+float freak_meanIntensity(const float* src, size_t width, size_t height, const float* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point) {
 	//const patternPoint* freakPoint = &patternLookup[scale * FREAK_NB_ORIENTATION * FREAK_NB_POINTS + rot * FREAK_NB_POINTS + point];
 	int INDEX = scale * FREAK_NB_ORIENTATION * FREAK_NB_POINTS + rot * FREAK_NB_POINTS + point;
 
@@ -324,14 +324,14 @@ double freak_meanIntensity(const double* src, size_t width, size_t height, const
 
 	const float radius = patternLookup[INDEX].sigma;
 
-	double ret_val;
+	float ret_val;
 	if (radius < 0.5) {
 		// Simple linear interpolation
 		const int r_x = (int)((xf - x) * 1024);
 		const int r_y = (int)((yf - y) * 1024);
 		const int r_x_1 = 1024 - r_x;
 		const int r_y_1 = 1024 - r_y;
-		const double* ptr = &src[y * width + x];
+		const float* ptr = &src[y * width + x];
 		// Keeping the pointer arithmetic mumbo jumbo for fun
 		ret_val = r_x_1 * r_y_1 * (*ptr);
 		ptr++;
