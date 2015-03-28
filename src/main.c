@@ -1,3 +1,6 @@
+#define _POSIX_C_SOURCE 2
+
+#include <unistd.h>
 #include <string.h>
 
 #include "opencl_handler.h"
@@ -13,6 +16,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 
 #ifndef __ANDROID__
 
@@ -77,21 +81,57 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
     fclose( f );
 }
 
-int main( int argc, const char ** argv )
+void print_help()
 {
-    if( argc == 2 )
+    printf( "Usage: hh_freak_detector [-ht] [-k FILE] [-p FILE] [-d FILE] FILE\n" );
+}
+
+int main( int argc, char * const *argv )
+{
+    int opt;
+    const char* k_name = NULL;
+    const char* p_name = NULL;
+    const char* d_name = NULL;
+    bool output_timing = false;
+
+    while((opt = getopt(argc,argv,"htk:p:d:")) != -1) 
     {
-        LOGV("Running harris hessian on %s\n", argv[1] );
+        switch(opt)
+        {
+            case 'h':
+                print_help(); 
+                return 2;
+                break; 
+            case 't':
+                output_timing = true;
+                break;
+            case 'k':
+                k_name = optarg;
+                break;
+            case 'p':
+                p_name = optarg;
+                break;
+            case 'd':
+                d_name = optarg;
+                break;
+            default:
+                break;
+        } 
+    }
+
+    if( optind == argc - 1 )
+    {
+        fprintf( stderr, "Running harris hessian on %s\n", argv[optind] );
         int width;
         int height;
         int n;
         uint8_t *data;
 
-        data = stbi_load( argv[1], &width, &height, &n, 4 );
+        data = stbi_load( argv[optind], &width, &height, &n, 4 );
 
         if( data )
         {
-            LOGV( "Picture dimensions: (%u,%u)", width, height );
+            fprintf( stderr, "Picture dimensions: (%u,%u)", width, height );
 
             cl_event detection_event;
             harris_hessian_init( width, height ); 
@@ -106,8 +146,17 @@ int main( int argc, const char ** argv )
                 &generate_keypoints_list_event
             );
 
-            save_keypoints( "out", keypoints_list, keypoints_count );
-            save_keypoints_image( "keypoints_image", keypoints_list, keypoints_count, data, width, height );
+            if( k_name )
+            {
+                fprintf( stderr, "Saving keypoints to: %s\n" , k_name );
+                save_keypoints( k_name, keypoints_list, keypoints_count );
+            }
+            
+            if( p_name )
+            {
+                fprintf( stderr, "Saving keypoint image to: %s\n" , p_name );
+                save_keypoints_image( p_name, keypoints_list, keypoints_count, data, width, height );
+            }
 
             size_t desc_count;
             descriptor * descriptors = harris_hessian_build_descriptor( 
@@ -119,7 +168,12 @@ int main( int argc, const char ** argv )
                 NULL 
             );
 
-            save_descriptor( "out.desc", descriptors, desc_count );
+            if( d_name )
+            {
+                fprintf( stderr, "Saving descriptor to: %s\n" , d_name );
+                save_descriptor( d_name, descriptors, desc_count );
+            }
+
             free( descriptors );
 
             free( keypoints_list );
@@ -129,14 +183,14 @@ int main( int argc, const char ** argv )
         }
         else
         {
-            LOGE("Unable to load image: %s", argv[1] );
+            fprintf( stderr, "Unable to load image: %s", argv[optind] );
         }
 
         free( data );
     }
     else
     {
-        LOGE( "Program needs exactly one argument" );
+        fprintf( stderr, "Missing input file (must be last argument)\n" );
     }
 
     return 0;
