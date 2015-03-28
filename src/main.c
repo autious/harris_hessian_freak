@@ -53,7 +53,7 @@ static void save_descriptor( const  char *filename, descriptor* descriptors, siz
         }
         fclose(fp);
     }
-    else printf("Can't create descriptor file\n");
+    else fprintf(stderr, "Can't create descriptor file\n");
 }
 
 static void save_keypoints( const char* filename, keyPoint* keypoints, size_t count   )
@@ -62,8 +62,6 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
     char name[filenamelen];
     snprintf( name, filenamelen, "%s.kpts", filename );
     FILE* f = fopen( name, "w" );
-
-    LOGV( "Outputting\n" );
 
     for( int i = 0; i < count; i++ )
     {
