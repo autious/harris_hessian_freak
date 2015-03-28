@@ -189,7 +189,7 @@ void harris_hessian_init( int width, int height)
 
     assert( 16 >= NELEMS( HHSIGMAS ) ); //Verification that the short we're using for keypoints is sufficient.
 
-    opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
+    //opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
     opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
     opencl_program_add_define_integer( "SCALE_COUNT", NELEMS( HHSIGMAS ) );
 
@@ -395,7 +395,7 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
         int x = keypoints[i].x;
         int y = keypoints[i].y;
         float scale = keypoints[i].size;
-        fprintf( f, "x:%d,y:%d,s:%f\n",x,y,scale);
+        fprintf( f, "%d,%d,%f\n",x,y,scale);
     }
 
     fclose( f );

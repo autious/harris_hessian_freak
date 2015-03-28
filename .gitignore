@@ -3,5 +3,7 @@
 *.o
 hh_freak_detector
 *.png
+*.jpg
+*.jpeg
 *.kpts
 *.desc
