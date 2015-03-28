@@ -11,7 +11,11 @@
 #include "lodepng.h"
 #include "freak.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #ifndef __ANDROID__
+
 
 const int FREAK_NB_PAIRS = 512;
 const int WORD_SIZE = 8;
@@ -21,14 +25,14 @@ int main( int argc, const char ** argv )
     if( argc == 2 )
     {
         LOGV("Running harris hessian on %s\n", argv[1] );
-        unsigned int lode_error;
-        unsigned int width;
-        unsigned int height;
+        int width;
+        int height;
+        int n;
         uint8_t *data;
 
-        lode_error = lodepng_decode32_file( &data, &width, &height, argv[1] );
+        data = stbi_load( argv[1], &width, &height, &n, 4 );
 
-        if( lode_error == 0 )
+        if( data )
         {
             LOGV( "Picture dimensions: (%u,%u)", width, height );
 
