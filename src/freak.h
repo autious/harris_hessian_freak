@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+extern const int FREAK_NB_PAIRS;
+extern const int WORD_SIZE;
+
 typedef uint8_t word_t;
 
 struct keyPoint_t {

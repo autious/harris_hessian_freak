@@ -8,6 +8,9 @@
 #define M_PI 3.14159265358979323846264338327
 #endif
 
+const int FREAK_NB_PAIRS = 512;
+//const int WORD_SIZE = 8;
+
 struct patternPoint {
 	float x; // coordinates relative to keypoint center
 	float y;
@@ -116,7 +119,7 @@ float integralBlur(const float* integral, size_t width, size_t height, int x, in
 }
 
 // Some utility functions for handling bitsets
-static const int WORD_SIZE = sizeof(word_t)* 8;
+const int WORD_SIZE = sizeof(word_t)* 8;
 
 static int bs_index(int b) { return b / WORD_SIZE; }
 static int bs_offset(int b) { return b % WORD_SIZE; }
