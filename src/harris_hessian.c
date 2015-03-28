@@ -381,29 +381,8 @@ static void save_image( const char* prefix, const char* filename, cl_mem mem, cl
     opencl_fd_save_buffer_to_image( buf, &state, mem, count, events );
 }
 
-static void save_keypoints( const char* filename, keyPoint* keypoints, size_t count   )
-{
-    int filenamelen = strlen(filename)+strlen(".kpts")+1;
-    char name[filenamelen];
-    snprintf( name, filenamelen, "%s.kpts", filename );
-    FILE* f = fopen( name, "w" );
 
-    LOGV( "Outputting\n" );
-
-    for( int i = 0; i < count; i++ )
-    {
-        int x = keypoints[i].x;
-        int y = keypoints[i].y;
-        float scale = keypoints[i].size;
-        fprintf( f, "%d,%d,%f\n",x,y,scale);
-    }
-
-    fclose( f );
-}
-
-static keyPoint* generate_keypoint_list( 
-    struct HarrisHessianScale* scales, 
-    cl_mem keypoints, 
+keyPoint* harris_hessian_generate_keypoint_list( 
     size_t* in_size, 
     cl_uint event_count, 
     cl_event *event_wait_list, 
@@ -420,7 +399,7 @@ static keyPoint* generate_keypoint_list(
 
 
     cl_short* buf = clEnqueueMapBuffer( command_queue,
-            keypoints,
+            mem.keypoints_buf,
             true,
             CL_MAP_READ,
             0,
@@ -446,7 +425,7 @@ static keyPoint* generate_keypoint_list(
                         size += step_size;
                         kps = realloc( kps, sizeof( keyPoint ) * size );
                     } 
-                    keyPoint kp = { .x = x, .y = y, .size = scales[i].sigma };
+                    keyPoint kp = { .x = x, .y = y, .size = harris_hessian_scales[i].sigma };
                     kps[count++] = kp;
                 }
             }
@@ -454,7 +433,7 @@ static keyPoint* generate_keypoint_list(
     }
 
     clEnqueueUnmapMemObject( command_queue,
-            keypoints,
+            mem.keypoints_buf,
             buf,
             0,
             NULL,
@@ -676,7 +655,9 @@ void harris_hessian_detection(
 }
 
 descriptor* harris_hessian_build_descriptor( 
-    int *desc_count,
+    keyPoint* keypoints_list,
+    size_t keypoints_count,
+    size_t *desc_count,
     cl_uint event_count, 
     cl_event* event_wait_list, 
     cl_event* event 
@@ -701,30 +682,19 @@ descriptor* harris_hessian_build_descriptor(
     );
     ASSERT_MAP( grayscale_data, errcode_ret );
 
-    cl_event generate_keypoints_list_event;
-    size_t keypoints_count;
-    keyPoint* keypoints_list = generate_keypoint_list(
-        harris_hessian_scales,
-        mem.keypoints_buf,
-        &keypoints_count,
-        event_count,
-        event_wait_list,
-        &generate_keypoints_list_event
-    );
-
-    clWaitForEvents( 1, &generate_keypoints_list_event );
     clWaitForEvents( 1, &grayscale_map_event );
 
-    save_keypoints( "out.png", keypoints_list, keypoints_count );
-
+    int _desc_count;
     descriptor* desc = freak_compute(  //This kills the keypoints_list
         grayscale_data, 
         state.width, 
         state.height, 
         keypoints_list, 
         keypoints_count, 
-        desc_count
+        &_desc_count
     );
+
+    *desc_count = _desc_count;
 
     clEnqueueUnmapMemObject( command_queue,
         mem.desaturated_image,
@@ -733,8 +703,6 @@ descriptor* harris_hessian_build_descriptor(
         NULL,
         event 
     );
-
-    free( keypoints_list );
 
     return desc;
 }

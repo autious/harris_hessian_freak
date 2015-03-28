@@ -12,9 +12,18 @@ void harris_hessian_detection(
 );
 
 descriptor* harris_hessian_build_descriptor( 
-    int *desc_count,
+    keyPoint* keypoints,
+    size_t keypoint_count,  
+    size_t *desc_count,
     cl_uint event_count, 
     cl_event* event_wait_list, 
+    cl_event* event 
+);
+
+keyPoint* harris_hessian_generate_keypoint_list( 
+    size_t* in_size, 
+    cl_uint event_count, 
+    cl_event *event_wait_list, 
     cl_event* event 
 );
 

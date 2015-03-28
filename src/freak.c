@@ -295,7 +295,7 @@ descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoin
 			pointsValue[i] = freak_meanIntensity(src, width, height, integral, (float)keyPoints[k].x, (float)keyPoints[k].y, kpScaleIdx[k], thetaIdx, i);
 		}
 
-		descriptors[k].data = (word_t*)malloc(sizeof(word_t)* FREAK_NB_PAIRS / WORD_SIZE);
+		descriptors[k].data = (word_t*)malloc(sizeof(word_t)* FREAK_NB_PAIRS / WORD_SIZE); //TODO: DON*T reallocate memory for each data point.
 		memset(descriptors[k].data, 0, sizeof(word_t)* FREAK_NB_PAIRS / WORD_SIZE);
 		descriptors[k].x = keyPoints[k].x;
 		descriptors[k].y = keyPoints[k].y;
