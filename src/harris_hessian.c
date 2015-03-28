@@ -425,8 +425,8 @@ static keyPoint* generate_keypoint_list(
             CL_MAP_READ,
             0,
             sizeof( cl_ushort ) * state.width * state.height,
-            0,
-            NULL,
+            event_count,
+            event_wait_list,
             NULL,
             &errcode_ret
     );
