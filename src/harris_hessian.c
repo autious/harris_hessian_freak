@@ -654,20 +654,21 @@ void harris_hessian_detection(
     printf( "Total count:%d\n", total_corner_count );
     //printf( "Characteristic scale:%f\n",  );
 
+    
     /*
-    save_image( &state, "gauss_blur",           "out.png", mem.gauss_blur,            0, NULL );
-    save_image( &state, "ddx",                  "out.png", mem.ddx,                   0, NULL );
-    save_image( &state, "ddy",                  "out.png", mem.ddy,                   0, NULL );
-    save_image( &state, "xx",                   "out.png", mem.xx,                    0, NULL );
-    save_image( &state, "xy",                   "out.png", mem.xy,                    0, NULL );
-    save_image( &state, "yy",                   "out.png", mem.yy,                    0, NULL );
+    save_image( "gauss_blur",           "out.png", mem.gauss_blur,            0, NULL );
+    save_image( "ddx",                  "out.png", mem.ddx,                   0, NULL );
+    save_image( "ddy",                  "out.png", mem.ddy,                   0, NULL );
+    save_image( "xx",                   "out.png", mem.xx,                    0, NULL );
+    save_image( "xy",                   "out.png", mem.xy,                    0, NULL );
+    save_image( "yy",                   "out.png", mem.yy,                    0, NULL );
 
-    save_image( &state, "harris_response",      "out.png", mem.harris_response,       0, NULL );
-    save_image( &state, "harris_suppression",   "out.png", mem.harris_suppression,    0, NULL );
+    save_image( "harris_response",      "out.png", mem.harris_response,       0, NULL );
+    save_image( "harris_suppression",   "out.png", mem.harris_suppression,    0, NULL );
 
-    save_image( &state, "ddxx",                 "out.png", mem.ddxx,                  0, NULL );
-    save_image( &state, "ddxy",                 "out.png", mem.ddxy,                  0, NULL );
-    save_image( &state, "ddyy",                 "out.png", mem.ddyy,                  0, NULL );
+    save_image( "ddxx",                 "out.png", mem.ddxx,                  0, NULL );
+    save_image( "ddxy",                 "out.png", mem.ddxy,                  0, NULL );
+    save_image( "ddyy",                 "out.png", mem.ddyy,                  0, NULL );
     */
 
     opencl_fd_free( &state, 0, NULL );
