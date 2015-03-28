@@ -715,7 +715,9 @@ descriptor* harris_hessian_build_descriptor(
     clWaitForEvents( 1, &generate_keypoints_list_event );
     clWaitForEvents( 1, &grayscale_map_event );
 
-    descriptor* desc = freak_compute( 
+    save_keypoints( "out.png", keypoints_list, keypoints_count );
+
+    descriptor* desc = freak_compute(  //This kills the keypoints_list
         grayscale_data, 
         state.width, 
         state.height, 
@@ -731,8 +733,6 @@ descriptor* harris_hessian_build_descriptor(
         NULL,
         event 
     );
-
-    save_keypoints( "out.png", keypoints_list, keypoints_count );
 
     free( keypoints_list );
 
