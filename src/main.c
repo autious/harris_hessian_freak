@@ -10,6 +10,7 @@
 #include "opencl_error.h"
 #include "opencl_program.h"
 #include "opencl_fd.h"
+#include "opencl_timer.h"
 #include "harris_hessian.h"
 #include "log.h"
 #include "util.h"
@@ -85,7 +86,6 @@ int main( int argc, char * const *argv )
     const char* k_name = NULL;
     const char* p_name = NULL;
     const char* d_name = NULL;
-    bool output_timing = false;
 
     while((opt = getopt(argc,argv,"htk:p:d:")) != -1) 
     {
@@ -96,7 +96,7 @@ int main( int argc, char * const *argv )
                 return 2;
                 break; 
             case 't':
-                output_timing = true;
+                opencl_timer_enable_profile = true;
                 break;
             case 'k':
                 k_name = optarg;

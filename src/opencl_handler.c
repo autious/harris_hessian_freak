@@ -7,6 +7,7 @@
 #include "log.h"
 #include "util.h"
 #include "opencl_error.h"
+#include "opencl_timer.h"
 #include "gauss_kernel.h"
 
 static const char* lastCLError = "";
@@ -422,9 +423,12 @@ bool opencl_loader_init()
 
         cl_command_queue_properties cq_props 
             = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-#ifdef PROFILE
-        cq_props |= CL_QUEUE_PROFILING_ENABLE;
-#endif
+
+        if( opencl_timer_enable_profile ) 
+        {
+            cq_props |= CL_QUEUE_PROFILING_ENABLE;
+        }
+
 
         command_queue = clCreateCommandQueue( 
                 context, 
