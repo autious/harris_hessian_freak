@@ -1,5 +1,7 @@
 #define _POSIX_C_SOURCE 2
 
+#ifndef __ANDROID__
+
 #include <unistd.h>
 #include <string.h>
 
@@ -16,13 +18,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-
-#ifndef __ANDROID__
-
-
-const int FREAK_NB_PAIRS = 512;
-const int WORD_SIZE = 8;
 
 static void save_keypoints_image( const char * filename, const keyPoint* keypoints, size_t keypoint_count, const uint8_t *data, int width, int height )
 {
