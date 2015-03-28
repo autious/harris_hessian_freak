@@ -258,7 +258,7 @@ descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoin
 		}
 	}
 	kpCount = tempCounter;
-	free(keyPoints);
+	//free(keyPoints);
 
 	keyPoints = (keyPoint*)realloc(keyPoints_TEMP, kpCount * sizeof(keyPoint));
 	kpScaleIdx = (int*)realloc(kpScaleIdx, kpCount * sizeof(int));

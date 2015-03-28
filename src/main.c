@@ -109,7 +109,6 @@ int main( int argc, const char ** argv )
             save_keypoints( "out", keypoints_list, keypoints_count );
             save_keypoints_image( "keypoints_image", keypoints_list, keypoints_count, data, width, height );
 
-            /*
             size_t desc_count;
             descriptor * descriptors = harris_hessian_build_descriptor( 
                 keypoints_list, 
@@ -122,7 +121,6 @@ int main( int argc, const char ** argv )
 
             save_descriptor( "out.desc", descriptors, desc_count );
             free( descriptors );
-            */
 
             free( keypoints_list );
 
