@@ -96,7 +96,12 @@ int main( int argc, char * const *argv )
                 return 2;
                 break; 
             case 't':
+            #ifdef PROFILE
                 opencl_timer_enable_profile = true;
+            #else
+                fprintf( stderr, "The program is not compiled with profiling.\n" );
+                return 1;
+            #endif
                 break;
             case 'k':
                 k_name = optarg;
@@ -166,6 +171,14 @@ int main( int argc, char * const *argv )
                 fprintf( stderr, "Saving descriptor to: %s\n" , d_name );
                 save_descriptor( d_name, descriptors, desc_count );
             }
+
+#ifdef PROFILE 
+            if( opencl_timer_enable_profile )
+            {
+                printf( "Timer output\n" );
+                opencl_timer_print_results( stdout );
+            }
+#endif
 
             free( descriptors );
 

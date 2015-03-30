@@ -424,10 +424,12 @@ bool opencl_loader_init()
         cl_command_queue_properties cq_props 
             = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
+#ifdef PROFILE
         if( opencl_timer_enable_profile ) 
         {
             cq_props |= CL_QUEUE_PROFILING_ENABLE;
         }
+#endif
 
 
         command_queue = clCreateCommandQueue( 

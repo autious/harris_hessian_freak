@@ -188,6 +188,7 @@ bool opencl_fd_run_gaussxy(
         &kernel_gaussx_event
     );
     ASSERT_ENQ( kernel_gaussx, errcode_ret );
+    PROFILE_PE( kernel_gaussx, kernel_gaussx_event );
 
     clSetKernelArg( kernel_gaussy, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
     clSetKernelArg( kernel_gaussy, 1, sizeof( cl_int ), &kernel_radius );
@@ -206,6 +207,7 @@ bool opencl_fd_run_gaussxy(
         event
     );
     ASSERT_ENQ( kernel_gaussy, errcode_ret );
+    PROFILE_PE( kernel_gaussy, *event );
 
     clReleaseKernel( kernel_gaussx );
     clReleaseKernel( kernel_gaussy );
@@ -252,6 +254,7 @@ bool opencl_fd_desaturate_image(
             event
         );
         ASSERT_ENQ( kernel_desaturate, errcode_ret );
+        PROFILE_PE( kernel_desaturate, *event );
 
         clReleaseKernel( kernel_desaturate );
 
@@ -317,7 +320,8 @@ bool opencl_fd_derivate_image( struct FD* state,
         event_wait_list,
         event
     );
-    ASSERT_ENQ( kernel_desaturate, errcode_ret );
+    ASSERT_ENQ( kernel_derivate, errcode_ret );
+    PROFILE_PE( kernel_derivate, *event );
 
     clReleaseKernel( kernel_derivate );
 
@@ -363,6 +367,7 @@ bool opencl_fd_second_moment_matrix_elements( struct FD* state,
         event
     );
     ASSERT_ENQ( smme_kernel, errcode_ret );
+    PROFILE_PE( smme_kernel, *event );
     
     clReleaseProgram( program );
     clReleaseKernel( smme_kernel );
@@ -409,6 +414,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
         event
     );
     ASSERT_ENQ( harris_corner_response, errcode_ret );
+    PROFILE_PE( harris_corner_response, *event );
     
     clReleaseProgram( program );
     clReleaseKernel( harris_corner_response );
@@ -453,6 +459,7 @@ bool opencl_fd_run_harris_corner_suppression( struct FD* state,
         event
     );
     ASSERT_ENQ( harris_corner_suppression, errcode_ret );
+    PROFILE_PE( harris_corner_suppression, *event );
     
     clReleaseProgram( program );
     clReleaseKernel( harris_corner_suppression );
@@ -499,6 +506,7 @@ bool opencl_fd_run_hessian( struct FD* state,
         event
     );
     ASSERT_ENQ( hessian, errcode_ret );
+    PROFILE_PE( hessian, *event );
     
     clReleaseProgram( program );
     clReleaseKernel( hessian );
@@ -542,6 +550,7 @@ bool opencl_fd_harris_corner_count( struct FD* state,
         event
     );
     ASSERT_ENQ( harris_count, errcode_ret );
+    PROFILE_PE( harris_count, *event );
 
     clReleaseProgram( program );
     clReleaseKernel( harris_count );
@@ -591,7 +600,8 @@ bool opencl_fd_find_keypoints(
         event_wait_list,
         event
     );
-    ASSERT_ENQ( harris_count, errcode_ret );
+    ASSERT_ENQ( find_keypoints, errcode_ret );
+    PROFILE_PE( find_keypoints, *event );
 
     clReleaseProgram( program );
     clReleaseKernel( find_keypoints  );
@@ -680,6 +690,7 @@ bool opencl_fd_run_gauss2d(
         event
     );
     ASSERT_ENQ( kernel_gauss2d, errcode_ret );
+    PROFILE_PE( kernel_gauss2d, *event );
 
     cl_float* output = malloc( sizeof( cl_float ) * gauss_kernel_size );
     clEnqueueReadBuffer( command_queue,

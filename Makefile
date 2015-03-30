@@ -8,7 +8,7 @@ VPATH=src/
 
 all: $(SOURCES) $(EXECUTABLE)
 
-debug: CFLAGS += -DDEBUG -g
+debug: CFLAGS += -DDEBUG -DPROFILE -g
 debug: all
 
 profile: CFLAGS += -DPROFILE

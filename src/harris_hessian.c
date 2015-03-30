@@ -342,7 +342,8 @@ static bool do_harris(
         &derivate_event, 
         &second_derivate_events[1] 
     );
-
+    
+    cl_event hessian_event;
     opencl_fd_run_hessian( 
             &state, 
             mem.ddxx, 
@@ -352,9 +353,10 @@ static bool do_harris(
             sigmaD, 
             2, 
             second_derivate_events, 
-            NULL
+            &hessian_event
     );
 
+    cl_event harris_corner_count_event;
     opencl_fd_harris_corner_count( 
         &state, 
         mem.harris_suppression, 
@@ -362,7 +364,7 @@ static bool do_harris(
         corner_count, 
         1, 
         &harris_suppression_event, 
-        NULL  
+        &harris_corner_count_event
     );
 
     //Need a gathered event for output.
@@ -371,7 +373,6 @@ static bool do_harris(
 
     return true;
 }
-
 
 static void save_image( const char* prefix, const char* filename, cl_mem mem, cl_uint count, cl_event *events )
 {
