@@ -113,106 +113,79 @@ static cl_program compile( const char* name )
     cl_device_id device = opencl_loader_get_device();
     cl_program program;
 
-    const int BUFSIZE = 128;
-    size_t size = 0;     
-    size_t read_bytes = 0;
-
-    char *string = NULL;
-
-    FILE* f = fopen( name, "r" ); 
-
-    if( f )
+    int i = 0;
+    const char* string = NULL;
+    while( kernel_files[i*2] != NULL && strcmp( kernel_files[i*2], name ) != 0  )
     {
-        while( !feof( f ) && !ferror( f ) )
+        i++;
+    }
+
+    string = kernel_files[i*2+1];
+
+    if( string != NULL )
+    {
+        LOGV( "Compiling -> program:%s,len:%zu\n", name, kernel_sizes[i] );
+
+        cl_int errcode_ret; 
+        program = clCreateProgramWithSource( 
+                context, 
+                1, 
+                (const char**)&string, 
+                &kernel_sizes[i], 
+                &errcode_ret 
+        );
+
+        if( errcode_ret != CL_SUCCESS )
         {
-            if( size < read_bytes + BUFSIZE )
-            {
-                size += BUFSIZE;
-                string = (char*)realloc( string, size );
-            }
-
-            if( string != NULL )
-            {
-                read_bytes += fread( string + read_bytes, 1, BUFSIZE, f );
-            }
-            else
-            {
-                LOGE( "Unable to allocate memory for opencl kernel temp string" );
-                break; //Unable to allocate more memory for string
-            }
-        }
-
-        if( !ferror( f ) && string != NULL )
-        {
-            LOGV( "Compiling -> program:%s,alloc:%zu,read:%zu\n", name, size, read_bytes );
-
-            cl_int errcode_ret; 
-            program = clCreateProgramWithSource( 
-                    context, 
-                    1, 
-                    (const char**)&string, 
-                    &read_bytes, 
-                    &errcode_ret 
-            );
-    
-            if( errcode_ret != CL_SUCCESS )
-            {
-                CLERR( "Unable to load program:%s", errcode_ret);
-            }
-            else
-            {
-                errcode_ret = clBuildProgram( 
-                        program, 
-                        1, 
-                        &device, 
-                        compile_macro, 
-                        NULL, 
-                        NULL 
-                );
-
-                if( errcode_ret != CL_SUCCESS )
-                {
-                    CLERR( "Unable to compile program", errcode_ret );
-                }
-
-                size_t compile_output_size;
-
-                errcode_ret = clGetProgramBuildInfo( program, 
-                    device, 
-                    CL_PROGRAM_BUILD_LOG,
-                    0,
-                    NULL,
-                    &compile_output_size );
-
-                if( errcode_ret != CL_SUCCESS )
-                {
-                    CLERR( "Unable to get size of compile log", errcode_ret );
-                }
-                else
-                {
-                    LOGV( "Program compile output" );
-                    char compile_log[compile_output_size];
-                    errcode_ret = clGetProgramBuildInfo( program, 
-                        device, 
-                        CL_PROGRAM_BUILD_LOG,
-                        compile_output_size,
-                        compile_log,
-                        NULL );
-                    LOGV( "%lu:%s", compile_output_size, compile_log );
-                }
-            }
+            CLERR( "Unable to load program:%s", errcode_ret);
         }
         else
         {
-            LOGE( "Error reading file:\"%s\"", name );
+            errcode_ret = clBuildProgram( 
+                    program, 
+                    1, 
+                    &device, 
+                    compile_macro, 
+                    NULL, 
+                    NULL 
+            );
+
+            if( errcode_ret != CL_SUCCESS )
+            {
+                CLERR( "Unable to compile program", errcode_ret );
+            }
+
+            size_t compile_output_size;
+
+            errcode_ret = clGetProgramBuildInfo( program, 
+                device, 
+                CL_PROGRAM_BUILD_LOG,
+                0,
+                NULL,
+                &compile_output_size );
+
+            if( errcode_ret != CL_SUCCESS )
+            {
+                CLERR( "Unable to get size of compile log", errcode_ret );
+            }
+            else
+            {
+                LOGV( "Program compile output" );
+                char compile_log[compile_output_size];
+                errcode_ret = clGetProgramBuildInfo( program, 
+                    device, 
+                    CL_PROGRAM_BUILD_LOG,
+                    compile_output_size,
+                    compile_log,
+                    NULL );
+                LOGV( "%lu:%s", compile_output_size, compile_log );
+            }
         }
     }
     else
     {
-        LOGE( "Unable to open the file:\"%s\"", name );
+        LOGE( "Missing kernel, unable to compile: %s", name );
     }
-
-    free( string );
 
     return program;
 }
