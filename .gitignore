@@ -8,3 +8,4 @@ hh_freak_detector
 *.kpts
 *.desc
 core
+src/_opencl_kernels.h

@@ -24,5 +24,11 @@ obj/%.o: %.c
 	@mkdir -p obj/
 	$(CC) $(CFLAGS) $< -o $@
 
+opencl_handler.c: encodekernels
+
+encodekernels:
+	./script/encode_kernels.sh kernels/ > src/_opencl_kernels.h
+	
+
 install:
 	cp hh_freak_detector /usr/local/bin/
