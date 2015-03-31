@@ -96,6 +96,45 @@ int opencl_timer_push_marker( const char* name, int reoccurance )
     return timer_stack_count++;
 }
 
+#define MAP_STRING_DOUBLE_NAME_SIZE 24
+
+struct MapStringDouble
+{
+    char name[MAP_STRING_DOUBLE_NAME_SIZE];
+    double value;
+    struct MapStringDouble *next;  
+};
+
+static void mapstringdouble_add( struct MapStringDouble** start, const char* name, double value )
+{
+    struct MapStringDouble **cur = start;
+
+    while( *cur != NULL && strncmp( (**cur).name, name, MAP_STRING_DOUBLE_NAME_SIZE - 1 ) != 0 )
+    {
+        cur = &(**cur).next;
+    } 
+
+    if( *cur == NULL )
+    {
+        *cur = (struct MapStringDouble*)malloc( sizeof( struct MapStringDouble ) );
+
+        (**cur).next = NULL; 
+        snprintf( (**cur).name, MAP_STRING_DOUBLE_NAME_SIZE, "%s", name );
+    }
+
+    (**cur).value += value;
+}
+
+static void mapstringdouble_clear( struct MapStringDouble* start )
+{
+    while( start != NULL )
+    {
+        void *tmp = start; 
+        start = start->next;
+        free( tmp );
+    }
+}
+
 void opencl_timer_push_segment( const char* name, int start, int end )
 {
     resize();
@@ -118,6 +157,8 @@ void opencl_timer_print_results( FILE* f )
 
     double event_sum_total;
     double tmp;
+
+    struct MapStringDouble *event_sum = NULL;
 
     for( int i = 0; i < timer_stack_count; i++ )
     {
@@ -148,6 +189,8 @@ void opencl_timer_print_results( FILE* f )
                     tmp
                 );
                 event_sum_total += tmp;
+
+                mapstringdouble_add( &event_sum, timer_stack[i].name, tmp );
                 break;
 
             case MARKER:
@@ -192,15 +235,18 @@ void opencl_timer_print_results( FILE* f )
                 }
                 else
                 {
+                    fprintf( stderr, "Invalid segment:%s", timer_stack[i].name );
                 }
                 break;
         }
         
     }
-    fprintf(f, T_FORMAT, "SUMEVENT", "", event_sum_total );
-    
 
-     
+    //Print sum
+    fprintf(f, T_FORMAT, "SUMEVENT", "", event_sum_total );
+
+    mapstringdouble_clear( event_sum );
+    event_sum = NULL;
 }
 
 void opencl_timer_clear_events( )
