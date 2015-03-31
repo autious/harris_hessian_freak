@@ -24,3 +24,5 @@ obj/%.o: %.c
 	@mkdir -p obj/
 	$(CC) $(CFLAGS) $< -o $@
 
+install:
+	cp hh_freak_detector /usr/local/bin/
