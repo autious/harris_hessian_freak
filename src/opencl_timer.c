@@ -80,7 +80,7 @@ void opencl_timer_push_event( const char* name, cl_event event )
 {
     resize();
 
-    strncpy( timer_stack[timer_stack_count].name, name, TIMER_EVENT_NAME_LENGTH );
+    snprintf(timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
     timer_stack[timer_stack_count].val.event = event;
     timer_stack[timer_stack_count].type = EVENT;
     timer_stack_count++;
@@ -90,7 +90,7 @@ int opencl_timer_push_marker( const char* name, int reoccurance )
 {
     resize();
     
-    strncpy( timer_stack[timer_stack_count].name, name, TIMER_EVENT_NAME_LENGTH );
+    snprintf( timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
     timer_stack[timer_stack_count].val.reoccurance = reoccurance;
     timer_stack[timer_stack_count].type = MARKER;
     return timer_stack_count++;
