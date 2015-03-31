@@ -6,9 +6,8 @@
 
 #include "opencl_error.h"
 
+#define TIMER_EVENT_NAME_LENGTH 32
 
-
-#define TIMER_EVENT_NAME_LENGTH 24
 static const int TIMER_STACK_SIZE_INCREASE = 256;
 
 bool opencl_timer_enable_profile = false;
@@ -96,7 +95,7 @@ int opencl_timer_push_marker( const char* name, int reoccurance )
     return timer_stack_count++;
 }
 
-#define MAP_STRING_DOUBLE_NAME_SIZE 24
+#define MAP_STRING_DOUBLE_NAME_SIZE 32
 
 struct MapStringDouble
 {
@@ -148,14 +147,13 @@ void opencl_timer_push_segment( const char* name, int start, int end )
 
 void opencl_timer_print_results( FILE* f )
 {
-    const char T_FORMAT[] = "%-10s %24s: %fms\n";
-    const char M_FORMAT[] = "%-10s %24s: %d\n";
+    const char T_FORMAT[] = "%-10s %32s: %fms\n";
+    const char M_FORMAT[] = "%-10s %32s: %d\n";
     cl_ulong time_start, time_end;
     cl_int errcode_ret;
 
     int segment_start, segment_end;
 
-    double event_sum_total;
     double tmp;
 
     struct MapStringDouble *event_sum = NULL;
@@ -188,8 +186,6 @@ void opencl_timer_print_results( FILE* f )
                     timer_stack[i].name,
                     tmp
                 );
-                event_sum_total += tmp;
-
                 mapstringdouble_add( &event_sum, timer_stack[i].name, tmp );
                 break;
 
@@ -242,9 +238,18 @@ void opencl_timer_print_results( FILE* f )
         
     }
 
-    //Print sum
-    fprintf(f, T_FORMAT, "SUMEVENT", "", event_sum_total );
+    struct MapStringDouble *cur = event_sum;;
+    double event_sum_total2 = 0;
 
+    while( cur != NULL )
+    {
+        fprintf( f, T_FORMAT, "SUMEVENT", cur->name, cur->value );
+        event_sum_total2 += cur->value;
+        cur = cur->next;
+    }
+
+    fprintf(f, T_FORMAT, "SUMEVENT", "", event_sum_total2 );
+    
     mapstringdouble_clear( event_sum );
     event_sum = NULL;
 }
