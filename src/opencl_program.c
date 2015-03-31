@@ -8,6 +8,7 @@
 #include "opencl_handler.h"
 #include "opencl_error.h"
 #include "util.h"
+#include "_opencl_kernels.h"
 
 struct ProgramList
 {

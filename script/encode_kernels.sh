@@ -14,7 +14,7 @@ for i in $(find "$1" -type f); do
     cname=${cname//-/_}
     cname=${cname//./_}
 
-    echo "\"$i\",$cname" >> "$names_file"
+    echo "\"$i\",$cname," >> "$names_file"
 
     echo "static unsigned char $cname[] = {"
     hexdump -v -e '" " 16/1 "  0x%02x, " "\n"' $i | \
