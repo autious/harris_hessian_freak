@@ -119,6 +119,9 @@ int main( int argc, char * const *argv )
 
     if( optind == argc - 1 )
     {
+        
+        int start_marker = PROFILE_PM( full_pass, 0 );
+
         fprintf( stderr, "Running harris hessian on %s\n", argv[optind] );
         int width;
         int height;
@@ -171,11 +174,13 @@ int main( int argc, char * const *argv )
                 fprintf( stderr, "Saving descriptor to: %s\n" , d_name );
                 save_descriptor( d_name, descriptors, desc_count );
             }
-
+    
+            int end_marker = PROFILE_PM( full_pass, 0 );
+            
 #ifdef PROFILE 
             if( opencl_timer_enable_profile )
             {
-                printf( "Timer output\n" );
+                opencl_timer_push_segment( "full_pass", start_marker, end_marker );
                 opencl_timer_print_results( stdout );
             }
 #endif

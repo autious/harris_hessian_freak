@@ -174,7 +174,7 @@ void opencl_timer_print_results( FILE* f )
                     );
                     ASSERT_PROF( time_start, errcode_ret );
 
-                    errcode_ret = clGetEventProfilingInfo( timer_stack[i].val.event,
+                    errcode_ret = clGetEventProfilingInfo( timer_stack[segment_end].val.event,
                         CL_PROFILING_COMMAND_END,
                         sizeof( cl_ulong ),
                         &time_end,
