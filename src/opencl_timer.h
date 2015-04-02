@@ -19,5 +19,5 @@ void opencl_timer_clear_events( );
 #define PROFILE_PM(kernel,o) opencl_timer_push_marker(#kernel,o)
 #else
 #define PROFILE_PE(kernel,event) ((void)0)
-#define PROFILE_PM(kernel,o) ((void)0)
+#define PROFILE_PM(kernel,o) ((int)0)
 #endif
