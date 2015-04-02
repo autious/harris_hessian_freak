@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include "opencl_handler.h"
+#include "opencl_loader.h"
 #include "opencl_error.h"
 #include "opencl_util.h"
 #include "opencl_program.h"

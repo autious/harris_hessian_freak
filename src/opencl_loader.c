@@ -1,4 +1,4 @@
-#include "opencl_handler.h"
+#include "opencl_loader.h"
 
 #include <dlfcn.h>
 #include <stdlib.h>

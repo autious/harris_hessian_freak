@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "log.h"
-#include "opencl_handler.h"
+#include "opencl_loader.h"
 #include "opencl_error.h"
 #include "util.h"
 #include "_opencl_kernels.h"

@@ -8,7 +8,7 @@
 
 #include "log.h"
 #include "util.h"
-#include "opencl_handler.h"
+#include "opencl_loader.h"
 #include "android_io.h"
 #include "opencl_error.h"
 #include "opencl_test.h"
