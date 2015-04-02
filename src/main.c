@@ -11,7 +11,7 @@
 #include "opencl_program.h"
 #include "opencl_fd.h"
 #include "opencl_timer.h"
-#include "harris_hessian.h"
+#include "harris_hessian_freak.h"
 #include "log.h"
 #include "util.h"
 #include "lodepng.h"
@@ -137,12 +137,12 @@ int main( int argc, char * const *argv )
             fprintf( stderr, "Picture dimensions: (%u,%u)", width, height );
 
             cl_event detection_event;
-            harris_hessian_init( width, height ); 
-            harris_hessian_detection( data, 0, NULL, &detection_event );
+            harris_hessian_freak_init( width, height ); 
+            harris_hessian_freak_detection( data, 0, NULL, &detection_event );
 
             cl_event generate_keypoints_list_event;
             size_t keypoints_count;
-            keyPoint* keypoints_list = harris_hessian_generate_keypoint_list(
+            keyPoint* keypoints_list = harris_hessian_freak_generate_keypoint_list(
                 &keypoints_count,
                 1,
                 &detection_event,
@@ -162,7 +162,7 @@ int main( int argc, char * const *argv )
             }
 
             size_t desc_count;
-            descriptor * descriptors = harris_hessian_build_descriptor( 
+            descriptor * descriptors = harris_hessian_freak_build_descriptor( 
                 keypoints_list, 
                 keypoints_count, 
                 &desc_count, 
@@ -191,7 +191,7 @@ int main( int argc, char * const *argv )
 
             free( keypoints_list );
 
-            harris_hessian_close( );
+            harris_hessian_freak_close( );
 
         }
         else

@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 //Decided for the H-H method.
 static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 0.0f, 0.0f };
@@ -180,7 +181,7 @@ static void free_harris_buffers( )
     memset( &mem, 0, sizeof( struct BufferMemory ));
 }
 
-void harris_hessian_init( int width, int height)
+void harris_hessian_freak_init( int width, int height)
 {
     state.width = width;
     state.height = height;
@@ -208,7 +209,7 @@ void harris_hessian_init( int width, int height)
     init_harris_buffers();
 }
 
-void harris_hessian_close()
+void harris_hessian_freak_close()
 {
     free_harris_buffers();
     opencl_program_close();
@@ -383,7 +384,7 @@ static void save_image( const char* prefix, const char* filename, cl_mem mem, cl
 }
 
 
-keyPoint* harris_hessian_generate_keypoint_list( 
+keyPoint* harris_hessian_freak_generate_keypoint_list( 
     size_t* in_size, 
     cl_uint event_count, 
     cl_event *event_wait_list, 
@@ -445,7 +446,7 @@ keyPoint* harris_hessian_generate_keypoint_list(
     return kps;
 }
 
-void harris_hessian_detection( 
+void harris_hessian_freak_detection( 
     uint8_t *rgba_data, 
     cl_uint event_count, 
     cl_event* event_wait_list, 
@@ -655,7 +656,7 @@ void harris_hessian_detection(
     //free( strong_corner_counts );
 }
 
-descriptor* harris_hessian_build_descriptor( 
+descriptor* harris_hessian_freak_build_descriptor( 
     keyPoint* keypoints_list,
     size_t keypoints_count,
     size_t *desc_count,

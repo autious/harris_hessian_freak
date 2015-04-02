@@ -1,6 +1,7 @@
 #include "gauss_kernel.h"
 
 #include <math.h>
+#include <stdlib.h>
 #include <CL/opencl.h>
 
 cl_float* generate_gauss_kernel_line( size_t* size, float sigma )
