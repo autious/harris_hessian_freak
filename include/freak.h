@@ -1,6 +1,9 @@
 #ifndef FREAK_H
 #define FREAK_H
 
+#include <stdint.h>
+#include <stdlib.h>
+
 extern const int FREAK_NB_PAIRS;
 extern const int WORD_SIZE;
 
