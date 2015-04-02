@@ -316,18 +316,20 @@ static void generate_device_list()
                                     }
                                     else if( print_type[m] == N_ULONG )
                                     {
+                                        long unsigned int cast_val = *(cl_ulong*)d;
                                         LOGV( 
                                             "%s:%lu", 
                                             opencl_device_info_codename( device_param_names[m] ), 
-                                            *(cl_ulong*)d 
+                                            cast_val 
                                         );
                                     }
                                     else if( print_type[m] == N_UINT )
                                     {
+                                        unsigned int cast_val = *(cl_uint*)d;
                                         LOGV( 
                                             "%s:%u", 
                                             opencl_device_info_codename( device_param_names[m] ), 
-                                            *(cl_uint*)d
+                                            cast_val 
                                         );
                                     }
 

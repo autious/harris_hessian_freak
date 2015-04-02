@@ -76,7 +76,8 @@ void opencl_program_add_define_integer( const char* name, int value )
     snprintf( compile_macro + compile_macro_count, additional_len + 1, " -D %s=%d", name, value );
     compile_macro_count += additional_len;
    
-    LOGV( "new define string, %lu digits: \"%s\"", count_base_10_digits( value ), compile_macro );
+    long unsigned int output_count_base = count_base_10_digits( value );
+    LOGV( "new define string, %lu digits: \"%s\"", output_count_base, compile_macro );
 }
 
 void opencl_program_add_compiler_flag( const char* value )
@@ -178,7 +179,8 @@ static cl_program compile( const char* name )
                     compile_output_size,
                     compile_log,
                     NULL );
-                LOGV( "%lu:%s", compile_output_size, compile_log );
+                long unsigned int c_compile_output_size = compile_output_size;
+                LOGV( "%lu:%s", c_compile_output_size, compile_log );
             }
         }
     }

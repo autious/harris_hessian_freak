@@ -90,7 +90,8 @@ bool opencl_test_run()
             clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_START, sizeof( cl_ulong ), &start, NULL );
             clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_END, sizeof( cl_ulong ), &end, NULL );
             
-            LOGV( "Kernel execution time: %lu", end-start ); 
+            long unsigned int time_diff = end-start;
+            LOGV( "Kernel execution time: %lu",  time_diff ); 
 
 
         }

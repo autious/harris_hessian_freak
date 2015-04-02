@@ -1,5 +1,5 @@
-CC=gcc
-CFLAGS=-c -std=c99 -Wall
+CC?=gcc #Use gcc if env doesn't specify otherwise
+CFLAGS=-c -std=c99 -Wall -Iinclude
 LDFLAGS= -lOpenCL -lm
 LIBRARY_SOURCES= opencl_error.c opencl_handler.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian.c util.c freak.c opencl_timer.c
 LIBRARY_OBJECTS=$(addprefix obj/,$(LIBRARY_SOURCES:.c=.o))
@@ -12,7 +12,9 @@ EXECUTABLE=hh_freak_detector
 LIBRARY=hh_freak_detector.a
 VPATH=src/
 
-all: $(SOURCES) $(EXECUTABLE)
+all: $(EXECUTABLE)
+
+lib: $(LIBRARY)
 
 debug: CFLAGS += -DDEBUG -DPROFILE -g
 debug: all
