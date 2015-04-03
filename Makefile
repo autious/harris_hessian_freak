@@ -9,7 +9,6 @@ LIBRARY_OBJECTS=$(addprefix obj/,$(LIBRARY_SOURCES:.c=.o))
 PROGRAM_SOURCES= main.c
 PROGRAM_OBJECTS=$(addprefix obj/,$(PROGRAM_SOURCES:.c=.o))
 
-
 EXECUTABLE=harris_hessian_freak
 LIBRARY=harris_hessian_freak.a
 VPATH=src/
@@ -37,10 +36,9 @@ obj/%.o: %.c
 	@mkdir -p obj/
 	$(CC) $(CFLAGS) $< -o $@
 
-opencl_program.c: encodekernels
+include Generate.mk
 
-encodekernels:
-	./script/encode_kernels.sh kernels/ > src/_opencl_kernels.h
+opencl_program.c: encodekernels
 
 install:
 	cp hh_freak_detector /usr/local/bin/

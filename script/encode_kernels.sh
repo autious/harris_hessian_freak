@@ -10,7 +10,7 @@ sizes_file=$(mktemp)
 
 echo "//This file is generated and should not be manually edited"
 
-for i in $(find "$1" -type f); do
+for i in $(find "$1" -name "*.cl" -type f); do
     cname=$(basename $i)
     cname=${cname//-/_}
     cname=${cname//./_}

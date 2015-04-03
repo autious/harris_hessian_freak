@@ -10,4 +10,10 @@ LOCAL_SRC_FILES := src/android_opencl_test_jni.c src/opencl_error.c src/opencl_l
 LOCAL_MODULE := android_opencl_test_jni
 LOCAL_LDLIBS := -landroid -ldl -llog -lOpenCL
 
+include $(LOCAL_PATH)/Generate.mk
+
+%opencl_program.c: encodekernels
+	echo "Generating kernels"
+
 include $(BUILD_SHARED_LIBRARY)
+
