@@ -3,8 +3,10 @@
 #include "opencl_timer.h"
 
 #include <string.h>
+#include <time.h>
 
 #include "opencl_error.h"
+#include "_commit_data.h"
 
 #define TIMER_EVENT_NAME_LENGTH 32
 
@@ -145,8 +147,8 @@ void opencl_timer_push_segment( const char* name, int start, int end )
 
 void opencl_timer_print_results( )
 {
-    const char T_FORMAT[] = "%-10s %32s: %fms\n";
-    const char M_FORMAT[] = "%-10s %32s: %d\n";
+    const char T_FORMAT[] = "__TIMER__ %-10s %32s: %fms";
+    const char M_FORMAT[] = "__TIMER__ %-10s %32s: %d";
     cl_ulong time_start, time_end;
     cl_int errcode_ret;
 
@@ -155,6 +157,12 @@ void opencl_timer_print_results( )
     double tmp;
 
     struct MapStringDouble *event_sum = NULL;
+
+    LOGV( "__TIMER__ BEGIN" );
+    time_t t = time( NULL );
+    char * t_s = ctime( &t );
+    LOGV( "__TIMER__ %s", t_s ? t_s : "" );
+    LOGV( "__TIMER__ %s", git_commit_info );
 
     for( int i = 0; i < timer_stack_count; i++ )
     {
@@ -246,6 +254,8 @@ void opencl_timer_print_results( )
     
     mapstringdouble_clear( event_sum );
     event_sum = NULL;
+
+    LOGV( "__TIMER__ END" );
 }
 
 void opencl_timer_clear_events( )

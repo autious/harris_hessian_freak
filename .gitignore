@@ -10,3 +10,4 @@ harris_hessian_freak.a
 *.desc
 core
 src/_opencl_kernels.h
+src/_commit_data.h

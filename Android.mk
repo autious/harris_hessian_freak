@@ -15,6 +15,8 @@ include $(LOCAL_PATH)/Generate.mk
 
 %opencl_program.c: encodekernels
 	echo "Generating kernels"
+%opencl_timer.c: encodeversion
+	echo "Encoding version"
 
 include $(BUILD_SHARED_LIBRARY)
 
