@@ -198,6 +198,7 @@ void opencl_program_compile( const char** programs )
 
     while( programs[i] != NULL )
     {
+        LOGV( "Compiling: %s", programs[i] );
         opencl_program_load( programs[i] );
         i++;
     }

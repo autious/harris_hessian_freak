@@ -196,11 +196,11 @@ void harris_hessian_freak_init( int width, int height)
 
     const char *programs[] = 
     {
-       "kernels/derivate.cl",
-       "kernels/gauss.cl",
-       "kernels/harris.cl",
-       "kernels/hessian.cl",
-       "kernels/smme.cl",
+       "derivate.cl",
+       "gauss.cl",
+       "harris.cl",
+       "hessian.cl",
+       "smme.cl",
        NULL
     };
 
@@ -518,7 +518,7 @@ void harris_hessian_freak_detection(
     //Run harris-hessian on all the standard scalespaces
     for( int i = 0; i < buffer_count-2; i++ )
     {
-        printf( "dispatch Harris sigma:%f\n", HHSIGMAS[i] );
+        LOGV( "dispatch Harris sigma:%f\n", HHSIGMAS[i] );
         do_harris( 
                 mem.hessian_determinants[harris_hessian_scales[i].hessian_determinant_index],
                 mem.strong_responses,
@@ -574,7 +574,7 @@ void harris_hessian_freak_detection(
 
     cl_event event_marker, event_before, event_after;
     clEnqueueMarker( command_queue, &event_marker );
-    printf( "dispatch Harris sigma:%f\n", scale_before.sigma );
+    LOGV( "dispatch Harris sigma:%f\n", scale_before.sigma );
     do_harris(
             mem.hessian_determinants[scale_before.hessian_determinant_index],
             mem.strong_responses,
@@ -584,7 +584,7 @@ void harris_hessian_freak_detection(
             &event_marker,
             &event_before 
     );
-    printf( "dispatch Harris sigma:%f\n", scale_after.sigma );
+    LOGV( "dispatch Harris sigma:%f\n", scale_after.sigma );
     do_harris(
             mem.hessian_determinants[scale_after.hessian_determinant_index],
             mem.strong_responses,
@@ -620,7 +620,7 @@ void harris_hessian_freak_detection(
     );
                
 
-    printf( "dispatch keypoints search\n" );
+    LOGV( "dispatch keypoints search\n" );
     opencl_fd_find_keypoints( 
         &state, 
         mem.hessian_determinant_buffer, 
@@ -632,8 +632,8 @@ void harris_hessian_freak_detection(
         event
     );
 
-    printf( "Total count:%d\n", total_corner_count );
-    //printf( "Characteristic scale:%f\n",  );
+    LOGV( "Total count:%d\n", total_corner_count );
+    //LOGV( "Characteristic scale:%f\n",  );
 
     
     /*

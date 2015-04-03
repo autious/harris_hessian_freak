@@ -4,39 +4,98 @@
 #include <jni.h>
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+#include <CL/opencl.h>
 
 #include "log.h"
 #include "util.h"
-#include "opencl_loader.h"
-#include "opencl_program.h"
-#include "android_io.h"
-#include "opencl_error.h"
+#include "harris_hessian_freak.h"
+#include "freak.h"
+#include "opencl_timer.h"
+#include "stb_image.h"
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
-    opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
-    return opencl_loader_init();
 }
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_closeLib( JNIEnv* env, jobject x )
 {
     android_io_set_asset_manager( NULL );
-    opencl_loader_close();
     return true;
 }
 
 jstring Java_org_bth_opencltestjni_OpenCLTestJNI_getLibError( JNIEnv* env, jobject x )
 {
-    size_t size = opencl_loader_get_error_size();
-    char err[size];
-    opencl_loader_get_error( err );
+    char *err = "err";
     return (*env)->NewStringUTF( env, err );
 }
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject x )
 {
-        opencl_test_run();
+    //opencl_test_run();
+#ifdef PROFILE
+    int start_marker = PROFILE_PM( full_pass, 0 );
+#endif
+    
+    int width;
+    int height;
+    int n;
+    uint8_t *data;
+
+    data = stbi_load( "test.png", &width, &height, &n, 4 );
+
+    if( data )
+    {
+        LOGV( "Picture dimensions: (%u,%u)", width, height );
+
+        cl_event detection_event;
+        harris_hessian_freak_init( width, height ); 
+        harris_hessian_freak_detection( data, 0, NULL, &detection_event );
+
+        cl_event generate_keypoints_list_event;
+        size_t keypoints_count;
+        keyPoint* keypoints_list = harris_hessian_freak_generate_keypoint_list(
+            &keypoints_count,
+            1,
+            &detection_event,
+            &generate_keypoints_list_event
+        );
+
+
+        size_t desc_count;
+        descriptor * descriptors = harris_hessian_freak_build_descriptor( 
+            keypoints_list, 
+            keypoints_count, 
+            &desc_count, 
+            1, 
+            &generate_keypoints_list_event, 
+            NULL 
+        );
+
+#ifdef PROFILE 
+        int end_marker = PROFILE_PM( full_pass, 0 );
+
+        if( opencl_timer_enable_profile )
+        {
+            opencl_timer_push_segment( "full_pass", start_marker, end_marker );
+            opencl_timer_print_results( stdout );
+        }
+#endif
+
+        free( descriptors );
+
+        free( keypoints_list );
+
+        harris_hessian_freak_close( );
+    }
+    else
+    {
+        LOGE( "Unable to load image: %s", "file" );
+    }
+
+    free( data );
+
+
 }

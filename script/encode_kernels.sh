@@ -11,11 +11,11 @@ sizes_file=$(mktemp)
 echo "//This file is generated and should not be manually edited"
 
 for i in $(find "$1" -name "*.cl" -type f); do
-    cname=$(basename $i)
-    cname=${cname//-/_}
+    filename=$(basename $i)
+    cname=${filename//-/_}
     cname=${cname//./_}
 
-    echo "\"$i\",$cname," >> "$names_file"
+    echo "\"$filename\",$cname," >> "$names_file"
     echo "sizeof( $cname )," >> "$sizes_file"
 
     echo "static unsigned char $cname[] = {"

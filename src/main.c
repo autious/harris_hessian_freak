@@ -16,8 +16,6 @@
 #include "util.h"
 #include "lodepng.h"
 #include "freak.h"
-
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 static void save_keypoints_image( const char * filename, const keyPoint* keypoints, size_t keypoint_count, const uint8_t *data, int width, int height )

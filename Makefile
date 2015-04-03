@@ -3,7 +3,7 @@
 CC?=gcc #Use gcc if env doesn't specify otherwise
 CFLAGS=-c -std=c99 -Wall -Iinclude
 LDFLAGS= -lOpenCL -lm
-LIBRARY_SOURCES= opencl_error.c opencl_loader.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian_freak.c util.c freak.c opencl_timer.c
+LIBRARY_SOURCES= opencl_error.c opencl_loader.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian_freak.c util.c freak.c opencl_timer.c stbi_image.c
 LIBRARY_OBJECTS=$(addprefix obj/,$(LIBRARY_SOURCES:.c=.o))
 
 PROGRAM_SOURCES= main.c

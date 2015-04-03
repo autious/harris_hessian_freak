@@ -14,7 +14,7 @@
 bool opencl_test_run()
 {
     cl_int errcode_ret;
-    cl_program program = opencl_program_load( "kernels/test_1.cl" );
+    cl_program program = opencl_program_load( "test_1.cl" );
     cl_kernel kernel = opencl_loader_load_kernel( program, "main" );
 
     const int TEST_SIZE = 1024*256;

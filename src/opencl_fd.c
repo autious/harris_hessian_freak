@@ -139,7 +139,7 @@ bool opencl_fd_run_gaussxy(
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size[] = { 8, 4 };
 
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "gauss.cl" );
     cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
     cl_kernel kernel_gaussy      = opencl_loader_load_kernel( program_gauss_cl, "gaussy" );
     cl_command_queue command_queue = opencl_loader_get_command_queue();
@@ -231,7 +231,7 @@ bool opencl_fd_desaturate_image(
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size[] = { 8,4 };
 
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "gauss.cl" );
     cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
 
     if( kernel_desaturate )
@@ -276,7 +276,7 @@ bool opencl_fd_derivate_image( struct FD* state,
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size[] = { 8, 4 };
 
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/derivate.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "derivate.cl" );
     cl_kernel kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate" );
         
     if( ddyout == NULL )
@@ -344,7 +344,7 @@ bool opencl_fd_second_moment_matrix_elements( struct FD* state,
     const size_t local_work_size[] = { 32 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/smme.cl" );
+    cl_program program = opencl_program_load( "smme.cl" );
     cl_kernel smme_kernel 
         = opencl_loader_load_kernel( program, "second_moment_matrix_elements" );
 
@@ -391,7 +391,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
     const size_t local_work_size[] = { 32 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/harris.cl" );
+    cl_program program = opencl_program_load( "harris.cl" );
     cl_kernel harris_corner_response
         = opencl_loader_load_kernel( program, "harris_corner_response" );
 
@@ -435,7 +435,7 @@ bool opencl_fd_run_harris_corner_suppression( struct FD* state,
     const size_t local_work_size[] = { 8,4 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/harris.cl" );
+    cl_program program = opencl_program_load( "harris.cl" );
     cl_kernel harris_corner_suppression
         = opencl_loader_load_kernel( program, "harris_corner_suppression" );
 
@@ -483,7 +483,7 @@ bool opencl_fd_run_hessian( struct FD* state,
     const size_t local_work_size[] = { 16 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/hessian.cl" );
+    cl_program program = opencl_program_load( "hessian.cl" );
     cl_kernel hessian
         = opencl_loader_load_kernel( program, "hessian" );
 
@@ -529,7 +529,7 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     const size_t local_work_size[] = { 32 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/harris.cl" );
+    cl_program program = opencl_program_load( "harris.cl" );
     cl_kernel harris_count
         = opencl_loader_load_kernel( program, "harris_count" );
 
@@ -574,7 +574,7 @@ bool opencl_fd_find_keypoints(
     const size_t local_work_size[] = { 32 };
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
-    cl_program program = opencl_program_load( "kernels/hessian.cl" );
+    cl_program program = opencl_program_load( "hessian.cl" );
     cl_kernel find_keypoints
         = opencl_loader_load_kernel( program, "find_keypoints" );
 
@@ -632,7 +632,7 @@ bool opencl_fd_run_gauss2d(
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size[] = { 2, 2 };
 
-    cl_program program_gauss_cl  = opencl_program_load( "kernels/gauss.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "gauss.cl" );
     cl_kernel kernel_gauss2d = opencl_loader_load_kernel( program_gauss_cl, "gauss2d" );
     cl_command_queue command_queue = opencl_loader_get_command_queue();
 
@@ -641,13 +641,13 @@ bool opencl_fd_run_gauss2d(
     size_t gauss_kernel_size = gauss_kernel_diameter * gauss_kernel_diameter;
     cl_int halfwidth = gauss_kernel_diameter/2;
 
-    printf( "Kernel contents %lu %lu %f\n", gauss_kernel_size, gauss_kernel_diameter, sigma);
+    LOGV( "Kernel contents %lu %lu %f\n", gauss_kernel_size, gauss_kernel_diameter, sigma);
     for( int y = 0; y < gauss_kernel_diameter; y++ )
     {
-        printf( "\n" );
+        LOGV( "\n" );
         for( int x = 0; x < gauss_kernel_diameter; x++ )
         {
-            printf( "%f ", gauss_kernel_line[x+y*gauss_kernel_diameter]);
+            LOGV( "%f ", gauss_kernel_line[x+y*gauss_kernel_diameter]);
         }
     }
 
@@ -704,14 +704,14 @@ bool opencl_fd_run_gauss2d(
             NULL
     );
 
-    printf( "Kernel contents read %lu %f\n", gauss_kernel_diameter, sigma);
+    LOGV( "Kernel contents read %lu %f\n", gauss_kernel_diameter, sigma);
     for( int y = 0; y < gauss_kernel_diameter; y++ )
     {
         for( int x = 0; x < gauss_kernel_diameter; x++ )
         {
-            printf( "%f ", output[x+y*gauss_kernel_diameter]);
+            LOGV( "%f ", output[x+y*gauss_kernel_diameter]);
         }
-        printf( "\n" );
+        LOGV( "\n" );
     }
             
 
