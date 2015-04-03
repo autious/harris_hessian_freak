@@ -1,7 +1,8 @@
 *.swp
 *.swo
 *.o
-hh_freak_detector
+harris_hessian_freak
+harris_hessian_freak.a
 *.png
 *.jpg
 *.jpeg
@@ -9,4 +10,3 @@ hh_freak_detector
 *.desc
 core
 src/_opencl_kernels.h
-hh_freak_detector.a

@@ -1,3 +1,5 @@
+# This is the generic makefile for building the program on a unix machine.
+# The project also contains android specific makefiles to make building to andoird easier
 CC?=gcc #Use gcc if env doesn't specify otherwise
 CFLAGS=-c -std=c99 -Wall -Iinclude
 LDFLAGS= -lOpenCL -lm
