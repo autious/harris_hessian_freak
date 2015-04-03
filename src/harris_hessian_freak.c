@@ -686,6 +686,7 @@ descriptor* harris_hessian_freak_build_descriptor(
 
     clWaitForEvents( 1, &grayscale_map_event );
 
+    LOGV( "Starting computation of freak" );
     int _desc_count;
     descriptor* desc = freak_compute(  //This kills the keypoints_list
         grayscale_data, 
@@ -695,6 +696,7 @@ descriptor* harris_hessian_freak_build_descriptor(
         keypoints_count, 
         &_desc_count
     );
+    LOGV( "Done computing freak" );
 
     *desc_count = _desc_count;
 

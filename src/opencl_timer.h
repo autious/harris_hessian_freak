@@ -7,12 +7,11 @@
 
 #include <CL/opencl.h>
 
-extern bool opencl_timer_enable_profile;
 
 void opencl_timer_push_event( const char* name, cl_event event );
 int opencl_timer_push_marker( const char* name, int reoccurance );
 void opencl_timer_push_segment( const char* name, int start, int end );
-void opencl_timer_print_results( FILE* f );
+void opencl_timer_print_results( );
 void opencl_timer_clear_events( );
 
 #define PROFILE_PE(kernel,event) opencl_timer_push_event(#kernel,event)

@@ -10,8 +10,6 @@
 
 static const int TIMER_STACK_SIZE_INCREASE = 256;
 
-bool opencl_timer_enable_profile = false;
-
 enum TimerEventType
 {
     EVENT,
@@ -145,7 +143,7 @@ void opencl_timer_push_segment( const char* name, int start, int end )
     timer_stack_count++;
 }
 
-void opencl_timer_print_results( FILE* f )
+void opencl_timer_print_results( )
 {
     const char T_FORMAT[] = "%-10s %32s: %fms\n";
     const char M_FORMAT[] = "%-10s %32s: %d\n";
@@ -179,9 +177,7 @@ void opencl_timer_print_results( FILE* f )
                 );
                 ASSERT_PROF( time_end, errcode_ret );
                 tmp = nano_to_milli(time_end-time_start);
-                fprintf( 
-                    f, 
-                    T_FORMAT,
+                LOGV( T_FORMAT,
                     "EVENT",
                     timer_stack[i].name,
                     tmp
@@ -190,8 +186,7 @@ void opencl_timer_print_results( FILE* f )
                 break;
 
             case MARKER:
-                fprintf(
-                    f,
+                LOGV(
                     M_FORMAT,
                     "MARKER",
                     timer_stack[i].name,
@@ -221,8 +216,7 @@ void opencl_timer_print_results( FILE* f )
                     );
                     ASSERT_PROF( time_end, errcode_ret );
 
-                    fprintf( 
-                        f, 
+                    LOGV( 
                         T_FORMAT,
                         "SEGMENT",
                         timer_stack[i].name,
@@ -231,7 +225,7 @@ void opencl_timer_print_results( FILE* f )
                 }
                 else
                 {
-                    fprintf( stderr, "Invalid segment:%s", timer_stack[i].name );
+                    LOGE( "Invalid segment:%s", timer_stack[i].name );
                 }
                 break;
         }
@@ -243,12 +237,12 @@ void opencl_timer_print_results( FILE* f )
 
     while( cur != NULL )
     {
-        fprintf( f, T_FORMAT, "SUMEVENT", cur->name, cur->value );
+        LOGV( T_FORMAT, "SUMEVENT", cur->name, cur->value );
         event_sum_total2 += cur->value;
         cur = cur->next;
     }
 
-    fprintf(f, T_FORMAT, "SUMEVENT", "", event_sum_total2 );
+    LOGV( T_FORMAT, "SUMEVENT", "", event_sum_total2 );
     
     mapstringdouble_clear( event_sum );
     event_sum = NULL;

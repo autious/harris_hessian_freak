@@ -18,6 +18,8 @@
 #include "freak.h"
 #include "stb_image.h"
 
+static bool opencl_timer_enable_profile;
+
 static void save_keypoints_image( const char * filename, const keyPoint* keypoints, size_t keypoint_count, const uint8_t *data, int width, int height )
 {
     uint8_t *dest_data = malloc( sizeof( uint8_t ) * 4 * width * height );

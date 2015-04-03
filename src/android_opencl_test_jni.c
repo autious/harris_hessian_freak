@@ -77,11 +77,9 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
 #ifdef PROFILE 
         int end_marker = PROFILE_PM( full_pass, 0 );
 
-        if( opencl_timer_enable_profile )
-        {
-            opencl_timer_push_segment( "full_pass", start_marker, end_marker );
-            opencl_timer_print_results( stdout );
-        }
+        LOGV("Printing timing data");
+        opencl_timer_push_segment( "full_pass", start_marker, end_marker );
+        opencl_timer_print_results();
 #endif
 
         free( descriptors );
@@ -96,6 +94,4 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
     }
 
     free( data );
-
-
 }
