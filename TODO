@@ -1,3 +1,5 @@
 Make HH init take w and h and prealloc all data.
 Make compile take a structure with compile flags.
 Return an object from opencl_program_compile with the compiled programs.
+
+Use CL_MEM_ALLOC_HOST_PTR in all allocations that need to be mapped, all other forms will incur overhead.
