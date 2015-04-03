@@ -1,4 +1,3 @@
-#ifdef __ANDROID
 #include <stdbool.h>
 
 #include <string.h>
@@ -9,15 +8,16 @@
 #include "log.h"
 #include "util.h"
 #include "opencl_loader.h"
+#include "opencl_program.h"
 #include "android_io.h"
 #include "opencl_error.h"
-#include "opencl_test.h"
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
+    opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
     return opencl_loader_init();
 }
 
@@ -38,7 +38,5 @@ jstring Java_org_bth_opencltestjni_OpenCLTestJNI_getLibError( JNIEnv* env, jobje
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject x )
 {
-    return opencl_test_run();
+        opencl_test_run();
 }
-
-#endif
