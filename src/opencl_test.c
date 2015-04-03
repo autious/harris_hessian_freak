@@ -13,99 +13,91 @@
 
 bool opencl_test_run()
 {
-    cl_program program = opencl_program_load( "kernels/test_1.cl" );
     cl_int errcode_ret;
-    cl_kernel kernel = clCreateKernel( program, "main", &errcode_ret );
+    cl_program program = opencl_program_load( "kernels/test_1.cl" );
+    cl_kernel kernel = opencl_loader_load_kernel( program, "main" );
 
     const int TEST_SIZE = 1024*256;
+
+    cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
+    cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
+
+
     if( errcode_ret == CL_SUCCESS )
     {
-        cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
-        cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
+        cl_event write_event;
+        cl_float inputValues[TEST_SIZE];
+        cl_float outputValues[TEST_SIZE];
+        for( int i = 0; i < TEST_SIZE; i++ )
+            inputValues[i] = i;
 
+        errcode_ret = clEnqueueWriteBuffer( 
+                opencl_loader_get_command_queue(), 
+                mem_in, 
+                false, 
+                0, 
+                sizeof( cl_float ) * TEST_SIZE, 
+                inputValues, 
+                0, 
+                NULL, 
+                &write_event );
 
-        if( errcode_ret == CL_SUCCESS )
-        {
-            cl_event write_event;
-            cl_float inputValues[TEST_SIZE];
-            cl_float outputValues[TEST_SIZE];
-            for( int i = 0; i < TEST_SIZE; i++ )
-                inputValues[i] = i;
+        if( errcode_ret != CL_SUCCESS )
+            CLERR( "Unable to enq range write", errcode_ret );
 
-            errcode_ret = clEnqueueWriteBuffer( 
-                    opencl_loader_get_command_queue(), 
-                    mem_in, 
-                    false, 
-                    0, 
-                    sizeof( cl_float ) * TEST_SIZE, 
-                    inputValues, 
-                    0, 
-                    NULL, 
-                    &write_event );
+        cl_event waitfor[] = { write_event };
+        cl_event kernel_event;
+        size_t global_work_size[] = { TEST_SIZE };
+        size_t local_work_size[] = { 16 };
 
-            if( errcode_ret != CL_SUCCESS )
-                CLERR( "Unable to enq range write", errcode_ret );
+        clSetKernelArg( kernel, 0, sizeof( cl_mem ), &mem_in );
+        clSetKernelArg( kernel, 1, sizeof( cl_mem ), &mem_out );
+        errcode_ret = clEnqueueNDRangeKernel( 
+                opencl_loader_get_command_queue(), 
+                kernel, 
+                1, 
+                NULL, 
+                global_work_size, 
+                local_work_size, 
+                1, 
+                waitfor, 
+                &kernel_event );
 
-            cl_event waitfor[] = { write_event };
-            cl_event kernel_event;
-            size_t global_work_size[] = { TEST_SIZE };
-            size_t local_work_size[] = { 16 };
+        if( errcode_ret != CL_SUCCESS )
+            CLERR( "Unable to enq range kernel", errcode_ret );
 
-            clSetKernelArg( kernel, 0, sizeof( cl_mem ), &mem_in );
-            clSetKernelArg( kernel, 1, sizeof( cl_mem ), &mem_out );
-            errcode_ret = clEnqueueNDRangeKernel( 
-                    opencl_loader_get_command_queue(), 
-                    kernel, 
-                    1, 
-                    NULL, 
-                    global_work_size, 
-                    local_work_size, 
-                    1, 
-                    waitfor, 
-                    &kernel_event );
+        cl_event read_event;
+        errcode_ret = clEnqueueReadBuffer( opencl_loader_get_command_queue(), 
+                mem_out, 
+                false, 
+                0, 
+                sizeof( cl_float ) * TEST_SIZE, 
+                outputValues, 
+                1, 
+                &kernel_event, 
+                &read_event );
 
-            if( errcode_ret != CL_SUCCESS )
-                CLERR( "Unable to enq range kernel", errcode_ret );
+        if( errcode_ret != CL_SUCCESS )
+            CLERR( "Unable to enq read buffer", errcode_ret );
 
-            cl_event read_event;
-            errcode_ret = clEnqueueReadBuffer( opencl_loader_get_command_queue(), 
-                    mem_out, 
-                    false, 
-                    0, 
-                    sizeof( cl_float ) * TEST_SIZE, 
-                    outputValues, 
-                    1, 
-                    &kernel_event, 
-                    &read_event );
+        clWaitForEvents( 1, &read_event ); 
 
-            if( errcode_ret != CL_SUCCESS )
-                CLERR( "Unable to enq read buffer", errcode_ret );
+        clReleaseMemObject( mem_in );
+        clReleaseMemObject( mem_out );
 
-            clWaitForEvents( 1, &read_event ); 
-
-            clReleaseMemObject( mem_in );
-            clReleaseMemObject( mem_out );
-
-            cl_ulong start=0, end=0;
-            clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_START, sizeof( cl_ulong ), &start, NULL );
-            clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_END, sizeof( cl_ulong ), &end, NULL );
-            
-            long unsigned int time_diff = end-start;
-            LOGV( "Kernel execution time: %lu",  time_diff ); 
-
-
-        }
-        else
-        {
-           CLERR( "Unable to create memory object", errcode_ret );
-        }
-
-        clReleaseKernel( kernel );
+        cl_ulong start=0, end=0;
+        clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_START, sizeof( cl_ulong ), &start, NULL );
+        clGetEventProfilingInfo( kernel_event, CL_PROFILING_COMMAND_END, sizeof( cl_ulong ), &end, NULL );
+        
+        long unsigned int time_diff = end-start;
+        LOGV( "Kernel execution time: %lu",  time_diff ); 
     }
     else
     {
-        CLERR("Unable to create kernel from program",errcode_ret );  
+       CLERR( "Unable to create memory object", errcode_ret );
     }
+
+    clReleaseKernel( kernel );
 
     clReleaseProgram( program );
 
