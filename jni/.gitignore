@@ -1,0 +1,13 @@
+*.swp
+*.swo
+*.o
+harris_hessian_freak
+harris_hessian_freak.a
+*.png
+*.jpg
+*.jpeg
+*.kpts
+*.desc
+core
+src/_opencl_kernels.h
+src/_commit_data.h
