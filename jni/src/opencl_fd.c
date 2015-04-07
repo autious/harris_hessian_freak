@@ -92,7 +92,7 @@ void opencl_fd_create_image_buffers( struct FD* state, cl_mem* buffers, size_t c
     {
         buffers[i] = clCreateBuffer(
             opencl_loader_get_context(),
-            CL_MEM_READ_WRITE,
+            CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
             sizeof( cl_float ) * state->width * state->height,
             NULL,
             &errcode_ret 

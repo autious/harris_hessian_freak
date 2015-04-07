@@ -102,7 +102,7 @@ static void init_harris_buffers( )
 
 
     mem.keypoints_buf = clCreateBuffer( context,
-        CL_MEM_READ_WRITE,
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR,
         sizeof( cl_ushort ) * state.width * state.height, 
         NULL,
         &errcode_ret 
@@ -137,10 +137,10 @@ static void init_harris_buffers( )
         
         cl_int value = 0;
         mem.hessian_corner_counts[i] = clCreateBuffer( context,
-                        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                        sizeof( cl_int ),
-                        &value,
-                        &errcode_ret
+            CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR | CL_MEM_ALLOC_HOST_PTR,
+            sizeof( cl_int ),
+            &value,
+            &errcode_ret
         );
         ASSERT_BUF( strong_arr_buf, errcode_ret );
     }
