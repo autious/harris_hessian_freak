@@ -110,10 +110,10 @@ static void init_harris_buffers( )
     ASSERT_BUF( keypoints_buf, errcode_ret );
 
     mem.hessian_determinant_indices_buffer = clCreateBuffer( context,
-            CL_MEM_READ_ONLY,
-            sizeof( cl_int ) * NELEMS( HHSIGMAS ),
-            NULL,
-            &errcode_ret
+        CL_MEM_READ_ONLY,
+        sizeof( cl_int ) * NELEMS( HHSIGMAS ),
+        NULL,
+        &errcode_ret
     );
     ASSERT_BUF( hessian_determinant_indices_buffer, errcode_ret );
 
