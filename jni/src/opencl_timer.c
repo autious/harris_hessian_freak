@@ -1,5 +1,7 @@
 #ifdef PROFILE
 
+#define _POSIX_C_SOURCE 199309L
+
 #include "opencl_timer.h"
 
 #include <string.h>
@@ -17,6 +19,7 @@ enum TimerEventType
     EVENT,
     MARKER,
     SEGMENT,
+    MONOTONIC
 };
 
 struct TimerEvent
@@ -29,6 +32,7 @@ struct TimerEvent
         cl_event event;
         int reoccurance;
         int segment[2];
+        struct timespec monotonic;
     } val;
 
 };
@@ -70,6 +74,19 @@ static int get_first_prior_event( int position )
     return position;
 }
 
+static int get_matching_prev_monotonic( const int startposition )
+{
+    int position = startposition-1;
+    while( position >= 0 
+            && !(timer_stack[position].type == MONOTONIC 
+                && strcmp(timer_stack[position].name, timer_stack[startposition].name ) == 0 ) )
+    {
+        position--; 
+    }
+
+    return position;
+}
+
 static double nano_to_milli( cl_ulong nano )
 {
     return ((double)nano / 1000.0 / 1000.0);
@@ -92,6 +109,15 @@ int opencl_timer_push_marker( const char* name, int reoccurance )
     snprintf( timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
     timer_stack[timer_stack_count].val.reoccurance = reoccurance;
     timer_stack[timer_stack_count].type = MARKER;
+    return timer_stack_count++;
+}
+
+int opencl_timer_push_monotonic( const char* name )
+{
+    resize();
+    snprintf( timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
+    clock_gettime( CLOCK_MONOTONIC, &timer_stack[timer_stack_count].val.monotonic );
+    timer_stack[timer_stack_count].type = MONOTONIC;
     return timer_stack_count++;
 }
 
@@ -149,10 +175,13 @@ void opencl_timer_print_results( )
 {
     const char T_FORMAT[] = "__TIMER__ %-10s %32s: %fms";
     const char M_FORMAT[] = "__TIMER__ %-10s %32s: %d";
+    const char E_FORMAT[] = "__TIMER__ %-10s %32s:";
     cl_ulong time_start, time_end;
     cl_int errcode_ret;
 
     int segment_start, segment_end;
+    time_t d_secs;
+    long d_nsec;
 
     double tmp;
 
@@ -201,6 +230,34 @@ void opencl_timer_print_results( )
                     timer_stack[i].val.reoccurance
                 );
                 break;
+            case MONOTONIC:
+                segment_start = get_matching_prev_monotonic( i );
+                segment_end = i;
+
+                if( segment_start >= 0 )
+                {
+                    d_secs 
+                        = timer_stack[segment_end].val.monotonic.tv_sec
+                        - timer_stack[segment_start].val.monotonic.tv_sec;
+                    d_nsec 
+                        = timer_stack[segment_end].val.monotonic.tv_nsec
+                        - timer_stack[segment_start].val.monotonic.tv_nsec;
+                    LOGV( 
+                        T_FORMAT,
+                        "MT_END",
+                        timer_stack[i].name,
+                        nano_to_milli(d_secs*1.0E9+d_nsec)
+                    );
+                }
+                else
+                {
+                    LOGV( 
+                        E_FORMAT,
+                        "MT_START",
+                        timer_stack[i].name
+                    );
+                }
+                break;
 
             case SEGMENT:
                 segment_start = get_first_following_event( timer_stack[i].val.segment[0] );
@@ -237,7 +294,6 @@ void opencl_timer_print_results( )
                 }
                 break;
         }
-        
     }
 
     struct MapStringDouble *cur = event_sum;;

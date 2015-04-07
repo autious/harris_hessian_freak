@@ -37,6 +37,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
     //opencl_test_run();
 #ifdef PROFILE
     int start_marker = PROFILE_PM( full_pass, 0 );
+    PROFILE_MM( "full_hh_freak" ); 
 #endif
     
     int width;
@@ -75,6 +76,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
         );
 
 #ifdef PROFILE 
+        PROFILE_MM( "full_hh_freak" ); 
         int end_marker = PROFILE_PM( full_pass, 0 );
 
         LOGV("Printing timing data");

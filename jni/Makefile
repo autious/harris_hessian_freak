@@ -21,6 +21,7 @@ debug: CFLAGS += -DDEBUG -DPROFILE -g
 debug: all
 
 profile: CFLAGS += -DPROFILE
+profile: LDFLAGS += -lrt
 profile: all
 
 clean: 

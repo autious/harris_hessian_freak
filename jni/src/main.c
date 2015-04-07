@@ -18,8 +18,6 @@
 #include "freak.h"
 #include "stb_image.h"
 
-static bool opencl_timer_enable_profile;
-
 static void save_keypoints_image( const char * filename, const keyPoint* keypoints, size_t keypoint_count, const uint8_t *data, int width, int height )
 {
     uint8_t *dest_data = malloc( sizeof( uint8_t ) * 4 * width * height );
@@ -80,6 +78,10 @@ void print_help()
     printf( "Usage: hh_freak_detector [-ht] [-k FILE] [-p FILE] [-d FILE] FILE\n" );
 }
 
+#ifdef PROFILE
+static bool opencl_timer_enable_profile = false;
+#endif
+
 int main( int argc, char * const *argv )
 {
     int opt;
@@ -121,6 +123,7 @@ int main( int argc, char * const *argv )
     {
         
  #ifdef PROFILE
+        PROFILE_MM( "full_hh_freak" ); 
         int start_marker = PROFILE_PM( full_pass, 0 );
  #endif
 
@@ -179,10 +182,11 @@ int main( int argc, char * const *argv )
     
 #ifdef PROFILE 
             int end_marker = PROFILE_PM( full_pass, 0 );
+            PROFILE_MM( "full_hh_freak" ); 
+            opencl_timer_push_segment( "full_pass", start_marker, end_marker );
 
             if( opencl_timer_enable_profile )
             {
-                opencl_timer_push_segment( "full_pass", start_marker, end_marker );
                 opencl_timer_print_results( stdout );
             }
 #endif
