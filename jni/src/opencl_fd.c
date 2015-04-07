@@ -231,7 +231,7 @@ bool opencl_fd_desaturate_image(
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size[] = { 8,4 };
 
-    cl_program program_gauss_cl  = opencl_program_load( "gauss.cl" );
+    cl_program program_gauss_cl  = opencl_program_load( "desaturate.cl" );
     cl_kernel kernel_desaturate  = opencl_loader_load_kernel( program_gauss_cl, "desaturate" );
 
     if( kernel_desaturate )

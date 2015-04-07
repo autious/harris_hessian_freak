@@ -189,7 +189,6 @@ void harris_hessian_freak_init( int width, int height)
     opencl_loader_init();
 
     assert( 16 >= NELEMS( HHSIGMAS ) ); //Verification that the short we're using for keypoints is sufficient.
-
     opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
     opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
     opencl_program_add_define_integer( "SCALE_COUNT", NELEMS( HHSIGMAS ) );
@@ -197,6 +196,7 @@ void harris_hessian_freak_init( int width, int height)
     const char *programs[] = 
     {
        "derivate.cl",
+       "desaturate.cl",
        "gauss.cl",
        "harris.cl",
        "hessian.cl",
