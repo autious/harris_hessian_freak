@@ -3,6 +3,7 @@
 #include "opencl_test.h"
 #include "opencl_error.h"
 #include "opencl_program.h"
+#include "compile_flag_object.h"
 #include "opencl_fd.h"
 #include "log.h"
 #include "util.h"
@@ -189,9 +190,12 @@ void harris_hessian_freak_init( int width, int height)
     opencl_loader_init();
 
     assert( 16 >= NELEMS( HHSIGMAS ) ); //Verification that the short we're using for keypoints is sufficient.
-    opencl_program_add_compiler_flag( "-cl-fast-relaxed-math" );
-    opencl_program_add_compiler_flag( "-cl-std=CL1.1" );
-    opencl_program_add_define_integer( "SCALE_COUNT", NELEMS( HHSIGMAS ) );
+
+    struct CompileFlagObject cfo;
+    compile_flag_object_init( &cfo );
+    compile_flag_object_add_compiler_flag( &cfo, "-cl-fast-relaxed-math" );
+    compile_flag_object_add_compiler_flag( &cfo, "-cl-std=CL1.1" );
+    compile_flag_object_add_define_integer( &cfo, "SCALE_COUNT", NELEMS( HHSIGMAS ) );
 
     const char *programs[] = 
     {
@@ -204,7 +208,9 @@ void harris_hessian_freak_init( int width, int height)
        NULL
     };
 
-    opencl_program_compile( programs );
+    opencl_program_compile( programs, &cfo );
+
+    compile_flag_object_free( &cfo );
 
     init_harris_buffers();
 }

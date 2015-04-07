@@ -8,6 +8,7 @@
 #include "opencl_loader.h"
 #include "opencl_error.h"
 #include "util.h"
+#include "compile_flag_object.h"
 #include "_opencl_kernels.h"
 
 struct ProgramList
@@ -19,7 +20,7 @@ struct ProgramList
 
 static struct ProgramList* program_root = NULL;
 
-static void opencl_program_add( const char* name, cl_program program )
+static void program_add( const char* name, cl_program program )
 {
     struct ProgramList ** cur = &program_root;
 
@@ -54,44 +55,6 @@ static cl_program opencl_program_get( const char* name )
     return NULL;
 }
 
-static char* compile_macro = NULL;
-int compile_macro_count = 0;
-int compile_macro_size = 0;
-
-static void resize( size_t additional_len )
-{
-    if( compile_macro_count + additional_len + 1 > compile_macro_size )
-    {
-        compile_macro_size = compile_macro_count + additional_len + 1;
-        compile_macro = realloc( compile_macro, sizeof( char ) * compile_macro_size );
-    }
-}
-
-void opencl_program_add_define_integer( const char* name, int value )
-{
-    size_t additional_len = strlen( " -D " ) + strlen( name ) + 1 + count_base_10_digits( value );
-
-    resize( additional_len );
-
-    snprintf( compile_macro + compile_macro_count, additional_len + 1, " -D %s=%d", name, value );
-    compile_macro_count += additional_len;
-   
-    long unsigned int output_count_base = count_base_10_digits( value );
-    LOGV( "new define string, %lu digits: \"%s\"", output_count_base, compile_macro );
-}
-
-void opencl_program_add_compiler_flag( const char* value )
-{
-    size_t additional_len = strlen(" ") + strlen( value );
-
-    resize( additional_len );
-
-    snprintf( compile_macro + compile_macro_count, additional_len + 1, " %s", value );
-    compile_macro_count += additional_len;
-
-    LOGV( "new define string: \"%s\"", compile_macro );
-}
-
 void opencl_program_close()
 {
     struct ProgramList *cur = program_root, *next;
@@ -104,11 +67,9 @@ void opencl_program_close()
         free(cur);
         cur = next;
     }
-
-    free( compile_macro );
 }
 
-static cl_program compile( const char* name )
+static void compile( const char* name, struct CompileFlagObject *cfo )
 {
     cl_context context = opencl_loader_get_context();
     cl_device_id device = opencl_loader_get_device();
@@ -146,7 +107,7 @@ static cl_program compile( const char* name )
                     program, 
                     1, 
                     &device, 
-                    compile_macro, 
+                    cfo->compile_macro, 
                     NULL, 
                     NULL 
             );
@@ -182,45 +143,38 @@ static cl_program compile( const char* name )
                 long unsigned int c_compile_output_size = compile_output_size;
                 LOGV( "%lu:%s", c_compile_output_size, compile_log );
             }
+
+            program_add( name, program );
         }
+
     }
     else
     {
         LOGE( "Missing kernel, unable to compile: %s", name );
     }
-
-    return program;
 }
 
-void opencl_program_compile( const char** programs )
+void opencl_program_compile( const char** programs, struct CompileFlagObject *cfo )
 {
     int i = 0;
 
     while( programs[i] != NULL )
     {
-        LOGV( "Compiling: %s", programs[i] );
-        opencl_program_load( programs[i] );
+        LOGV( "Compiling: %s with: %s", programs[i], cfo->compile_macro);
+        compile( programs[i], cfo );
         i++;
     }
 
     //clUnloadCompiler(); //Hint to the program that we are done using the compiler.
 }
 
-/*
- * Compiles and loads given program name, contains a caching function
- * meaning that a program is retained for subsequent loads.
- *
- * Progams aquired through this function need to be released
- * using clReleaseProgram 
- */
 cl_program opencl_program_load( const char* name )
 {
     cl_program program = opencl_program_get( name );
 
     if( !program )
     {
-        program = compile( name );
-        opencl_program_add( name, program );
+        LOGE( "Trying to get nonexistant program\n" );
     }
 
     return program;
