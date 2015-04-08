@@ -11,6 +11,7 @@
 #include "opencl_program.h"
 #include "opencl_fd.h"
 #include "opencl_timer.h"
+#include "opencl_config.h"
 #include "harris_hessian_freak.h"
 #include "log.h"
 #include "util.h"
@@ -75,7 +76,7 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
 
 void print_help()
 {
-    printf( "Usage: hh_freak_detector [-ht] [-k FILE] [-p FILE] [-d FILE] FILE\n" );
+    printf( "Usage: hh_freak_detector [-htr] [-k FILE] [-p FILE] [-d FILE] FILE\n" );
 }
 
 #ifdef PROFILE
@@ -89,7 +90,7 @@ int main( int argc, char * const *argv )
     const char* p_name = NULL;
     const char* d_name = NULL;
 
-    while((opt = getopt(argc,argv,"htk:p:d:")) != -1) 
+    while((opt = getopt(argc,argv,"htrk:p:d:")) != -1) 
     {
         switch(opt)
         {
@@ -113,6 +114,9 @@ int main( int argc, char * const *argv )
                 break;
             case 'd':
                 d_name = optarg;
+                break;
+            case 'r':
+                opencl_run_reference_mode = true;
                 break;
             default:
                 break;

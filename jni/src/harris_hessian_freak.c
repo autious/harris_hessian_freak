@@ -199,6 +199,8 @@ void harris_hessian_freak_init( int width, int height)
 
     const char *programs[] = 
     {
+       "optimized_gauss.cl",
+       "ref_gauss.cl",
        "derivate.cl",
        "desaturate.cl",
        "gauss.cl",

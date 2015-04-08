@@ -1,4 +1,4 @@
-__kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width )
+__kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, __local float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
