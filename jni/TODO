@@ -7,3 +7,7 @@ Use CL_MEM_ALLOC_HOST_PTR in all allocations that need to be mapped, all other f
 Remove all create/release memory objects between kernel calls to prevent stalls.
 Run application in fullscreen mode to minimize external influences
 Run tests in performance mode (p 39)
+
+use halffloats
+compile in the kernel into the program
+prefetch data in kernels
