@@ -352,15 +352,15 @@ static bool do_harris(
     
     cl_event hessian_event;
     opencl_fd_run_hessian( 
-            &state, 
-            mem.ddxx, 
-            mem.ddxy, 
-            mem.ddyy, 
-            hessian_determinant,
-            sigmaD, 
-            2, 
-            second_derivate_events, 
-            &hessian_event
+        &state, 
+        mem.ddxx, 
+        mem.ddxy, 
+        mem.ddyy, 
+        hessian_determinant,
+        sigmaD, 
+        2, 
+        second_derivate_events, 
+        &hessian_event
     );
 
     cl_event harris_corner_count_event;
