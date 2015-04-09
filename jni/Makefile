@@ -3,15 +3,17 @@
 CC?=gcc #Use gcc if env doesn't specify otherwise
 CFLAGS=-c -std=c99 -Wall -Iinclude
 LDFLAGS= -lOpenCL -lm
-LIBRARY_SOURCES= opencl_error.c opencl_loader.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian_freak.c util.c freak.c opencl_timer.c stb_image.c compile_flag_object.c
-LIBRARY_OBJECTS=$(addprefix obj/,$(LIBRARY_SOURCES:.c=.o))
 
+include Sources.mk
 PROGRAM_SOURCES= main.c
+
+LIBRARY_OBJECTS=$(addprefix obj/,$(LIBRARY_SOURCES:.c=.o))
 PROGRAM_OBJECTS=$(addprefix obj/,$(PROGRAM_SOURCES:.c=.o))
+PROGRAM_SOURCES_PATH=$(addprefix src/,$(PROGRAM_SOURCES))
+LIBRARY_SOURCES_PATH=$(addprefix src/,$(LIBRARY_SOURCES))
 
 EXECUTABLE=harris_hessian_freak
 LIBRARY=harris_hessian_freak.a
-VPATH=src/
 
 all: $(EXECUTABLE)
 
@@ -33,15 +35,15 @@ $(EXECUTABLE): $(LIBRARY) $(PROGRAM_OBJECTS)
 $(LIBRARY): $(LIBRARY_OBJECTS)
 	ar -cvq $(LIBRARY) $(LIBRARY_OBJECTS)
 
-obj/%.o: %.c
+obj/%.o: src/%.c
 	@mkdir -p obj/
 	$(CC) $(CFLAGS) $< -o $@
 
 include Generate.mk
 
-opencl_program.c: encodekernels
+src/opencl_program.c: encodekernels
 
-opencl_timer.c: encodeversion
+src/opencl_timer.c: encodeversion
 
 install:
 	cp hh_freak_detector /usr/local/bin/
