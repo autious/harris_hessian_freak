@@ -69,7 +69,7 @@ void opencl_program_close()
     }
 }
 
-static void compile( const char* name, struct CompileFlagObject *cfo )
+struct KernelData
 {
     cl_context context = opencl_loader_get_context();
     cl_device_id device = opencl_loader_get_device();
@@ -107,7 +107,7 @@ static void compile( const char* name, struct CompileFlagObject *cfo )
                     program, 
                     1, 
                     &device, 
-                    cfo->compile_macro, 
+                    cfo,
                     NULL, 
                     NULL 
             );
@@ -154,13 +154,13 @@ static void compile( const char* name, struct CompileFlagObject *cfo )
     }
 }
 
-void opencl_program_compile( const char** programs, struct CompileFlagObject *cfo )
+void opencl_program_compile( const char** programs, const char *cfo )
 {
     int i = 0;
 
     while( programs[i] != NULL )
     {
-        LOGV( "Compiling: %s with: %s", programs[i], cfo->compile_macro);
+        LOGV( "Compiling: %s with: %s", programs[i], cfo );
         compile( programs[i], cfo );
         i++;
     }
