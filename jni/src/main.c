@@ -97,8 +97,9 @@ int main( int argc, char * const *argv )
     const char* k_name = NULL;
     const char* p_name = NULL;
     const char* d_name = NULL;
+    const char* b_name = NULL;
 
-    while((opt = getopt(argc,argv,"xhtrk:p:d:")) != -1) 
+    while((opt = getopt(argc,argv,"xhtrk:p:d:b:")) != -1) 
     {
         switch(opt)
         {
@@ -123,6 +124,8 @@ int main( int argc, char * const *argv )
             case 'd': //descriptor file
                 d_name = optarg;
                 break;
+            case 'b': //Save all buffer steps.
+                b_name = optarg;
             case 'r':
                 opencl_run_reference_mode = true;
                 break;
@@ -170,7 +173,7 @@ int main( int argc, char * const *argv )
 
         cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
-        harris_hessian_freak_detection( data, 0, NULL, &detection_event );
+        harris_hessian_freak_detection( data, b_name, 0, NULL, &detection_event );
 
         cl_event generate_keypoints_list_event;
         size_t keypoints_count;

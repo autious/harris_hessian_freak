@@ -6,6 +6,7 @@
 void harris_hessian_freak_init( int width, int height );
 void harris_hessian_freak_detection( 
     uint8_t *rgba_data, 
+    const char* save_path,
     cl_uint event_count, 
     cl_event* event_wait_list, 
     cl_event *event 

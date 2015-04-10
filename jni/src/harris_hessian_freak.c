@@ -233,11 +233,30 @@ void harris_hessian_freak_close()
     opencl_loader_close();
 }
 
+
+static void save_image( const char* path, const char* filename, float sigma, cl_mem mem, cl_uint count, cl_event *events )
+{
+    int sigmai = sigma*100;
+    size_t len = strlen( path ) 
+        + strlen( "/" ) 
+        + (int)log10( sigmai ) + 1
+        + strlen( "_" )
+        + strlen( filename ) 
+        + strlen( ".png" ) 
+        + 2;
+    char buf[len];
+    snprintf( buf, len, "%s/%d_%s.png", path, sigmai, filename );
+    opencl_fd_save_buffer_to_image( buf, &state, mem, count, events );
+}
+
+#define SI(path,name,sigma,mem,count,event) if( path ) save_image( path, name,sigma, mem, count, event )
+
 static bool do_harris( 
         cl_mem hessian_determinant, 
         cl_mem strong_responses,
         cl_mem corner_count,
         float sigmaI, 
+        const char* save_path,
         cl_int wait_for_event_count,
         cl_event* wait_for, 
         cl_event* event 
@@ -259,6 +278,8 @@ static bool do_harris(
         wait_for, 
         &gauss_event 
     );
+    SI( save_path, "gauss_blur_x", sigmaI, mem.ddx, 1, &gauss_event );
+    SI( save_path, "gauss_blur_xy", sigmaI, mem.gauss_blur, 1, &gauss_event );
 
     opencl_fd_derivate_image( 
         &state, 
@@ -392,14 +413,6 @@ static bool do_harris(
     return true;
 }
 
-static void save_image( const char* prefix, const char* filename, cl_mem mem, cl_uint count, cl_event *events )
-{
-    size_t len = strlen( filename ) + strlen( prefix ) + 2;
-    char buf[len];
-    snprintf( buf, len, "%s_%s", prefix, filename );
-    opencl_fd_save_buffer_to_image( buf, &state, mem, count, events );
-}
-
 
 keyPoint* harris_hessian_freak_generate_keypoint_list( 
     size_t* in_size, 
@@ -465,6 +478,7 @@ keyPoint* harris_hessian_freak_generate_keypoint_list(
 
 void harris_hessian_freak_detection( 
     uint8_t *rgba_data, 
+    const char* save_path,
     cl_uint event_count, 
     cl_event* event_wait_list, 
     cl_event *event 
@@ -541,6 +555,7 @@ void harris_hessian_freak_detection(
                 mem.strong_responses,
                 mem.hessian_corner_counts[harris_hessian_scales[i].hessian_determinant_index],
                 harris_hessian_scales[i].sigma,
+                save_path,
                 i == 0 ? NELEMS( HHSIGMAS ) : 1, 
                 i == 0 ? hessian_write_null_events : &harris_hessian_scales[i-1].execution_event,
                 &harris_hessian_scales[i].execution_event );
@@ -560,9 +575,7 @@ void harris_hessian_freak_detection(
             mem.hessian_corner_counts[harris_hessian_scales[i].hessian_determinant_index],
             true,
             0,
-            sizeof( cl_int ),
-            &read_corner_count,
-            1,
+            sizeof( cl_int ), &read_corner_count, 1,
             &harris_hessian_scales[i].execution_event,
             NULL
         );
@@ -597,6 +610,7 @@ void harris_hessian_freak_detection(
             mem.strong_responses,
             mem.hessian_corner_counts[scale_before.hessian_determinant_index],
             scale_before.sigma,
+            save_path,
             1,
             &event_marker,
             &event_before 
@@ -607,6 +621,7 @@ void harris_hessian_freak_detection(
             mem.strong_responses,
             mem.hessian_corner_counts[scale_after.hessian_determinant_index],
             scale_after.sigma,
+            save_path,
             1,
             &event_before,
             &event_after 
@@ -653,21 +668,6 @@ void harris_hessian_freak_detection(
     //LOGV( "Characteristic scale:%f\n",  );
 
     
-    /*
-    save_image( "gauss_blur",           "out.png", mem.gauss_blur,            0, NULL );
-    save_image( "ddx",                  "out.png", mem.ddx,                   0, NULL );
-    save_image( "ddy",                  "out.png", mem.ddy,                   0, NULL );
-    save_image( "xx",                   "out.png", mem.xx,                    0, NULL );
-    save_image( "xy",                   "out.png", mem.xy,                    0, NULL );
-    save_image( "yy",                   "out.png", mem.yy,                    0, NULL );
-
-    save_image( "harris_response",      "out.png", mem.harris_response,       0, NULL );
-    save_image( "harris_suppression",   "out.png", mem.harris_suppression,    0, NULL );
-
-    save_image( "ddxx",                 "out.png", mem.ddxx,                  0, NULL );
-    save_image( "ddxy",                 "out.png", mem.ddxy,                  0, NULL );
-    save_image( "ddyy",                 "out.png", mem.ddyy,                  0, NULL );
-    */
 
     opencl_fd_free( &state, 0, NULL );
     //free( strong_corner_counts );
