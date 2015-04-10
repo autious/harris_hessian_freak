@@ -60,6 +60,25 @@ static struct BufferMemory mem;
 static struct FD state;
 static struct HarrisHessianScale harris_hessian_scales[NELEMS( HHSIGMAS )];
 
+static void save_image( const char* path, const char* filename, float sigma, cl_mem mem, cl_uint count, cl_event *events )
+{
+    int sigmai = sigma*100;
+    size_t sigmalen = sigmai > 1 ? (int)log10( sigmai ) : 0;
+
+    size_t len = strlen( path ) 
+        + strlen( "/" ) 
+        + sigmalen + 1
+        + strlen( "_" )
+        + strlen( filename ) 
+        + strlen( ".png" ) 
+        + 2;
+    char buf[len];
+    snprintf( buf, len, "%s/%d_%s.png", path, sigmai, filename );
+    opencl_fd_save_buffer_to_image( buf, &state, mem, count, events );
+}
+
+#define SI(path,name,sigma,mem,count,event) if( path ) save_image( path, name,sigma, mem, count, event )
+
 static void init_harris_buffers( )
 {
     cl_context context = opencl_loader_get_context();
@@ -235,22 +254,6 @@ void harris_hessian_freak_close()
 }
 
 
-static void save_image( const char* path, const char* filename, float sigma, cl_mem mem, cl_uint count, cl_event *events )
-{
-    int sigmai = sigma*100;
-    size_t len = strlen( path ) 
-        + strlen( "/" ) 
-        + (int)log10( sigmai ) + 1
-        + strlen( "_" )
-        + strlen( filename ) 
-        + strlen( ".png" ) 
-        + 2;
-    char buf[len];
-    snprintf( buf, len, "%s/%d_%s.png", path, sigmai, filename );
-    opencl_fd_save_buffer_to_image( buf, &state, mem, count, events );
-}
-
-#define SI(path,name,sigma,mem,count,event) if( path ) save_image( path, name,sigma, mem, count, event )
 
 static bool do_harris( 
         cl_mem hessian_determinant, 
@@ -494,6 +497,8 @@ void harris_hessian_freak_detection(
     
     cl_event desaturate_event;
     opencl_fd_desaturate_image( &state, mem.desaturated_image, 0, NULL, &desaturate_event );
+
+    SI( save_path, "desaturated_source", 0.0f, mem.desaturated_image, 1, &desaturate_event );
     
     cl_int errcode_ret;
 

@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "opencl_error.h"
 #include "opencl_program.h"
