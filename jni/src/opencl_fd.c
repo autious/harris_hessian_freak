@@ -13,7 +13,7 @@ bool opencl_fd_load_rgba( uint8_t* data, struct FD* state )
     cl_int errcode_ret;
     cl_image_format image_format = {
         CL_RGBA,
-        CL_UNSIGNED_INT8
+        CL_UNORM_INT8
     };
 
     state->image_rgba_char = clCreateImage2D(
@@ -63,7 +63,10 @@ void opencl_fd_save_buffer_to_image(
         for( int i = 0; i < state->width * state->height; i++ )
         {
             //LOGV( "%f", output_desaturated_image[i] );
-            output_desaturated_image_l[i] = output_desaturated_image[i];
+            int val = (int)(output_desaturated_image[i] * 255.0f);
+            val = val > 255 ? 255 : val;
+            val = val < 0 ? 0 : val;
+            output_desaturated_image_l[i] = val;
         } 
 
         lodepng_encode_file( name, output_desaturated_image_l, state->width, state->height, LCT_GREY, 8 );
