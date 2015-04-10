@@ -46,6 +46,8 @@ __kernel void harris_corner_suppression(
         out[c.x+c.y*width] = in_value;
 }
 
+#define HARRIS_THRESHOLD 0.0f
+
 __kernel void harris_count( __global float* in, volatile __global uint* strong, volatile __global int* count ) 
 {
     int i = get_global_id(0);
@@ -55,7 +57,7 @@ __kernel void harris_count( __global float* in, volatile __global uint* strong, 
     if( value > 0 )
     {
         atomic_inc( count );
-        if( value > 10000 )
+        if( value > HARRIS_THRESHOLD )
         {
            strong[i] += 1;
         }

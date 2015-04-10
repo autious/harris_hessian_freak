@@ -83,7 +83,7 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
 
 void print_help()
 {
-    printf( "Usage: hh_freak_detector [-htr] [-k FILE] [-p FILE] [-d FILE] FILE|-x\n" );
+    printf( "Usage: hh_freak_detector [-htr] [-k FILE] [-p FILE] [-d FILE] [-b directory] FILE|-x\n" );
 }
 
 #ifdef PROFILE
