@@ -126,6 +126,7 @@ int main( int argc, char * const *argv )
                 break;
             case 'b': //Save all buffer steps.
                 b_name = optarg;
+                break;
             case 'r':
                 opencl_run_reference_mode = true;
                 break;
