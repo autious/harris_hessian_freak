@@ -17,6 +17,7 @@
 //Decided for the H-H method.
 static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 0.0f, 0.0f };
 
+#define IMAGE_SIZE_MULTIPLE 32
 struct BufferMemory
 {
     cl_mem desaturated_image;
@@ -184,8 +185,16 @@ static void free_harris_buffers( )
 
 void harris_hessian_freak_init( int width, int height)
 {
-    state.width = width;
-    state.height = height;
+    state.width = (width / IMAGE_SIZE_MULTIPLE) * IMAGE_SIZE_MULTIPLE;
+    state.height = (height / IMAGE_SIZE_MULTIPLE) * IMAGE_SIZE_MULTIPLE;
+    state.source_width = width;
+    state.source_height = height;
+
+    LOGV( 
+        "Cut off %d,%d pixels from picture", 
+        state.source_width - state.width, 
+        state.source_height - state.height 
+    ); 
 
     opencl_loader_init();
 
@@ -465,7 +474,7 @@ void harris_hessian_freak_detection(
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
 
-    opencl_fd_load_rgba( rgba_data, state.width, state.height, &state );
+    opencl_fd_load_rgba( rgba_data, &state );
     init_harris_buffers( );
     
     cl_event desaturate_event;

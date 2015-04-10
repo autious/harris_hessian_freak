@@ -6,8 +6,11 @@ struct FD
 {
     cl_mem image_rgba_char; // "Image source buffer"
     //Following buffers are use when filters are applied to the greyscale image.
-    cl_uint width;
-    cl_uint height;
+    cl_uint source_width;
+    cl_uint source_height;
+
+    cl_uint width; //Target size, working size
+    cl_uint height; //Target size, working size
 };
 
 void opencl_fd_save_buffer_to_image( 
@@ -19,8 +22,6 @@ void opencl_fd_save_buffer_to_image(
 
 bool opencl_fd_load_rgba( 
         uint8_t* data, 
-        int width, 
-        int height, 
         struct FD* state 
 );
 

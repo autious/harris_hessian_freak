@@ -8,7 +8,7 @@
 #include "gauss_kernel.h"
 #include "lodepng.h"
 
-bool opencl_fd_load_rgba( uint8_t* data, int width, int height, struct FD* state )
+bool opencl_fd_load_rgba( uint8_t* data, struct FD* state )
 {
     cl_int errcode_ret;
     cl_image_format image_format = {
@@ -18,18 +18,15 @@ bool opencl_fd_load_rgba( uint8_t* data, int width, int height, struct FD* state
 
     state->image_rgba_char = clCreateImage2D(
         opencl_loader_get_context(),
-        CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
+        CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
         &image_format,
-        width,
-        height,
-        width*sizeof(uint8_t)*4,
+        state->width,
+        state->height,
+        state->source_width*sizeof(uint8_t)*4,
         data,
         &errcode_ret 
     );
     ASSERT_BUF(input_image, errcode_ret);
-
-    state->width = width;
-    state->height = height;
 
     return true;
 }

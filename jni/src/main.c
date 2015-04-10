@@ -20,7 +20,13 @@
 #include "stb_image.h"
 #include "xor_texture.h"
 
-static void save_keypoints_image( const char * filename, const keyPoint* keypoints, size_t keypoint_count, const uint8_t *data, int width, int height )
+static void save_keypoints_image( 
+        const char * filename, 
+        const keyPoint* keypoints, 
+        size_t keypoint_count, 
+        const uint8_t *data, 
+        int width, 
+        int height )
 {
     uint8_t *dest_data = malloc( sizeof( uint8_t ) * 4 * width * height );
     memcpy( dest_data, data, sizeof( uint8_t ) * 4 * width * height );
