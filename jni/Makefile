@@ -47,4 +47,4 @@ src/opencl_program.c: encodekernels
 src/opencl_timer.c: encodeversion
 
 install:
-	cp hh_freak_detector /usr/local/bin/
+	cp harris_hessian_freak /usr/local/bin/
