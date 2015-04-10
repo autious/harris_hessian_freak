@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]; then
+if [ $# -ne 2 ]; then
     echo "Program requires one param: folder"
     exit
 fi
@@ -13,7 +13,7 @@ echo "//This file is generated and should not be manually edited"
 for i in $(find "$1" -name "*.cl" -type f); do
     filename=$(basename $i)
     cname=${filename//-/_}
-    cname=${cname//./_}
+    cname="${2}${cname//./_}"
 
     echo "\"$filename\",$cname," >> "$names_file"
     echo "sizeof( $cname )," >> "$sizes_file"
@@ -25,7 +25,7 @@ for i in $(find "$1" -name "*.cl" -type f); do
 done
 
 echo ""
-echo "const void* kernel_files[] = {"
+echo "const void* ${2}kernel_files[] = {"
 
 cat "$names_file" 
 
@@ -34,7 +34,7 @@ echo "};"
 
 echo ""
 
-echo "const size_t kernel_sizes[] = {"
+echo "const size_t ${2}kernel_sizes[] = {"
 
 cat "$sizes_file"
 

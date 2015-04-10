@@ -90,6 +90,8 @@ int main( int argc, char * const *argv )
     const char* p_name = NULL;
     const char* d_name = NULL;
 
+    
+
     while((opt = getopt(argc,argv,"htrk:p:d:")) != -1) 
     {
         switch(opt)

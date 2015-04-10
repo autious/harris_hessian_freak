@@ -9,5 +9,6 @@ harris_hessian_freak.a
 *.kpts
 *.desc
 core
-src/_opencl_kernels.h
 src/_commit_data.h
+src/_opt_opencl_kernels.h
+src/_ref_opencl_kernels.h

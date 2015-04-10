@@ -7,9 +7,11 @@
 #include "log.h"
 #include "opencl_loader.h"
 #include "opencl_error.h"
+#include "opencl_config.h"
 #include "util.h"
-#include "compile_flag_object.h"
-#include "_opencl_kernels.h"
+#include "string_object.h"
+#include "_ref_opencl_kernels.h"
+#include "_opt_opencl_kernels.h"
 
 struct ProgramList
 {
@@ -71,29 +73,71 @@ void opencl_program_close()
 
 struct KernelData
 {
-    cl_context context = opencl_loader_get_context();
-    cl_device_id device = opencl_loader_get_device();
-    cl_program program;
+    const char* data;
+    size_t size;
+};
+
+struct KernelData get_kernel( const char* name, bool reference_mode )
+{
+    struct KernelData ret;
+    const void** kernel_files;
+    const size_t* kernel_sizes;
+    if( reference_mode )
+    {
+        kernel_files = ref_kernel_files;
+        kernel_sizes = ref_kernel_sizes;
+        LOGV( "Warning: using the reference kernel" );
+    }
+    else
+    {
+        kernel_files = opt_kernel_files;
+        kernel_sizes = opt_kernel_sizes;
+    }
 
     int i = 0;
-    const char* string = NULL;
+
     while( kernel_files[i*2] != NULL && strcmp( kernel_files[i*2], name ) != 0  )
     {
         i++;
     }
 
-    string = kernel_files[i*2+1];
+    ret.data = kernel_files[i*2+1];
 
-    if( string != NULL )
+    if( ret.data == NULL )
     {
-        LOGV( "Compiling -> program:%s,len:%zu\n", name, kernel_sizes[i] );
+        //If we lack the optimized version we fallback on the reference impl
+        if( reference_mode == false )
+        {
+            ret = get_kernel( name, !reference_mode );
+        }
+        //Otherwise we are unable to find the kernel
+    }
+    else
+    {
+        ret.size = kernel_sizes[i];
+    }
+
+    return ret;
+}
+
+static void compile( const char* name, const char* cfo )
+{
+    cl_context context = opencl_loader_get_context();
+    cl_device_id device = opencl_loader_get_device();
+    cl_program program;
+
+    struct KernelData kd = get_kernel( name, opencl_run_reference_mode );
+
+    if( kd.data != NULL )
+    {
+        LOGV( "Compiling -> program:%s,len:%zu\n", name, kd.size );
 
         cl_int errcode_ret; 
         program = clCreateProgramWithSource( 
                 context, 
                 1, 
-                (const char**)&string, 
-                &kernel_sizes[i], 
+                (const char**)&kd.data,
+                &kd.size, 
                 &errcode_ret 
         );
 
