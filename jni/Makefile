@@ -20,6 +20,7 @@ all: $(EXECUTABLE)
 lib: $(LIBRARY)
 
 debug: CFLAGS += -DDEBUG -DPROFILE -g
+debug: LDFLAGS += -lrt
 debug: all
 
 profile: CFLAGS += -DPROFILE
