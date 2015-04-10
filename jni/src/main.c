@@ -128,10 +128,6 @@ int main( int argc, char * const *argv )
         } 
     }
 
- #ifdef PROFILE
-    PROFILE_MM( "full_hh_freak" ); 
-    int start_marker = PROFILE_PM( full_pass, 0 );
- #endif
 
     int width = 32 * 25;
     int height = 32 * 18;
@@ -159,6 +155,11 @@ int main( int argc, char * const *argv )
 
     if( data )
     {
+#ifdef PROFILE
+        PROFILE_MM( "full_hh_freak" ); 
+        int start_marker = PROFILE_PM( full_pass, 0 );
+#endif
+
         fprintf( stderr, "Picture dimensions: (%u,%u)", width, height );
 
         cl_event detection_event;
