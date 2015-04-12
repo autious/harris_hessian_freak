@@ -6,7 +6,7 @@ LOCAL_C_INCLUDES := jni/include/
 
 #THe android_io include is intended to mask some stdio functions 
 LOCAL_CFLAGS += -std=c99 -Wall -DPROFILE -include "src/android_io.h"
-LOCAL_CFLAGS += -DHH_USE_HALF
+#LOCAL_CFLAGS += -DHH_USE_HALF
 
 include $(LOCAL_PATH)/Sources.mk
 
