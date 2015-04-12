@@ -197,7 +197,7 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &in );
     clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &middle );
     clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
-    clSetKernelArg( kernel_gaussx, 5, sizeof( cache_float ) * (gauss_kernel_size+local_work_size_gaussx[0]) * local_work_size_gaussx[1], NULL );
+    clSetKernelArg( kernel_gaussx, 5, sizeof( hh_float ) * (gauss_kernel_size+local_work_size_gaussx[0]) * local_work_size_gaussx[1], NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussx, 
         2,
@@ -217,7 +217,7 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &out );
     clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
     clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
-    clSetKernelArg( kernel_gaussy, 6, sizeof( cache_float ) * (gauss_kernel_size+local_work_size_gaussx[1]) * local_work_size_gaussx[0], NULL );
+    clSetKernelArg( kernel_gaussy, 6, sizeof( hh_float ) * (gauss_kernel_size+local_work_size_gaussx[1]) * local_work_size_gaussx[0], NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussy, 
         2,

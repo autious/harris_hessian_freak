@@ -22,9 +22,9 @@ __kernel void find_keypoints(
     {
         for( int j = 0; j < SCALE_COUNT; j++ )
         {
-            float before = 0;
-            float after = 0;
-            float current = LOAD_HHF(source_determinants, hessian_determinant_indices[j]*width*height+i);
+            hh_float before = 0;
+            hh_float after = 0;
+            hh_float current = LOAD_HHF(source_determinants, hessian_determinant_indices[j]*width*height+i);
 
             if( j > 0 )
             {

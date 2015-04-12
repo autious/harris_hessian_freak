@@ -2,7 +2,7 @@ __kernel void derivate( __global hh_float* input, __global hh_float* ddx, __glob
 {
     int x = get_global_id(0);
     int y = get_global_id(1);
-    float v0, v1;
+    hh_float v0, v1;
 
     v0 = LOAD_HHF(input, width * y + il(x-sample_width,0,width-1));
     v1 = LOAD_HHF(input, width * y + il(x+sample_width,0,width-1));
@@ -17,7 +17,7 @@ __kernel void derivate_y( __global hh_float* input, __global hh_float* ddy, int 
 {
     int x = get_global_id(0);
     int y = get_global_id(1);
-    float v0, v1;
+    hh_float v0, v1;
 
     v0 = LOAD_HHF(input, width * il(y+sample_width,0,height-1) + x);
     v1 = LOAD_HHF(input, width * il(y-sample_width,0,height-1) + x);
@@ -28,7 +28,7 @@ __kernel void derivate_x( __global hh_float* input, __global hh_float* ddx, int 
 {
     int x = get_global_id(0);
     int y = get_global_id(1);
-    float v0, v1;
+    hh_float v0, v1;
 
     v0 = LOAD_HHF(input, width * y + il(x-sample_width,0,width-1));
     v1 = LOAD_HHF(input, width * y + il(x+sample_width,0,width-1));

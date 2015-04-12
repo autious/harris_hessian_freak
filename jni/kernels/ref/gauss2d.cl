@@ -3,7 +3,7 @@ __kernel void gauss2d( __constant hh_float* gauss_kernel, int kernel_radius, __g
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
     int kernel_diameter = kernel_radius*2+1;
-    float sum = 0;
+    hh_float sum = 0;
     if( coord.x == 0 && coord.y == 0 )
     {
         for( int y = -kernel_radius; y <= kernel_radius; y++ )

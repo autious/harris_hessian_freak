@@ -12,6 +12,4 @@ typedef cl_half hh_float;
 typedef cl_float hh_float;
 #endif
 
-typedef cl_float cache_float;
-
 typedef cl_float param_float;

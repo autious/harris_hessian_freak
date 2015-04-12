@@ -9,8 +9,6 @@ typedef float hh_float;
 #define STORE_HHF(arr,offset,value) arr[offset]=value
 #endif
 
-typedef float cache_float;
-
 typedef float param_float;
 
 #define il(value,v_min,v_max) min(max(v_min,value),v_max)

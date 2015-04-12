@@ -6,9 +6,9 @@ __kernel void harris_corner_response(
         param_float sigmaD )
 {
     int i = get_global_id(0);
-    float A = LOAD_HHF(xx,i) * pow(sigmaD, 2);
-    float B = LOAD_HHF(yy,i) * pow(sigmaD, 2);
-    float C = LOAD_HHF(xy,i) * pow(sigmaD, 2);
+    hh_float A = LOAD_HHF(xx,i) * pow(sigmaD, 2);
+    hh_float B = LOAD_HHF(yy,i) * pow(sigmaD, 2);
+    hh_float C = LOAD_HHF(xy,i) * pow(sigmaD, 2);
 
     STORE_HHF(output, i, A*B-C*C-CORNER_RESPONSE_ALPHA*pow(A+B,2));
 }
@@ -22,7 +22,7 @@ __kernel void harris_corner_suppression(
 {
     int2 c = (int2)(get_global_id(0),get_global_id(1));
 
-    float m = -HUGE_VALF;
+    hh_float m = -HUGE_VALF;
 
     for( int y = -SUP_HALFWIDTH; y <= SUP_HALFWIDTH; y++ )
     {
@@ -33,7 +33,7 @@ __kernel void harris_corner_suppression(
         }
     }
 
-    float in_value = LOAD_HHF(in,c.x+c.y*width);
+    hh_float in_value = LOAD_HHF(in,c.x+c.y*width);
     if( m > in_value )
         STORE_HHF(out, c.x+c.y*width, 0.0f);
     else
@@ -44,7 +44,7 @@ __kernel void harris_count( __global hh_float* in, volatile __global uint* stron
 {
     int i = get_global_id(0);
 
-    float value = LOAD_HHF(in, i);
+    hh_float value = LOAD_HHF(in, i);
 
     if( value > 0.0f )
     {

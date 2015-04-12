@@ -2,7 +2,7 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
-    float sum = 0;
+    hh_float sum = 0;
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
@@ -16,7 +16,7 @@ __kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __gl
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
-    float sum = 0;
+    hh_float sum = 0;
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
