@@ -17,7 +17,6 @@
 //Decided for the H-H method.
 static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 0.0f, 0.0f };
 
-
 #define IMAGE_SIZE_MULTIPLE 32
 struct BufferMemory
 {
