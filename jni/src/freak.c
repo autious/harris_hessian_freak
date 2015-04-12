@@ -334,7 +334,7 @@ float freak_meanIntensity(const hh_float* src, size_t width, size_t height, cons
 		const int r_y = (int)((yf - y) * 1024);
 		const int r_x_1 = 1024 - r_x;
 		const int r_y_1 = 1024 - r_y;
-		const float* ptr = &src[y * width + x];
+		const hh_float* ptr = &src[y * width + x];
 		// Keeping the pointer arithmetic mumbo jumbo for fun
 		ret_val = r_x_1 * r_y_1 * (*ptr);
 		ptr++;
