@@ -61,10 +61,28 @@ void opencl_fd_save_buffer_to_image(
     {
         clWaitForEvents( 1, &buffer_read_event );
         uint8_t* output_desaturated_image_l = malloc( sizeof( uint8_t ) * state->width * state->height );
+
+        float factor = 1.0f;
+        float avg = 0.0f;
+        float maxval = 0.0f;
+
+        for( int i = 0; i < state->width * state->height; i++ )
+        {
+            avg += output_desaturated_image[i] / (float)(state->width * state->height);
+
+            if( output_desaturated_image[i] > maxval )
+                maxval = output_desaturated_image[i];
+        } 
+
+        if( avg < 0.25f && avg > 0.0f )
+        {
+            factor = 1.0f/maxval;
+        }
+
         for( int i = 0; i < state->width * state->height; i++ )
         {
             //LOGV( "%f", output_desaturated_image[i] );
-            int val = (int)(output_desaturated_image[i] * 255.0f);
+            int val = (int)(output_desaturated_image[i] * 255.0f * factor);
             val = val > 255 ? 255 : val;
             val = val < 0 ? 0 : val;
             output_desaturated_image_l[i] = val;
