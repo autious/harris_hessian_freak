@@ -1,7 +1,7 @@
 
 #define il(value,v_min,v_max) min(max(v_min,value),v_max)
 
-__constant float alpha = 0.04; // I have found literally one lecture that explains that this alpha is 
+__constant float CORNER_RESPONSE_ALPHA = 0.04; // I have found literally one lecture that explains that this alpha is 
                    //empirically measured to be [0.04 - 0.06] and another that just uses 
                    //0.04 without ref
 __kernel void harris_corner_response( 
@@ -16,7 +16,7 @@ __kernel void harris_corner_response(
     float B = yy[i] * pow(sigmaD, 2);
     float C = xy[i] * pow(sigmaD, 2);
 
-    output[i] = A * B - C * C - alpha * pow(A + B, 2);
+    output[i] = A * B - C * C - CORNER_RESPONSE_ALPHA * pow(A + B, 2);
 }
 
 #define SUP_HALFWIDTH 1
