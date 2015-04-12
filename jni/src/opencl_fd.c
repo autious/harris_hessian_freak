@@ -156,7 +156,7 @@ bool opencl_fd_run_gaussxy(
 {
     const size_t global_work_offset[] = { 0,0 };
     const size_t global_work_size[] = { state->width, state->height };
-    const size_t local_work_size_gaussx[] = { 16, 1 };
+    const size_t local_work_size_gaussx[] = { 8, 4 };
     const size_t local_work_size_gaussy[] = { 8, 4 };
 
     cl_program program_gauss_cl = opencl_program_load( "gauss.cl" );
@@ -197,7 +197,7 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &in );
     clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &middle );
     clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
-    clSetKernelArg( kernel_gaussx, 5, sizeof( cl_float ) * (gauss_kernel_size+local_work_size_gaussx[0]), NULL );
+    clSetKernelArg( kernel_gaussx, 5, sizeof( cl_float ) * (gauss_kernel_size+local_work_size_gaussx[0]) * local_work_size_gaussx[1], NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussx, 
         2,
