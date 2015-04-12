@@ -156,7 +156,8 @@ bool opencl_fd_run_gaussxy(
 {
     const size_t global_work_offset[] = { 0,0 };
     const size_t global_work_size[] = { state->width, state->height };
-    const size_t local_work_size[] = { 8, 1 };
+    const size_t local_work_size_gaussx[] = { 16, 1 };
+    const size_t local_work_size_gaussy[] = { 8, 4 };
 
     cl_program program_gauss_cl = opencl_program_load( "gauss.cl" );
     cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
@@ -196,13 +197,13 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussx, 2, sizeof( cl_mem ), &in );
     clSetKernelArg( kernel_gaussx, 3, sizeof( cl_mem ), &middle );
     clSetKernelArg( kernel_gaussx, 4, sizeof( cl_int ), &cl_width );
-    clSetKernelArg( kernel_gaussx, 5, sizeof( cl_float ) * (gauss_kernel_size+local_work_size[0]), NULL );
+    clSetKernelArg( kernel_gaussx, 5, sizeof( cl_float ) * (gauss_kernel_size+local_work_size_gaussx[0]), NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussx, 
         2,
         global_work_offset,
         global_work_size,
-        local_work_size,
+        local_work_size_gaussx,
         num_events_in_wait_list,
         event_wait_list,
         &kernel_gaussx_event
@@ -216,12 +217,13 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &out );
     clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
     clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
+    clSetKernelArg( kernel_gaussx, 6, sizeof( cl_float ) * (gauss_kernel_size+local_work_size_gaussy[1]), NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussy, 
         2,
         global_work_offset,
         global_work_size,
-        local_work_size,
+        local_work_size_gaussy,
         1,
         &kernel_gaussx_event,
         event

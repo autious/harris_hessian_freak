@@ -1,15 +1,15 @@
 __kernel void second_moment_matrix_elements( 
-    __global float* ddx, 
-    __global float* ddy, 
-    __global float* xx,
-    __global float* xy,
-    __global float* yy 
+    __global hh_float* ddx, 
+    __global hh_float* ddy, 
+    __global hh_float* xx,
+    __global hh_float* xy,
+    __global hh_float* yy 
 )
 {
     int i = get_global_id(0);
 
-    float dx = ddx[i];
-    float dy = ddy[i];
+    hh_float dx = ddx[i];
+    hh_float dy = ddy[i];
 
     xx[i] = dx*dx;
     xy[i] = dx*dy;

@@ -9,29 +9,46 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
     int2 group_id = (int2)(get_group_id(0),get_group_id(1));
 
     int left_index = group_id.x * local_size.x - kernel_radius;
-    int right_index = group_id.x * local_size.x + local_size.x + kernel_radius - 1;
-
-    //get how far into the cache line the data should be offset
-    int left_offset = abs(min(left_index, 0));
-    int local_len = min(right_index,width-1) - max(0,left_index);
 
     for( int i = local_id.x; i < kernel_radius + local_size.x + kernel_radius; i += local_size.x )
     {
-        if( i < left_offset || i > local_len )
-        {
-            cached_source[i] = 0.0f;
-        }
-        else
-        {
-            cached_source[i] = input[left_index + i+coord.y*width];
-        } 
+        cached_source[i] = input[min(width-1,max(left_index+i,0)) + coord.y*width];
     }
 
     hh_float sum = 0;
 
+    write_mem_fence( CLK_LOCAL_MEM_FENCE );
+
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
         sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.x + kernel_radius + i];
+    }
+
+    output[coord.x+coord.y*width] = sum;
+}
+
+__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height)
+{
+    int2 coord = (int2)(get_global_id(0),get_global_id(1));
+    int2 local_size = (int2)(get_local_size(0),get_local_size(1));
+    int2 local_id = (int2)(get_local_id(0),get_local_id(1));
+    int2 group_id = (int2)(get_group_id(0),get_group_id(1));
+
+    int top_index = group_id.y * local_size.y - kernel_radius;
+    int left_index = group_id.x * local_size.x - kernel_radius;
+
+    for( int y = local_id.y; y < kernel_radius + local_size.y + kernel_radius; y += local_size.y )
+    {
+        cached_source[y] = input[min(height-1,max(top_index+y,0))*width + coord.x];
+    }
+
+    hh_float sum = 0;
+
+    write_mem_fence( CLK_LOCAL_MEM_FENCE );
+
+    for( int i = -kernel_radius; i <= kernel_radius; i++ )
+    {
+        sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.y + kernel_radius + i];
     }
 
     output[coord.x+coord.y*width] = sum;
@@ -80,16 +97,3 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
 }
 */
 
-__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height)
-{
-    int2 coord = (int2)(get_global_id(0), get_global_id(1));
-
-    hh_float sum = 0;
-
-    for( int i = -kernel_radius; i <= kernel_radius; i++ )
-    {
-        sum += gauss_kernel[i+kernel_radius] * input[min(height-1,max(coord.y + i,0))*width+coord.x];
-    }
-
-    output[coord.x+coord.y*width] = sum;
-}

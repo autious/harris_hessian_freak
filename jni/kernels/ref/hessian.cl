@@ -1,4 +1,4 @@
-__kernel void hessian( __global float *xx, __global float* xy, __global float* yy, __global float* out, float sigmaD )
+__kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, hh_float sigmaD )
 {
     int i = get_global_id(0); 
     out[i] = fabs(((xx[i] * yy[i] - pow(xy[i],2)) / sigmaD ));
@@ -7,7 +7,7 @@ __kernel void hessian( __global float *xx, __global float* xy, __global float* y
 #define HESSIAN_DETERMINANT_THRESHOLD 0.1f
 
 __kernel void find_keypoints( 
-        __global float *source_determinants, 
+        __global hh_float *source_determinants, 
         __global int* corner_counts,
         __global ushort* keypoints, 
         __global int* hessian_determinant_indices,
@@ -22,9 +22,9 @@ __kernel void find_keypoints(
     {
         for( int j = 0; j < SCALE_COUNT; j++ )
         {
-            float before = 0;
-            float after = 0;
-            float current = source_determinants[hessian_determinant_indices[j] * width * height + i];
+            hh_float before = 0;
+            hh_float after = 0;
+            hh_float current = source_determinants[hessian_determinant_indices[j] * width * height + i];
 
             if( j > 0 )
             {

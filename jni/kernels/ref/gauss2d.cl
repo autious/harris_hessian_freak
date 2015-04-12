@@ -1,9 +1,9 @@
-__kernel void gauss2d( __constant float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, int height, __global float* g_debug )
+__kernel void gauss2d( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __global hh_float* g_debug )
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
     int kernel_diameter = kernel_radius*2+1;
-    float sum = 0;
+    hh_float sum = 0;
     if( coord.x == 0 && coord.y == 0 )
     {
         for( int y = -kernel_radius; y <= kernel_radius; y++ )
