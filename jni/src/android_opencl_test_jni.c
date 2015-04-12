@@ -12,12 +12,14 @@
 #include "freak.h"
 #include "opencl_timer.h"
 #include "stb_image.h"
+#include "opencl_config.h"
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
+    opencl_run_reference_mode = false;
 
     return true;
 }
@@ -55,7 +57,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
 
         cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
-        harris_hessian_freak_detection( data, 0, NULL, &detection_event );
+        harris_hessian_freak_detection( data, NULL, 0, NULL, &detection_event );
 
         cl_event generate_keypoints_list_event;
         size_t keypoints_count;

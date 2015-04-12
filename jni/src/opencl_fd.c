@@ -217,7 +217,6 @@ bool opencl_fd_run_gaussxy(
     clSetKernelArg( kernel_gaussy, 3, sizeof( cl_mem ), &out );
     clSetKernelArg( kernel_gaussy, 4, sizeof( cl_int ), &cl_width );
     clSetKernelArg( kernel_gaussy, 5, sizeof( cl_int ), &cl_height );
-    clSetKernelArg( kernel_gaussx, 6, sizeof( cl_float ) * (gauss_kernel_size+local_work_size_gaussy[1]), NULL );
     errcode_ret = clEnqueueNDRangeKernel( command_queue, 
         kernel_gaussy, 
         2,
