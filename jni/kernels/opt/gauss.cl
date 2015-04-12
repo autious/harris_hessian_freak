@@ -1,7 +1,7 @@
 //__attribute__((work_group_size_hint(32,1,1)))
 //__attribute__((reqd_work_group_size(32,1,1)))
 //__attribute__((vec_type_hint(hh_float)))
-__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local hh_float* cached_source )
+__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));
@@ -13,22 +13,22 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
 
     for( int i = local_id.x; i < cache_row_len; i += local_size.x )
     {
-        cached_source[i+local_id.y*cache_row_len] = input[min(width-1,max(left_index+i,0)) + coord.y*width];
+        cached_source[i+local_id.y*cache_row_len] = LOAD_HHF(input,min(width-1,max(left_index+i,0)) + coord.y*width);
     }
 
-    hh_float sum = 0;
+    float sum = 0;
 
     write_mem_fence( CLK_LOCAL_MEM_FENCE );
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.x + kernel_radius + i + local_id.y * cache_row_len];
+        sum += LOAD_HHF(gauss_kernel,i+kernel_radius) * cached_source[local_id.x + kernel_radius + i + local_id.y * cache_row_len];
     }
 
-    output[coord.x+coord.y*width] = sum;
+    STORE_HHF(output, coord.x+coord.y*width, sum );
 }
 
-__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __local hh_float* cached_source )
+__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __local float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));
@@ -40,19 +40,19 @@ __kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __gl
 
     for( int i = local_id.y; i < cache_height_len; i += local_size.y )
     {
-        cached_source[i+local_id.x*cache_height_len] = input[min(height-1,max(top_index+i,0)) * width + coord.x];
+        cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
     }
 
-    hh_float sum = 0;
+    float sum = 0;
 
     write_mem_fence( CLK_LOCAL_MEM_FENCE );
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.y + kernel_radius + i + local_id.x * cache_height_len];
+        sum += LOAD_HHF(gauss_kernel,i+kernel_radius) * cached_source[local_id.y + kernel_radius + i + local_id.x * cache_height_len];
     }
 
-    output[coord.x+coord.y*width] = sum;
+    STORE_HHF(output, coord.x+coord.y*width, sum);
 }
 
 /*

@@ -3,14 +3,14 @@ __kernel void gauss2d( __constant hh_float* gauss_kernel, int kernel_radius, __g
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
     int kernel_diameter = kernel_radius*2+1;
-    hh_float sum = 0;
+    float sum = 0;
     if( coord.x == 0 && coord.y == 0 )
     {
         for( int y = -kernel_radius; y <= kernel_radius; y++ )
         {
             for( int x = -kernel_radius; x <= kernel_radius; x++ )
             {
-                g_debug[(x+kernel_radius)+(y+kernel_radius)*kernel_diameter] = gauss_kernel[(x+kernel_radius)+(y+kernel_radius)*kernel_diameter];
+                STORE_HHF(g_debug,(x+kernel_radius)+(y+kernel_radius)*kernel_diameter, LOAD_HHF(gauss_kernel,(x+kernel_radius)+(y+kernel_radius)*kernel_diameter));
             }
         }
     }
@@ -20,9 +20,9 @@ __kernel void gauss2d( __constant hh_float* gauss_kernel, int kernel_radius, __g
         for( int x = -kernel_radius; x <= kernel_radius; x++ )
         {
             //gauss_kernel[(x+kernel_radius)+(y+kernel_radius)*(kernel_radius*2)]
-            sum += gauss_kernel[(x+kernel_radius)+(y+kernel_radius)*kernel_diameter] * input[min(width-1,max(coord.x + x,0))+min(height-1,max(coord.y + y,0))*width];
+            sum += LOAD_HHF(gauss_kernel,(x+kernel_radius)+(y+kernel_radius)*kernel_diameter) * LOAD_HHF(input,min(width-1,max(coord.x + x,0))+min(height-1,max(coord.y + y,0))*width);
         }
     }
 
-    output[coord.x+coord.y*width] = sum;
+    STORE_HHF(output, coord.x+coord.y*width, sum);
 }

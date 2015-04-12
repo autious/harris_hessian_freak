@@ -1,10 +1,10 @@
-__kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, hh_float sigmaD )
+__kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, float sigmaD )
 {
     int i = get_global_id(0); 
-    out[i] = fabs(((xx[i] * yy[i] - pow(xy[i],2)) / sigmaD ));
+
+    STORE_HHF(out, i, fabs(((LOAD_HHF(xx, i) * LOAD_HHF(yy, i) - pow( LOAD_HHF(xy, i),2.0f)) / sigmaD)));
 }
 
-#define HESSIAN_DETERMINANT_THRESHOLD 0.1f
 
 __kernel void find_keypoints( 
         __global hh_float *source_determinants, 
@@ -22,18 +22,18 @@ __kernel void find_keypoints(
     {
         for( int j = 0; j < SCALE_COUNT; j++ )
         {
-            hh_float before = 0;
-            hh_float after = 0;
-            hh_float current = source_determinants[hessian_determinant_indices[j] * width * height + i];
+            float before = 0;
+            float after = 0;
+            float current = LOAD_HHF(source_determinants, hessian_determinant_indices[j]*width*height+i);
 
             if( j > 0 )
             {
-                before = source_determinants[hessian_determinant_indices[j-1] * width * height + i];
+                before = LOAD_HHF(source_determinants,hessian_determinant_indices[j-1]*width*height+i);
             }
 
             if( j < SCALE_COUNT - 1 )
             {
-                after = source_determinants[hessian_determinant_indices[j+1] * width * height + i];
+                after = LOAD_HHF(source_determinants,hessian_determinant_indices[j+1]*width*height+i);
             }
 
             if( current > before && current > after && current > HESSIAN_DETERMINANT_THRESHOLD )
