@@ -157,7 +157,7 @@ bool opencl_fd_run_gaussxy(
     const size_t global_work_offset[] = { 0,0 };
     const size_t global_work_size[] = { state->width, state->height };
     const size_t local_work_size_gaussx[] = { 8, 4 };
-    const size_t local_work_size_gaussy[] = { 8, 4 };
+    const size_t local_work_size_gaussy[] = { 4, 8 };
 
     cl_program program_gauss_cl = opencl_program_load( "gauss.cl" );
     cl_kernel kernel_gaussx      = opencl_loader_load_kernel( program_gauss_cl, "gaussx" );
