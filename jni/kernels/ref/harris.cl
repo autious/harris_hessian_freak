@@ -35,7 +35,7 @@ __kernel void harris_corner_suppression(
 
     float in_value = LOAD_HHF(in,c.x+c.y*width);
     if( m > in_value )
-        STORE_HHF(out, c.x+c.y*width, 0);
+        STORE_HHF(out, c.x+c.y*width, 0.0f);
     else
         STORE_HHF(out, c.x+c.y*width, in_value);
 }

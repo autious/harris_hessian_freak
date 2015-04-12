@@ -23,9 +23,15 @@ debug: CFLAGS += -DDEBUG -DPROFILE -g
 debug: LDFLAGS += -lrt
 debug: all
 
+debug-half: CFLAGS += -DHH_USE_HALF
+debug-half: debug 
+
 profile: CFLAGS += -DPROFILE
 profile: LDFLAGS += -lrt
 profile: all
+
+profile-half: CFLAGS += -DHH_USE_HALF
+profile-half: profile
 
 clean: 
 	rm $(PROGRAM_OBJECTS) $(LIBRARY_OBJECTS) $(EXECUTABLE) $(LIBRARY)

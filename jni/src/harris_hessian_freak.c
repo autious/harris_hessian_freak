@@ -224,6 +224,9 @@ void harris_hessian_freak_init( int width, int height)
     string_object_add_compiler_flag( &cfo, "-cl-fast-relaxed-math" );
     string_object_add_compiler_flag( &cfo, "-cl-std=CL1.1" );
     string_object_add_define_integer( &cfo, "SCALE_COUNT", NELEMS( HHSIGMAS ) );
+#ifdef HH_USE_HALF
+    string_object_add_define( &cfo, "HH_USE_HALF" );
+#endif
 
     const char *programs[] = 
     {

@@ -83,7 +83,7 @@ int patternSizes[FREAK_NB_SCALES];
 descriptionPair descriptionPairs[FREAK_NB_PAIRS];
 orientationPair orientationPairs[FREAK_NB_ORIENTATION_PAIRS];
 
-void makeIntegral(const float* src, size_t width, size_t height, float* outIntegral) {
+void makeIntegral(const hh_float* src, size_t width, size_t height, float* outIntegral) {
 	for (size_t y = 0; y < height; ++y) {
 		for (size_t x = 0; x < width; ++x) {
 			float val = (x % width != 0) ? outIntegral[width * y + x - 1] : 0.0;
@@ -231,7 +231,7 @@ void freak_buildPattern() {
 }
 
 // Returns an ALLOCATED pointer to <descriptorCount> descriptors. Note that descriptorCount is an out variable
-descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount) {
+descriptor* freak_compute(const hh_float* src, size_t width, size_t height, keyPoint* keyPoints, int kpCount, int* descriptorCount) {
 	float* integral = (float*)malloc(width * height * sizeof(float));
 	makeIntegral(src, width, height, integral);
 	int* kpScaleIdx = (int*)malloc(kpCount * sizeof(int));
@@ -316,7 +316,7 @@ descriptor* freak_compute(const float* src, size_t width, size_t height, keyPoin
 }
 
 // FREAK paper says Gaussian blur, implementation does box filter with integral image.
-float freak_meanIntensity(const float* src, size_t width, size_t height, const float* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point) {
+float freak_meanIntensity(const hh_float* src, size_t width, size_t height, const float* integral, const float kp_x, const float kp_y, const uint32_t scale, const uint32_t rot, const uint32_t point) {
 	//const patternPoint* freakPoint = &patternLookup[scale * FREAK_NB_ORIENTATION * FREAK_NB_POINTS + rot * FREAK_NB_POINTS + point];
 	int INDEX = scale * FREAK_NB_ORIENTATION * FREAK_NB_POINTS + rot * FREAK_NB_POINTS + point;
 

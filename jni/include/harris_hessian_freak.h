@@ -1,7 +1,21 @@
 #ifndef HARRIS_HESSIAN_FREAK_H
 #define HARRIS_HESSIAN_FREAK_H
 
-#include "freak.h"
+#include <CL/opencl.h>
+
+typedef uint8_t word_t;
+
+struct keyPoint_t {
+	int x; // pixel coordinates
+	int y;
+	float size; // gaussian sigma
+}; typedef struct keyPoint_t keyPoint;
+
+struct descriptor_t {
+	word_t* data;
+	uint32_t x;
+	uint32_t y;
+}; typedef struct descriptor_t descriptor;
 
 void harris_hessian_freak_init( int width, int height );
 void harris_hessian_freak_detection( 

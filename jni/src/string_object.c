@@ -52,6 +52,18 @@ void string_object_add_define_integer( struct StringObject* cfo, const char* nam
     LOGV( "new define string, %lu digits: \"%s\"", output_count_base, cfo->str );
 }
 
+void string_object_add_define( struct StringObject* cfo, const char* name )
+{
+    size_t additional_len = strlen( " -D" ) + strlen( name );
+
+    resize( cfo, additional_len );
+
+    snprintf( cfo->str + cfo->str_count, additional_len + 1, " -D%s", name );
+    cfo->str_count += additional_len;
+   
+    LOGV( "new define string \"%s\"",  cfo->str );
+}
+
 void string_object_add_compiler_flag( struct StringObject* cfo, const char* value )
 {
     size_t additional_len = strlen(" ") + strlen( value );
