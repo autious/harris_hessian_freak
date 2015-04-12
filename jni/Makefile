@@ -34,15 +34,17 @@ $(EXECUTABLE): $(LIBRARY) $(PROGRAM_OBJECTS)
 	$(CC) $(PROGRAM_OBJECTS) $(LIBRARY) $(LDFLAGS) -o $@
 
 $(LIBRARY): $(LIBRARY_OBJECTS)
-	ar -cvq $(LIBRARY) $(LIBRARY_OBJECTS)
+	ar -cq $(LIBRARY) $(LIBRARY_OBJECTS)
 
-obj/%.o: src/%.c
+obj/%.o: src/%.c 	
 	@mkdir -p obj/
 	$(CC) $(CFLAGS) $< -o $@
 
+obj/opencl_program.o: src/_ref_opencl_kernels.h src/_opt_opencl_kernels.h
+
 include Generate.mk
 
-src/opencl_program.c: encodekernels
+src/opencl_program.c: encodekernels 
 
 src/opencl_timer.c: encodeversion
 
