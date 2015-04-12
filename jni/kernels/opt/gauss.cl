@@ -1,7 +1,7 @@
 //__attribute__((work_group_size_hint(32,1,1)))
 //__attribute__((reqd_work_group_size(32,1,1)))
 //__attribute__((vec_type_hint(hh_float)))
-__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local float* cached_source )
+__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local cache_float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));
@@ -28,7 +28,7 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
     STORE_HHF(output, coord.x+coord.y*width, sum );
 }
 
-__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __local float* cached_source )
+__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __local cache_float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));

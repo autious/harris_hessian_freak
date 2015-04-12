@@ -19,15 +19,15 @@ bool opencl_test_run()
 
     const int TEST_SIZE = 1024*256;
 
-    cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
-    cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( cl_float ) * TEST_SIZE, NULL, &errcode_ret );
+    cl_mem mem_in = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( hh_float ) * TEST_SIZE, NULL, &errcode_ret );
+    cl_mem mem_out = clCreateBuffer( opencl_loader_get_context(), CL_MEM_READ_WRITE, sizeof( hh_float ) * TEST_SIZE, NULL, &errcode_ret );
 
 
     if( errcode_ret == CL_SUCCESS )
     {
         cl_event write_event;
-        cl_float inputValues[TEST_SIZE];
-        cl_float outputValues[TEST_SIZE];
+        hh_float inputValues[TEST_SIZE];
+        hh_float outputValues[TEST_SIZE];
         for( int i = 0; i < TEST_SIZE; i++ )
             inputValues[i] = i;
 
@@ -36,7 +36,7 @@ bool opencl_test_run()
                 mem_in, 
                 false, 
                 0, 
-                sizeof( cl_float ) * TEST_SIZE, 
+                sizeof( hh_float ) * TEST_SIZE, 
                 inputValues, 
                 0, 
                 NULL, 
@@ -71,7 +71,7 @@ bool opencl_test_run()
                 mem_out, 
                 false, 
                 0, 
-                sizeof( cl_float ) * TEST_SIZE, 
+                sizeof( hh_float ) * TEST_SIZE, 
                 outputValues, 
                 1, 
                 &kernel_event, 

@@ -107,7 +107,7 @@ static void init_harris_buffers( )
 
     mem.hessian_determinant_buffer = clCreateBuffer( context,
         CL_MEM_READ_WRITE,
-        sizeof( cl_float ) * state.width * state.height * NELEMS( HHSIGMAS ),
+        sizeof( hh_float ) * state.width * state.height * NELEMS( HHSIGMAS ),
         NULL,
         &errcode_ret
     );
@@ -143,8 +143,8 @@ static void init_harris_buffers( )
         harris_hessian_scales[i].sigma = HHSIGMAS[i];
 
         cl_buffer_region det_region = { 
-            .origin = (sizeof( cl_float ) * state.width * state.height)*i,
-            .size = sizeof( cl_float ) * state.width * state.height
+            .origin = (sizeof( hh_float ) * state.width * state.height)*i,
+            .size = sizeof( hh_float ) * state.width * state.height
         };
 
         mem.hessian_determinants[i] = clCreateSubBuffer( 
@@ -711,13 +711,13 @@ descriptor* harris_hessian_freak_build_descriptor(
     cl_int errcode_ret;
 
     cl_event grayscale_map_event;
-    cl_float *grayscale_data = clEnqueueMapBuffer( 
+    hh_float *grayscale_data = clEnqueueMapBuffer( 
         command_queue,
         mem.desaturated_image,
         false,
         CL_MAP_READ,
         0,
-        sizeof( cl_float ) * state.width * state.height,
+        sizeof( hh_float ) * state.width * state.height,
         event_count,
         event_wait_list,
         &grayscale_map_event,

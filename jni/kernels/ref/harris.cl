@@ -3,7 +3,7 @@ __kernel void harris_corner_response(
         __global hh_float* xy, 
         __global hh_float* yy, 
         __global hh_float* output, 
-        float sigmaD )
+        param_float sigmaD )
 {
     int i = get_global_id(0);
     float A = LOAD_HHF(xx,i) * pow(sigmaD, 2);

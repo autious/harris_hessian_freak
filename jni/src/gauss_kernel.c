@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 
-cl_float* generate_gauss_kernel_line( size_t* size, float sigma )
+hh_float* generate_gauss_kernel_line( size_t* size, float sigma )
 {
     *size = 2 * 3 * sigma;
     *size += (*size % 2) == 0 ? 1 : 0;  //Make uneven if even.
-    cl_float* dest = (cl_float*)malloc( sizeof( cl_float ) * (*size) );
+    hh_float* dest = (hh_float*)malloc( sizeof( hh_float ) * (*size) );
     for( int i = 0; i < *size; i++ )
     {
        int dist = i - *size/2;
@@ -20,12 +20,12 @@ cl_float* generate_gauss_kernel_line( size_t* size, float sigma )
 
 /*
  * Lacking implementation of a decent 2d kernel
-cl_float* generate_gauss_kernel_2D( size_t* diameter, float sigma )
+hh_float* generate_gauss_kernel_2D( size_t* diameter, float sigma )
 {
     *diameter = 2 * 3 * sigma;
     *diameter += (*diameter % 2) == 0 ? 1 : 0;  //Make uneven if even.
 
-    cl_float* dest = (cl_float*)malloc( sizeof( cl_float ) * (*diameter) * (*diameter) );
+    hh_float* dest = (hh_float*)malloc( sizeof( hh_float ) * (*diameter) * (*diameter) );
 
     for( int y = 0; y < *diameter; y++ )
     {

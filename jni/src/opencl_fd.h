@@ -1,6 +1,7 @@
 #pragma once 
 #include "opencl_loader.h"
 #include "opencl_timer.h"
+#include "opencl_config.h"
 
 struct FD
 {
@@ -75,7 +76,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
     cl_mem xy,
     cl_mem yy,
     cl_mem output,
-    cl_float sigmaD,
+    param_float sigmaD,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event
@@ -94,7 +95,7 @@ bool opencl_fd_run_hessian( struct FD* state,
     cl_mem xy,
     cl_mem yy,
     cl_mem out,
-    cl_float sigmaD,
+    param_float sigmaD,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event

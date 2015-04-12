@@ -1,4 +1,4 @@
-__kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, float sigmaD )
+__kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, param_float sigmaD )
 {
     int i = get_global_id(0); 
 

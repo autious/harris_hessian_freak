@@ -9,6 +9,10 @@ typedef float hh_float;
 #define STORE_HHF(arr,offset,value) arr[offset]=value
 #endif
 
+typedef float cache_float;
+
+typedef float param_float;
+
 #define il(value,v_min,v_max) min(max(v_min,value),v_max)
 
 #define HESSIAN_DETERMINANT_THRESHOLD 0.1f
@@ -17,6 +21,7 @@ typedef float hh_float;
 
 #define HARRIS_THRESHOLD 0.0f
 
-__constant float CORNER_RESPONSE_ALPHA = 0.04; // I have found literally one lecture that explains that this alpha is 
-                   //empirically measured to be [0.04 - 0.06] and another that just uses 
-                   //0.04 without ref
+#define CORNER_RESPONSE_ALPHA 0.04f
+                    // I have found literally one lecture that explains that this alpha is 
+                    // empirically measured to be [0.04 - 0.06] and another that just uses 
+                    // 0.04 without ref
