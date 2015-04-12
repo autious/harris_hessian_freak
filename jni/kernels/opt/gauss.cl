@@ -28,6 +28,7 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
     STORE_HHF(output, coord.x+coord.y*width, sum );
 }
 
+__attribute__((reqd_work_group_size(4,8,1)))
 __kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height, __local hh_float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
@@ -38,9 +39,15 @@ __kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __gl
     int top_index = group_id.y * local_size.y - kernel_radius;
     int cache_height_len = kernel_radius + local_size.y + kernel_radius;
 
-    for( int i = local_id.y; i < cache_height_len; i += local_size.y )
+    if( local_id.x == 0 )
     {
-        cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
+        for( int i = local_id.y; i < cache_height_len; i += local_size.y )
+        {
+            __local hh_float4* ff = (__local hh_float4*)&cached_source[i*4];
+            *ff = *((__global hh_float4*)&input[min(height-1,max(top_index+i,0)) * width]);
+                    
+            //cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
+        }
     }
 
     hh_float sum = 0;
