@@ -39,16 +39,16 @@ __kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __gl
     int top_index = group_id.y * local_size.y - kernel_radius;
     int cache_height_len = kernel_radius + local_size.y + kernel_radius;
 
-    if( local_id.x == 0 )
-    {
+    //if( local_id.x == 0 )
+    //{
         for( int i = local_id.y; i < cache_height_len; i += local_size.y )
         {
-            __local hh_float4* ff = (__local hh_float4*)&cached_source[i*4];
-            *ff = *((__global hh_float4*)&input[min(height-1,max(top_index+i,0)) * width]);
+            //__local hh_float4* ff = (__local hh_float4*)&cached_source[i*4];
+            //*ff = *((__global hh_float4*)&input[min(height-1,max(top_index+i,0)) * width]);
                     
-            //cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
+            cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
         }
-    }
+    //}
 
     hh_float sum = 0;
 
