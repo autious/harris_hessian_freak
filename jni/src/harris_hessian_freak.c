@@ -254,6 +254,12 @@ void harris_hessian_freak_close()
 }
 
 
+static int calc_derivate_sample_width( float sigma )
+{
+    return 1;
+    //return (int)(sigma/4.0f+1.0f) ;
+}
+
 
 static bool do_harris( 
         cl_mem hessian_determinant, 
@@ -287,6 +293,7 @@ static bool do_harris(
 
     opencl_fd_derivate_image( 
         &state, 
+        calc_derivate_sample_width( sigmaI ),
         mem.gauss_blur, 
         mem.ddx, 
         mem.ddy, 
@@ -368,6 +375,7 @@ static bool do_harris(
     cl_event second_derivate_events[2];
     opencl_fd_derivate_image( 
         &state, 
+        1,
         mem.ddx, 
         mem.ddxx, 
         mem.ddxy, 
@@ -378,6 +386,7 @@ static bool do_harris(
 
     opencl_fd_derivate_image( 
         &state, 
+        1,
         mem.ddy, 
         NULL, 
         mem.ddyy, 

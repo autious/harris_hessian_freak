@@ -266,6 +266,7 @@ bool opencl_fd_desaturate_image(
 }
 
 bool opencl_fd_derivate_image( struct FD* state,
+    cl_int cl_sample_width,
     cl_mem in,
     cl_mem ddxout,
     cl_mem ddyout,
@@ -311,6 +312,7 @@ bool opencl_fd_derivate_image( struct FD* state,
 
     clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_int ), &cl_width );
     clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_int ), &cl_height );
+    clSetKernelArg( kernel_derivate, kernelIndex++, sizeof( cl_int ), &cl_sample_width );
 
     cl_int errcode_ret = clEnqueueNDRangeKernel( command_queue,
         kernel_derivate,
