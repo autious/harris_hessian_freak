@@ -18,6 +18,8 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject 
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
+
+    return true;
 }
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_closeLib( JNIEnv* env, jobject x )
@@ -96,4 +98,6 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
     }
 
     free( data );
+
+    return true;
 }
