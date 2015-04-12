@@ -29,7 +29,7 @@ __kernel void harris_corner_suppression(
         for( int x = -SUP_HALFWIDTH; x <= SUP_HALFWIDTH; x++ )
         {
             int2 lc = (int2)(il(x+c.x,0,width),il(y+c.y,0,height));
-            m = fmax(m,LOAD_HHF(in,lc.x+lc.y*width));
+            m = fmax(m,(hh_float)LOAD_HHF(in,lc.x+lc.y*width));
         }
     }
 
