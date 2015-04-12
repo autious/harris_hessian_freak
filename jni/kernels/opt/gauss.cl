@@ -1,8 +1,7 @@
 //__attribute__((work_group_size_hint(32,1,1)))
 //__attribute__((reqd_work_group_size(32,1,1)))
-//__attribute__((vec_type_hint(float)))
-
-__kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, __local float* cached_source )
+//__attribute__((vec_type_hint(hh_float)))
+__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local hh_float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));
@@ -28,7 +27,7 @@ __kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global 
         } 
     }
 
-    float sum = 0;
+    hh_float sum = 0;
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
@@ -39,7 +38,7 @@ __kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global 
 }
 
 /*
-__kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, __local float* cached_source )
+__kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, __local hh_float* cached_source )
 {
     int2 coord = (int2)(get_global_id(0),get_global_id(1));
     int2 local_size = (int2)(get_local_size(0),get_local_size(1));
@@ -63,14 +62,14 @@ __kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global 
 
     event_t cache_copy_event;
     cache_copy_event = async_work_group_copy( 
-        (__local float*)(cached_source + left_offset),
-        (__global float*)(&input[max(left_index,0)+coord.y*width]),
+        (__local hh_float*)(cached_source + left_offset),
+        (__global hh_float*)(&input[max(left_index,0)+coord.y*width]),
         local_len,
         0
     );
 
     wait_group_events( 1, &cache_copy_event );
-    float sum = 0;
+    hh_float sum = 0;
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
@@ -81,11 +80,11 @@ __kernel void gaussx( __global float* gauss_kernel, int kernel_radius, __global 
 }
 */
 
-__kernel void gaussy( __constant float* gauss_kernel, int kernel_radius, __global float* input, __global float* output, int width, int height)
+__kernel void gaussy( __constant hh_float* gauss_kernel, int kernel_radius, __global hh_float* input, __global hh_float* output, int width, int height)
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
 
-    float sum = 0;
+    hh_float sum = 0;
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {

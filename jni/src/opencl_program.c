@@ -126,7 +126,12 @@ static void compile( const char* name, const char* cfo )
     cl_device_id device = opencl_loader_get_device();
     cl_program program;
 
+    struct KernelData hd = get_kernel( "header.cl", opencl_run_reference_mode );
     struct KernelData kd = get_kernel( name, opencl_run_reference_mode );
+
+    //We always include the header as being part of all kernels.
+    const char* char_arr[] = {hd.data,kd.data};
+    const size_t size_arr[] = {hd.size,kd.size};
 
     if( kd.data != NULL )
     {
@@ -135,9 +140,9 @@ static void compile( const char* name, const char* cfo )
         cl_int errcode_ret; 
         program = clCreateProgramWithSource( 
                 context, 
-                1, 
-                (const char**)&kd.data,
-                &kd.size, 
+                2, 
+                char_arr,
+                size_arr, 
                 &errcode_ret 
         );
 
