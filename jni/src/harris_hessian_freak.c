@@ -301,6 +301,8 @@ static bool do_harris(
         &gauss_event, 
         &derivate_event 
     );
+    SI( save_path, "derivate_ddx", sigmaI, mem.ddx, 1, &derivate_event );
+    SI( save_path, "derivate_ddy", sigmaI, mem.ddy, 1, &derivate_event );
 
     opencl_fd_second_moment_matrix_elements( 
         &state, 
@@ -313,6 +315,10 @@ static bool do_harris(
         &derivate_event, 
         &second_moment_elements 
     );
+
+    SI( save_path, "second_moment_xx", sigmaI, mem.xx, 1, &second_moment_elements );
+    SI( save_path, "second_moment_xy", sigmaI, mem.xy, 1, &second_moment_elements );
+    SI( save_path, "second_moment_yy", sigmaI, mem.yy, 1, &second_moment_elements );
 
     cl_event moment_gauss[3];
     opencl_fd_run_gaussxy( 
@@ -361,6 +367,8 @@ static bool do_harris(
         &harris_response_event 
     );
 
+    SI( save_path, "harris_response", sigmaI, mem.harris_response, 1, &harris_response_event );
+
     cl_event harris_suppression_event;
     opencl_fd_run_harris_corner_suppression( 
         &state, 
@@ -370,6 +378,8 @@ static bool do_harris(
         &harris_response_event, 
         &harris_suppression_event 
     );
+
+    SI( save_path, "harris_suppression", sigmaI, mem.harris_suppression, 1, &harris_suppression_event );
 
     //Get second derivates for hessian
     cl_event second_derivate_events[2];
