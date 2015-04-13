@@ -13,7 +13,7 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
 
     for( int i = local_id.x; i < cache_row_len; i += local_size.x )
     {
-        cached_source[i+local_id.y*cache_row_len] = LOAD_HHF(input,min(width-1,max(left_index+i,0)) + coord.y*width);
+        cached_source[i+local_id.y*cache_row_len] = input[min(width-1,max(left_index+i,0)) + coord.y*width];
     }
 
     hh_float sum = 0;
@@ -22,10 +22,10 @@ __kernel void gaussx( __global hh_float* gauss_kernel, int kernel_radius, __glob
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += LOAD_HHF(gauss_kernel,i+kernel_radius) * cached_source[local_id.x + kernel_radius + i + local_id.y * cache_row_len];
+        sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.x + kernel_radius + i + local_id.y * cache_row_len];
     }
 
-    STORE_HHF(output, coord.x+coord.y*width, sum );
+    output[coord.x+coord.y*width] = sum;
 }
 
 __attribute__((reqd_work_group_size(4,8,1)))
@@ -43,10 +43,10 @@ __kernel void gaussy( __global hh_float* gauss_kernel, int kernel_radius, __glob
     //{
         for( int i = local_id.y; i < cache_height_len; i += local_size.y )
         {
+
             //__local hh_float4* ff = (__local hh_float4*)&cached_source[i*4];
             //*ff = *((__global hh_float4*)&input[min(height-1,max(top_index+i,0)) * width]);
-                    
-            cached_source[i+local_id.x*cache_height_len] = LOAD_HHF(input,min(height-1,max(top_index+i,0)) * width + coord.x);
+            cached_source[i+local_id.x*cache_height_len] = input[min(height-1,max(top_index+i,0)) * width + coord.x];
         }
     //}
 
@@ -56,10 +56,10 @@ __kernel void gaussy( __global hh_float* gauss_kernel, int kernel_radius, __glob
 
     for( int i = -kernel_radius; i <= kernel_radius; i++ )
     {
-        sum += LOAD_HHF(gauss_kernel,i+kernel_radius) * cached_source[local_id.y + kernel_radius + i + local_id.x * cache_height_len];
+        sum += gauss_kernel[i+kernel_radius] * cached_source[local_id.y + kernel_radius + i + local_id.x * cache_height_len];
     }
 
-    STORE_HHF(output, coord.x+coord.y*width, sum);
+    output[coord.x+coord.y*width] = sum;
 }
 
 /*

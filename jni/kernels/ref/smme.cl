@@ -8,11 +8,11 @@ __kernel void second_moment_matrix_elements(
 {
     int i = get_global_id(0);
 
-    hh_float dx = LOAD_HHF(ddx,i);
-    hh_float dy = LOAD_HHF(ddy,i);
+    hh_float dx = ddx[i];
+    hh_float dy = ddy[i];
 
-    STORE_HHF(xx, i, dx*dx);
-    STORE_HHF(xy, i, dx*dy);
-    STORE_HHF(yy, i, dy*dy);
+    xx[i] = dx*dx;
+    xy[i] = dx*dy;
+    yy[i] = dy*dy;
 }
 
