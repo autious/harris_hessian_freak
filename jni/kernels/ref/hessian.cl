@@ -2,7 +2,7 @@ __kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh
 {
     int i = get_global_id(0); 
 
-    STORE_HHF(out, i, fabs(((LOAD_HHF(xx, i) * LOAD_HHF(yy, i) - pow( LOAD_HHF(xy, i),2.0f)) / sigmaD)));
+    STORE_HHF(out, i, fabs(((LOAD_HHF(xx, i) * LOAD_HHF(yy, i) - pow( LOAD_HHF(xy, i),2)) / sigmaD)));
 }
 
 
