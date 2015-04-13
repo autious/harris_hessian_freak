@@ -4,15 +4,11 @@ typedef half hh_float;
 typedef half2 hh_float2;
 typedef half4 hh_float4;
 typedef half8 hh_float8;
-#define LOAD_HHF(arr,offset) arr[offset]
-#define STORE_HHF(arr,offset,value) arr[offset]=value
 #else
 typedef float hh_float;
 typedef float2 hh_float2;
 typedef float4 hh_float4;
 typedef float8 hh_float8;
-#define LOAD_HHF(arr,offset) arr[offset]
-#define STORE_HHF(arr,offset,value) arr[offset]=value
 #endif
 
 typedef float param_float;
