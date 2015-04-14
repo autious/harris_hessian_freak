@@ -5,7 +5,5 @@ __kernel void desaturate( __global image2d_t image, __global hh_float* desaturat
 {
     int2 coord = (int2)(get_global_id(0), get_global_id(1));
     float4 pixel = read_imagef( image, sampler, coord );
-    STORE_HHF( desaturated_out, coord.x+coord.y*width, 0.21f * pixel.x + 0.72f * pixel.y + 0.07f * pixel.z );
-    //desaturated_out[coord.x+coord.y*width] = coord.x/(hh_float)width * 255;
-    //desaturated_out[coord.x+coord.y*width] = pixel.x;
+    desaturated_out[coord.x+coord.y*width] = 0.21f * pixel.x + 0.72f * pixel.y + 0.07f * pixel.z;
 }
