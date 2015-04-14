@@ -1,1 +1,1 @@
-LIBRARY_SOURCES = opencl_error.c opencl_loader.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian_freak.c util.c freak.c opencl_timer.c stb_image.c string_object.c opencl_config.c xor_texture.c
+LIBRARY_SOURCES = opencl_error.c opencl_loader.c opencl_test.c lodepng.c gauss_kernel.c opencl_util.c opencl_program.c opencl_fd.c harris_hessian_freak.c util.c freak.c opencl_timer.c stb_image.c string_object.c opencl_config.c xor_texture.c  ieeehalfprecision.c

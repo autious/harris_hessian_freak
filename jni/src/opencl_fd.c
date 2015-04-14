@@ -8,6 +8,7 @@
 #include "opencl_program.h"
 #include "gauss_kernel.h"
 #include "lodepng.h"
+#include "ieeehalfprecision.h"
 
 bool opencl_fd_load_rgba( uint8_t* data, struct FD* state )
 {
@@ -44,14 +45,14 @@ void opencl_fd_save_buffer_to_image(
     cl_event buffer_read_event;
     cl_int errcode_ret;
 
-    hh_float* output_desaturated_image = (hh_float*)malloc(state->width*state->height*sizeof(hh_float));
+    hh_float* output_desaturated_image_hh_float = (hh_float*)malloc(state->width*state->height*sizeof(hh_float));
 
     errcode_ret = clEnqueueReadBuffer( command_queue,
         in,
         false,
         0,
         sizeof( hh_float ) * state->width * state->height,
-        output_desaturated_image,
+        output_desaturated_image_hh_float,
         num_events_in_wait_list,
         event_wait_list,
         &buffer_read_event
@@ -60,6 +61,19 @@ void opencl_fd_save_buffer_to_image(
     if( errcode_ret == CL_SUCCESS )
     {
         clWaitForEvents( 1, &buffer_read_event );
+
+            cl_float* output_desaturated_image;
+        #ifdef HH_USE_HALF
+            output_desaturated_image = (cl_float*)malloc(state->width*state->height*sizeof(cl_float));
+            halfp2singles( output_desaturated_image, output_desaturated_image_hh_float, state->width*state->height );
+        #else
+            output_desaturated_image = output_desaturated_image_hh_float;
+            output_desaturated_image_hh_float = NULL;
+        #endif
+
+            if( output_desaturated_image_hh_float )
+                free( output_desaturated_image_hh_float );
+
         uint8_t* output_desaturated_image_l = malloc( sizeof( uint8_t ) * state->width * state->height );
 
         float factor = 1.0f;
@@ -90,6 +104,8 @@ void opencl_fd_save_buffer_to_image(
 
         lodepng_encode_file( name, output_desaturated_image_l, state->width, state->height, LCT_GREY, 8 );
         free( output_desaturated_image_l );
+
+        free(output_desaturated_image);
     }
     else
     {
