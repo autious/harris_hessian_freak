@@ -9,5 +9,5 @@
 FILE* android_io_fopen( const char* fname, const char* mode );
 void android_io_set_asset_manager( AAssetManager* mgr );
 
-#define fopen(name, mode) android_io_fopen(name, mode)
+//#define fopen(name, mode) android_io_fopen(name, mode)
 #endif

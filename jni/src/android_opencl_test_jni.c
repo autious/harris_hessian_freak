@@ -13,6 +13,9 @@
 #include "opencl_timer.h"
 #include "stb_image.h"
 #include "opencl_config.h"
+#include "android_io.h"
+
+static char* save_path = NULL;
 
 jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
@@ -20,6 +23,18 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject 
     
     android_io_set_asset_manager( mgr );
     opencl_run_reference_mode = false;
+
+    return true;
+}
+
+jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_setSaveFolder( JNIEnv* env, jobject x, jbyteArray path )
+{
+    int len = (*env)->GetArrayLength( env, path ); 
+
+    save_path = realloc(save_path, sizeof( char ) * (len + 1));
+    memset( save_path, '\0', sizeof( char ) * (len + 1) );
+
+    (*env)->GetByteArrayRegion( env, path, 0, len, (jbyte*)save_path );
 
     return true;
 }
@@ -48,8 +63,9 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
     int height;
     int n;
     uint8_t *data;
-
-    data = stbi_load( "test.png", &width, &height, &n, 4 );
+    
+    FILE* f_handle = android_io_fopen( "test.png", "r" );
+    data = stbi_load_from_file( f_handle, &width, &height, &n, 4 );
 
     if( data )
     {
@@ -57,7 +73,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject 
 
         cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
-        harris_hessian_freak_detection( data, NULL, 0, NULL, &detection_event );
+        harris_hessian_freak_detection( data, save_path, 0, NULL, &detection_event );
 
         cl_event generate_keypoints_list_event;
         size_t keypoints_count;
