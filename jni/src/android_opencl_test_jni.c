@@ -22,7 +22,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject 
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
-    opencl_run_reference_mode = false;
+    opencl_run_reference_mode = true;
 
     return true;
 }
