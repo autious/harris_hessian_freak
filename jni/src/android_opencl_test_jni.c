@@ -17,7 +17,7 @@
 
 static char* save_path = NULL;
 
-jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
+jboolean Java_org_bth_HarrisHessianFreakJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
@@ -27,7 +27,7 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_initLib( JNIEnv* env, jobject 
     return true;
 }
 
-jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_setSaveFolder( JNIEnv* env, jobject x, jbyteArray path )
+jboolean Java_org_bth_HarrisHessianFreakJNI_setSaveFolder( JNIEnv* env, jobject x, jbyteArray path )
 {
     int len = (*env)->GetArrayLength( env, path ); 
 
@@ -39,19 +39,19 @@ jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_setSaveFolder( JNIEnv* env, jo
     return true;
 }
 
-jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_closeLib( JNIEnv* env, jobject x )
+jboolean Java_org_bth_HarrisHessianFreakJNI_closeLib( JNIEnv* env, jobject x )
 {
     android_io_set_asset_manager( NULL );
     return true;
 }
 
-jstring Java_org_bth_opencltestjni_OpenCLTestJNI_getLibError( JNIEnv* env, jobject x )
+jstring Java_org_bth_HarrisHessianFreakJNI_getLibError( JNIEnv* env, jobject x )
 {
     char *err = "err";
     return (*env)->NewStringUTF( env, err );
 }
 
-jboolean Java_org_bth_opencltestjni_OpenCLTestJNI_runTest( JNIEnv* env, jobject x )
+jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
 {
     //opencl_test_run();
 #ifdef PROFILE

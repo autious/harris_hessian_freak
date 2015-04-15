@@ -1,4 +1,4 @@
-package org.bth.opencltestjni;
+package org.bth;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -10,26 +10,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-public class OpenCLTestJNI extends Activity
+public class HarrisHessianFreakTest extends Activity
 {
-    private static final String TAG = "opencl_app";
+    HarrisHessianFreakJNI api;
+
+    private static final String TAG = "harris_hessian_freak";
     TextView tv;
     AssetManager mgr;
-
-    public String getAlbumStorageDir() 
-    {
-        File file = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "opencl_app_debug");
-        if (!file.mkdirs()) {
-            Log.e(TAG, "Directory not created");
-        }
-        return file.getAbsolutePath();
-    }    
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        api = new HarrisHessianFreakJNI();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -44,7 +38,7 @@ public class OpenCLTestJNI extends Activity
 
         AssetManager mgr = getResources().getAssets();
 
-        if( initLib(mgr) )
+        if( api.initLib(mgr) )
         {
             tv.setText( "Opened lib");
             Log.v( TAG, "Opened lib" );
@@ -70,23 +64,21 @@ public class OpenCLTestJNI extends Activity
             Log.e( TAG, "Unable to read from media." );
         }
 
-        Log.e( TAG, getAlbumStorageDir() );
-
         try
         {
-            //setSaveFolder( getAlbumStorageDir().getBytes( "UTF-8" ) ); 
+            //api.setSaveFolder( getAlbumStorageDir().getBytes( "UTF-8" ) ); 
             String folder = new String("/storage/sdcard0/harris_hessian_freak");
             File file = new File( folder );
             file.mkdirs();
             
-            setSaveFolder( folder.getBytes( "UTF-8" ) ); 
+            api.setSaveFolder( folder.getBytes( "UTF-8" ) ); 
         }
         catch( UnsupportedEncodingException uee )
         {
             Log.e( TAG, uee.toString() );
         }
 
-        runTest();
+        api.runTest();
     }
 
     @Override
@@ -94,18 +86,7 @@ public class OpenCLTestJNI extends Activity
     {
         super.onStop();
         tv.setText( "Closed lib");
-        closeLib();
+        api.closeLib();
         AssetManager mgr = null;
     }
-
-    static
-    {
-        System.loadLibrary("android_opencl_test_jni");
-    }
-
-    public native boolean initLib( AssetManager assetManager );
-    public native boolean closeLib();
-    public native String getLibError();
-    public native boolean runTest();
-    public native boolean setSaveFolder( byte[] path );
 }

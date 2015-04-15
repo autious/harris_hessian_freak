@@ -13,7 +13,7 @@ include $(LOCAL_PATH)/Sources.mk
 LOCAL_SRC_FILES := $(addprefix src/,$(LIBRARY_SOURCES))
 LOCAL_SRC_FILES += src/android_opencl_test_jni.c src/android_io.c
 
-LOCAL_MODULE := android_opencl_test_jni
+LOCAL_MODULE := harris_hessian_freak_jni
 LOCAL_LDLIBS := -landroid -ldl -llog -lOpenCL
 
 include $(LOCAL_PATH)/Generate.mk
