@@ -1,7 +1,7 @@
 __kernel void hessian( __global hh_float *xx, __global hh_float* xy, __global hh_float* yy, __global hh_float* out, param_float sigmaD )
 {
     int i = get_global_id(0); 
-    out[i] = fabs(((xx[i] * yy[i] - pow(xy[i],2)) / sigmaD ));
+    out[i] = fabs(((xx[i] * yy[i] - pow(xy[i],2)) * pow(sigmaD,2)));
 }
 
 __kernel void find_keypoints( 

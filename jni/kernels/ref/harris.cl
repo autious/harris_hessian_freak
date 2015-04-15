@@ -45,7 +45,7 @@ __kernel void harris_count( __global hh_float* in, volatile __global uint* stron
 
     hh_float value = in[i];
 
-    if( value > 0 )
+    if( value > 0.0f )
     {
         atomic_inc( count );
         if( value > HARRIS_THRESHOLD )
