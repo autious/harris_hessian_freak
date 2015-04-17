@@ -22,7 +22,7 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_initLib( JNIEnv* env, jobject x, job
     AAssetManager *mgr = AAssetManager_fromJava( env, assetManager );
     
     android_io_set_asset_manager( mgr );
-    opencl_run_reference_mode = true;
+    opencl_run_reference_mode = false;
 
     return true;
 }

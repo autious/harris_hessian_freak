@@ -64,6 +64,7 @@ public class HarrisHessianFreakTest extends Activity
             Log.e( TAG, "Unable to read from media." );
         }
 
+        /*
         try
         {
             //api.setSaveFolder( getAlbumStorageDir().getBytes( "UTF-8" ) ); 
@@ -77,6 +78,7 @@ public class HarrisHessianFreakTest extends Activity
         {
             Log.e( TAG, uee.toString() );
         }
+        */
 
         api.runTest();
     }
