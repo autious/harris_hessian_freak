@@ -234,7 +234,7 @@ int main( int argc, char * const *argv )
     }
     else
     {
-        fprintf( stderr, "Unable to load image\n" );
+        fprintf( stderr, "Unable to load image: %s reason: %s\n", argv[optind], stbi_failure_reason() );
     }
 
     free( data );
