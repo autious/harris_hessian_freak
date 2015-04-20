@@ -709,7 +709,9 @@ descriptor* harris_hessian_freak_build_descriptor(
     cl_event* event 
 )
 {
+#ifdef PROFILE
     PROFILE_MM( "build_descriptor" );
+#endif
     cl_command_queue command_queue = opencl_loader_get_command_queue();
     cl_int errcode_ret;
 
@@ -751,7 +753,8 @@ descriptor* harris_hessian_freak_build_descriptor(
         NULL,
         event 
     );
-
+#ifdef PROFILE
     PROFILE_MM( "build_descriptor" );
+#endif
     return desc;
 }

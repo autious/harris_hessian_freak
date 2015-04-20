@@ -53,9 +53,8 @@ jstring Java_org_bth_HarrisHessianFreakJNI_getLibError( JNIEnv* env, jobject x )
 
 jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
 {
-    opencl_timer_clear_events();
-    //opencl_test_run();
 #ifdef PROFILE
+    opencl_timer_clear_events();
     int start_marker = PROFILE_PM( full_pass, 0 );
     PROFILE_MM( "full_hh_freak" ); 
 #endif

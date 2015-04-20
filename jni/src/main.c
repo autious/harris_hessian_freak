@@ -165,8 +165,8 @@ int main( int argc, char * const *argv )
 
     if( data )
     {
-        opencl_timer_clear_events();
 #ifdef PROFILE
+        opencl_timer_clear_events();
         PROFILE_MM( "full_hh_freak" ); 
         int start_marker = PROFILE_PM( full_pass, 0 );
 #endif
