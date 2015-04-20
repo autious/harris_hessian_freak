@@ -7,7 +7,7 @@
       <application android:label="@string/app_name" 
                    android:icon="@drawable/ic_launcher"
                    android:debuggable="true">
-        <activity android:name="HarrisHessianFreakTest"
+        <activity android:name="HarrisHessianFreakUI"
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

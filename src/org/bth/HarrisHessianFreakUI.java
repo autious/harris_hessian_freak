@@ -4,31 +4,33 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.widget.TextView;
+import android.widget.Button;
 import android.content.res.AssetManager;
 import android.util.Log;
+import android.view.View;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
-public class HarrisHessianFreakTest extends Activity
+public class HarrisHessianFreakUI extends Activity
 {
-    HarrisHessianFreakJNI api;
-
     private static final String TAG = "harris_hessian_freak";
+    Button startButton;
     TextView tv;
-    AssetManager mgr;
+    AssetManager mgr = null;
+    HarrisHessianFreak hhf;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
-        api = new HarrisHessianFreakJNI();
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        tv = new TextView(this);
-        setContentView(tv);
+        mgr = getResources().getAssets();
+        tv = (TextView)findViewById( R.id.info_v );
+        startButton = (Button)findViewById( R.id.button_id );
+        hhf = new HarrisHessianFreak( mgr, tv );
     }
 
     @Override
@@ -36,13 +38,12 @@ public class HarrisHessianFreakTest extends Activity
     {
         super.onStart();
 
-        AssetManager mgr = getResources().getAssets();
 
-        if( api.initLib(mgr) )
+        /*
+        if( api == null )
         {
-            tv.setText( "Opened lib");
-            Log.v( TAG, "Opened lib" );
         }
+        */
 
         String state = Environment.getExternalStorageState();
 
@@ -80,15 +81,25 @@ public class HarrisHessianFreakTest extends Activity
         }
         */
 
-        api.runTest();
     }
 
     @Override
-    public void onStop()
-    {
+    public void onStop() {
         super.onStop();
         tv.setText( "Closed lib");
-        api.closeLib();
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        super.onDestroy();
+        //api.closeLib();
+        //api = null;
         AssetManager mgr = null;
+    }
+
+    public void selfDestruct( View view )
+    {
+        hhf.Run();
     }
 }
