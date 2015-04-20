@@ -15,11 +15,11 @@ typedef float param_float;
 
 #define il(value,v_min,v_max) min(max(v_min,value),v_max)
 
-#define HESSIAN_DETERMINANT_THRESHOLD 0.000001f
+#define HESSIAN_DETERMINANT_THRESHOLD 0.00001f
 
 #define SUP_HALFWIDTH 1
 
-#define HARRIS_THRESHOLD 0.000001f
+#define HARRIS_THRESHOLD 0.00001f
 
 #define CORNER_RESPONSE_ALPHA 0.04f
                     // I have found literally one lecture that explains that this alpha is 
