@@ -3,14 +3,15 @@ __kernel void harris_corner_response(
         __global hh_float* xy, 
         __global hh_float* yy, 
         __global hh_float* output, 
-        param_float sigmaD )
+        param_float sigmaD,
+        param_float corner_response_alpha )
 {
     int i = get_global_id(0);
     hh_float A = xx[i] * pow(sigmaD, 2);
     hh_float B = yy[i] * pow(sigmaD, 2);
     hh_float C = xy[i] * pow(sigmaD, 2);
 
-    output[i] = A * B - C * C - CORNER_RESPONSE_ALPHA * pow(A + B, 2);
+    output[i] = A * B - C * C - corner_response_alpha * pow(A + B, 2);
 }
 
 __kernel void harris_corner_suppression(
@@ -39,7 +40,11 @@ __kernel void harris_corner_suppression(
         out[c.x+c.y*width] = in_value;
 }
 
-__kernel void harris_count( __global hh_float* in, volatile __global uint* strong, volatile __global int* count ) 
+__kernel void harris_count( 
+        __global hh_float* in, 
+        volatile __global uint* strong, 
+        volatile __global int* count, 
+        param_float harris_threshold ) 
 {
     int i = get_global_id(0);
 
@@ -48,7 +53,7 @@ __kernel void harris_count( __global hh_float* in, volatile __global uint* stron
     if( value > 0.0f )
     {
         atomic_inc( count );
-        if( value > HARRIS_THRESHOLD )
+        if( value > harris_threshold )
         {
            strong[i] += 1;
         }

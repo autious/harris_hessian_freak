@@ -77,6 +77,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
     cl_mem yy,
     cl_mem output,
     param_float sigmaD,
+    param_float corner_response_alpha,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event
@@ -105,6 +106,7 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     cl_mem corners_in,
     cl_mem strong_responses,
     cl_mem corner_count,
+    param_float harris_threshold,
     cl_uint num_events_in_wait_list,
     cl_event *event_wait_list,
     cl_event *event
@@ -116,6 +118,7 @@ bool opencl_fd_find_keypoints(
         cl_mem corner_counts, 
         cl_mem keypoints_data, 
         cl_mem hessian_determinant_indices,
+        param_float hessian_determinant_threshold,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event

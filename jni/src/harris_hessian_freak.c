@@ -17,6 +17,15 @@
 //Decided for the H-H method.
 static const float HHSIGMAS[] = { 0.7f, 2.0f, 4.0f, 6.0f, 8.0f, 12.0f, 16.0f, 20.0f, 24.0f, 0.0f, 0.0f };
 
+static float HESSIAN_DETERMINANT_THRESHOLD = 0.00001f;
+
+static float HARRIS_THRESHOLD = 0.00001f;
+
+static float CORNER_RESPONSE_ALPHA  = 0.04f;
+                    // I have found literally one lecture that explains that this alpha is 
+                    // empirically measured to be [0.04 - 0.06] and another that just uses 
+                    // 0.04 without ref
+
 #define IMAGE_SIZE_MULTIPLE 32
 struct BufferMemory
 {
@@ -364,6 +373,7 @@ static bool do_harris(
         mem.yy, 
         mem.harris_response, 
         sigmaD, 
+        CORNER_RESPONSE_ALPHA,
         3, 
         moment_gauss, 
         &harris_response_event 
@@ -426,6 +436,7 @@ static bool do_harris(
         mem.harris_suppression, 
         strong_responses, 
         corner_count, 
+        HARRIS_THRESHOLD,
         1, 
         &harris_suppression_event, 
         &harris_corner_count_event
@@ -686,6 +697,7 @@ void harris_hessian_freak_detection(
         mem.strong_responses, 
         mem.keypoints_buf, 
         mem.hessian_determinant_indices_buffer,  
+        HESSIAN_DETERMINANT_THRESHOLD,
         1, 
         &write_indices_event, 
         event

@@ -433,6 +433,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
         cl_mem yy,
         cl_mem output,
         param_float sigmaD,
+        param_float corner_response_alpha,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event
@@ -454,6 +455,7 @@ bool opencl_fd_run_harris_corner_response( struct FD* state,
     clSetKernelArg( harris_corner_response, 2, sizeof( cl_mem ), &yy );
     clSetKernelArg( harris_corner_response, 3, sizeof( cl_mem ), &output );
     clSetKernelArg( harris_corner_response, 4, sizeof( param_float ), &sigmaD );
+    clSetKernelArg( harris_corner_response, 5, sizeof( param_float ), &corner_response_alpha );
 
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
         harris_corner_response,
@@ -577,6 +579,7 @@ bool opencl_fd_harris_corner_count( struct FD* state,
         cl_mem corners_in,
         cl_mem strong_responses,
         cl_mem corner_count,
+        param_float harris_threshold,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event
@@ -596,6 +599,7 @@ bool opencl_fd_harris_corner_count( struct FD* state,
     clSetKernelArg( harris_count, 0, sizeof( cl_mem ), &corners_in );
     clSetKernelArg( harris_count, 1, sizeof( cl_mem ), &strong_responses );
     clSetKernelArg( harris_count, 2, sizeof( cl_mem ), &corner_count );
+    clSetKernelArg( harris_count, 3, sizeof( param_float ), &harris_threshold );
 
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
         harris_count,
@@ -624,6 +628,7 @@ bool opencl_fd_find_keypoints(
         cl_mem corner_counts, 
         cl_mem keypoints_data, 
         cl_mem hessian_determinant_indices,
+        param_float hessian_determinant_threshold,
         cl_uint num_events_in_wait_list,
         cl_event *event_wait_list,
         cl_event *event
@@ -649,6 +654,7 @@ bool opencl_fd_find_keypoints(
     clSetKernelArg( find_keypoints, 3, sizeof( cl_mem ), &hessian_determinant_indices);
     clSetKernelArg( find_keypoints, 4, sizeof( cl_int ), &width );
     clSetKernelArg( find_keypoints, 5, sizeof( cl_int ), &height );
+    clSetKernelArg( find_keypoints, 6, sizeof( param_float ), &hessian_determinant_threshold );
 
     errcode_ret = clEnqueueNDRangeKernel( command_queue,
         find_keypoints,

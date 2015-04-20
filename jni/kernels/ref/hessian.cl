@@ -10,7 +10,8 @@ __kernel void find_keypoints(
         __global ushort* keypoints, 
         __global int* hessian_determinant_indices,
         int width, 
-        int height )
+        int height,
+        param_float hessian_determinant_threshold  )
 {
     int i = get_global_id(0);
 
@@ -34,7 +35,7 @@ __kernel void find_keypoints(
                 after = source_determinants[hessian_determinant_indices[j+1] * width * height + i];
             }
 
-            if( current > before && current > after && current > HESSIAN_DETERMINANT_THRESHOLD )
+            if( current > before && current > after && current > hessian_determinant_threshold )
             {
                 keypoints[i] |= (1UL << j);
             } 
