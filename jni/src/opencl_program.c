@@ -69,6 +69,7 @@ void opencl_program_close()
         free(cur);
         cur = next;
     }
+    program_root = NULL;
 }
 
 struct KernelData
