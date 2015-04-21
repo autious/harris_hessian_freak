@@ -12,6 +12,6 @@ public class HarrisHessianFreakJNI
     public native boolean initLib( AssetManager assetManager );
     public native boolean closeLib();
     public native String getLibError();
-    public native boolean runTest();
+    public native boolean runTest( HarrisHessianProgressCallbackInterface hhpci );
     public native boolean setSaveFolder( byte[] path );
 }

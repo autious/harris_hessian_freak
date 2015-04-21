@@ -10,12 +10,18 @@
         android:layout_height="wrap_content"
         android:text="Hello World, HarrisHessianFreak"
         />
-
     <Button 
         android:id="@+id/button_id"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:text="@string/self_destruct"
         android:onClick="selfDestruct" />
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:max="100"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+    />
 </LinearLayout>
 

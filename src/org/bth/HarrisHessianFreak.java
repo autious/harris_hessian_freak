@@ -1,6 +1,7 @@
 package org.bth;
 
 import android.widget.TextView;
+import android.widget.ProgressBar;
 import android.content.res.AssetManager;
 import java.lang.Thread;
 import java.lang.InterruptedException;
@@ -10,11 +11,15 @@ public class HarrisHessianFreak
     Thread workitem;
     AssetManager mgr;
     TextView tv;
+    ProgressBar pb;
+    HarrisHessianFreakJNI api;
 
-    public HarrisHessianFreak( AssetManager mgr, TextView tv )
+    public HarrisHessianFreak( AssetManager mgr, TextView tv, ProgressBar pb )
     {
         this.mgr = mgr;
         this.tv = tv;
+        this.pb = pb;
+        this.api = new HarrisHessianFreakJNI();
     }
 
     public void Run()
@@ -25,25 +30,27 @@ public class HarrisHessianFreak
             {
                 public void run()
                 {
-                    try
+                    api.initLib(mgr);
+                    api.runTest( new HarrisHessianProgressCallbackInterface()
                     {
-                        Thread.sleep(2000);                    
-                    }
-                    catch( InterruptedException ie )
-                    {
+                        public void progress( final int progress )
+                        {
+                            pb.post( new Runnable()
+                            {
+                                public void run()
+                                {
+                                    pb.setProgress( progress );
+                                }
+                            });
+                        }
+                    });
 
-                    }
+                    api.closeLib();
 
                     tv.post( new Runnable()
                     {
                         public void run()
                         {
-                            HarrisHessianFreakJNI api = new HarrisHessianFreakJNI();
-
-                            api.initLib(mgr);
-                            api.runTest();
-                            api.closeLib();
-
                             Finish();
                         }
                     });

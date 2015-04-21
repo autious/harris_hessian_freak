@@ -51,8 +51,17 @@ jstring Java_org_bth_HarrisHessianFreakJNI_getLibError( JNIEnv* env, jobject x )
     return (*env)->NewStringUTF( env, err );
 }
 
-jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
+jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, jobject callback_object )
 {
+    const char* callback_name = "progress";
+    const char* callback_type = "(I)V";
+
+    jclass callback_class = (*env)->GetObjectClass( env, callback_object );
+    jmethodID callback_method_id = (*env)->GetMethodID( env, callback_class, callback_name, callback_type );
+    int progress = 0;
+    int increment = 100/6;
+
+
 #ifdef PROFILE
     opencl_timer_clear_events();
     int start_marker = PROFILE_PM( full_pass, 0 );
@@ -66,6 +75,7 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
     
     FILE* f_handle = android_io_fopen( "test.png", "r" );
     data = stbi_load_from_file( f_handle, &width, &height, &n, 4 );
+    (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
     if( data )
     {
@@ -73,7 +83,12 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
 
         cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
+
+        (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
+
         harris_hessian_freak_detection( data, save_path, 0, NULL, &detection_event );
+
+        (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
         cl_event generate_keypoints_list_event;
         size_t keypoints_count;
@@ -83,6 +98,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
             &detection_event,
             &generate_keypoints_list_event
         );
+
+        (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
 
         size_t desc_count;
@@ -94,6 +111,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
             &generate_keypoints_list_event, 
             NULL 
         );
+
+        (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
 #ifdef PROFILE 
         PROFILE_MM( "full_hh_freak" ); 
@@ -114,6 +133,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x )
     {
         LOGE( "Unable to load image: %s", "file" );
     }
+
+    (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress = 100) );
 
     free( data );
 

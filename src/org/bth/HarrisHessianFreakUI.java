@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.widget.TextView;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.content.res.AssetManager;
 import android.util.Log;
 import android.view.View;
@@ -19,6 +20,7 @@ public class HarrisHessianFreakUI extends Activity
     TextView tv;
     AssetManager mgr = null;
     HarrisHessianFreak hhf;
+    ProgressBar pb;
 
     /** Called when the activity is first created. */
     @Override
@@ -30,7 +32,8 @@ public class HarrisHessianFreakUI extends Activity
         mgr = getResources().getAssets();
         tv = (TextView)findViewById( R.id.info_v );
         startButton = (Button)findViewById( R.id.button_id );
-        hhf = new HarrisHessianFreak( mgr, tv );
+        pb = (ProgressBar)findViewById( R.id.progress_bar );
+        hhf = new HarrisHessianFreak( mgr, tv, pb );
     }
 
     @Override
