@@ -115,7 +115,7 @@ public class HarrisHessianFreakUI extends Activity
                 try
                 {
                     FileWriter fw = new FileWriter( STORAGE + "/tempdata.txt" );
-                    TemperatureMonitor tm = new TemperatureMonitor();
+                    SystemMonitor tm = new SystemMonitor();
                     long start = System.currentTimeMillis();
 
                     while( !hhf.IsFinished() )
