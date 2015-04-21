@@ -9,12 +9,13 @@ import android.widget.ProgressBar;
 import android.content.res.AssetManager;
 import android.util.Log;
 import android.view.View;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.io.FileWriter;
 
 public class HarrisHessianFreakUI extends Activity
 {
+    private static final String STORAGE = "/storage/sdcard0/harris_hessian_freak";
     private static final String TAG = "harris_hessian_freak";
     Button startButton;
     TextView tv;
@@ -104,5 +105,41 @@ public class HarrisHessianFreakUI extends Activity
     public void selfDestruct( View view )
     {
         hhf.Run();
+
+
+        new Thread( new Runnable()
+        {  
+            public void run()
+            {
+
+                try
+                {
+                    FileWriter fw = new FileWriter( STORAGE + "/tempdata.txt" );
+                    TemperatureMonitor tm = new TemperatureMonitor();
+                    long start = System.currentTimeMillis();
+
+                    while( !hhf.IsFinished() )
+                    {
+                        for( Temp t : tm.GetTemps() )
+                        {
+                            fw.write( System.currentTimeMillis() - start + "." + t.getName() + ":" + t.getTemp() + "\n");
+                        }
+
+                        try
+                        {
+                            Thread.sleep(5); 
+                        }
+                        catch( InterruptedException ie )
+                        {
+
+                        }
+                    }
+                    fw.close();
+                }
+                catch( IOException ioe )
+                {
+                }
+            }
+        }).start();
     }
 }

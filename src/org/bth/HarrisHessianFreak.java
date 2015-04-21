@@ -26,7 +26,7 @@ public class HarrisHessianFreak
     {
         if( workitem == null )
         {
-            workitem = new Thread( new Runnable() 
+            RunWorkitem( new Thread( new Runnable() 
             {
                 public void run()
                 {
@@ -55,9 +55,8 @@ public class HarrisHessianFreak
                         }
                     });
                 }
-            });
+            }));
 
-            workitem.start();
             tv.setText( "Running job." );
         }
         else
@@ -66,9 +65,20 @@ public class HarrisHessianFreak
         }
     }
 
-    public void Finish()
+    public synchronized void RunWorkitem( Thread t )
     {
-        workitem = null;
+        this.workitem = t;
+        this.workitem.start();
+    }
+
+    public synchronized void Finish()
+    {
+        this.workitem = null;
         tv.setText( "Finished job." );
+    }
+
+    public synchronized boolean IsFinished()
+    {
+        return this.workitem == null;
     }
 }
