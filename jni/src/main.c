@@ -83,7 +83,7 @@ static void save_keypoints( const char* filename, keyPoint* keypoints, size_t co
 
 void print_help()
 {
-    printf( "Usage: hh_freak_detector [-htr] [-k FILE] [-p FILE] [-d FILE] [-b directory] FILE|-x\n" );
+    printf( "Usage: hh_freak_detector [-htr] [-k FILE] [-p FILE] [-d FILE] [-b directory] [-i iterations] FILE|-x\n" );
 }
 
 #ifdef PROFILE
@@ -98,8 +98,9 @@ int main( int argc, char * const *argv )
     const char* p_name = NULL;
     const char* d_name = NULL;
     const char* b_name = NULL;
+    int iterations = 1;
 
-    while((opt = getopt(argc,argv,"xhtrk:p:d:b:")) != -1) 
+    while((opt = getopt(argc,argv,"xhtrk:p:d:b:i:")) != -1) 
     {
         switch(opt)
         {
@@ -132,6 +133,9 @@ int main( int argc, char * const *argv )
                 break;
             case 'x':
                 use_xor = true;
+                break;
+            case 'i':
+                iterations = atoi(optarg);
                 break;
             default:
                 break;
@@ -175,43 +179,51 @@ int main( int argc, char * const *argv )
 
         cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
-        harris_hessian_freak_detection( data, b_name, 0, NULL, &detection_event );
 
-        cl_event generate_keypoints_list_event;
-        size_t keypoints_count;
-        keyPoint* keypoints_list = harris_hessian_freak_generate_keypoint_list(
-            &keypoints_count,
-            1,
-            &detection_event,
-            &generate_keypoints_list_event
-        );
-
-        if( k_name )
+        for( int i = 0; i < iterations; i++ )
         {
-            fprintf( stderr, "Saving keypoints to: %s\n" , k_name );
-            save_keypoints( k_name, keypoints_list, keypoints_count );
-        }
-        
-        if( p_name )
-        {
-            fprintf( stderr, "Saving keypoint image to: %s\n" , p_name );
-            save_keypoints_image( p_name, keypoints_list, keypoints_count, data, width, height );
-        }
+            harris_hessian_freak_detection( data, b_name, 0, NULL, &detection_event );
 
-        size_t desc_count;
-        descriptor * descriptors = harris_hessian_freak_build_descriptor( 
-            keypoints_list, 
-            keypoints_count, 
-            &desc_count, 
-            1, 
-            &generate_keypoints_list_event, 
-            NULL 
-        );
+            cl_event generate_keypoints_list_event;
+            size_t keypoints_count;
+            keyPoint* keypoints_list = harris_hessian_freak_generate_keypoint_list(
+                &keypoints_count,
+                1,
+                &detection_event,
+                &generate_keypoints_list_event
+            );
 
-        if( d_name )
-        {
-            fprintf( stderr, "Saving descriptor to: %s\n" , d_name );
-            save_descriptor( d_name, descriptors, desc_count );
+            if( k_name )
+            {
+                fprintf( stderr, "Saving keypoints to: %s\n" , k_name );
+                save_keypoints( k_name, keypoints_list, keypoints_count );
+            }
+            
+            if( p_name )
+            {
+                fprintf( stderr, "Saving keypoint image to: %s\n" , p_name );
+                save_keypoints_image( p_name, keypoints_list, keypoints_count, data, width, height );
+            }
+
+            size_t desc_count;
+            descriptor * descriptors = harris_hessian_freak_build_descriptor( 
+                keypoints_list, 
+                keypoints_count, 
+                &desc_count, 
+                1, 
+                &generate_keypoints_list_event, 
+                NULL 
+            );
+
+            if( d_name )
+            {
+                fprintf( stderr, "Saving descriptor to: %s\n" , d_name );
+                save_descriptor( d_name, descriptors, desc_count );
+            }
+
+            free( descriptors );
+
+            free( keypoints_list );
         }
 
 #ifdef PROFILE 
@@ -224,10 +236,6 @@ int main( int argc, char * const *argv )
             opencl_timer_print_results( stdout );
         }
 #endif
-
-        free( descriptors );
-
-        free( keypoints_list );
 
         harris_hessian_freak_close( );
 
