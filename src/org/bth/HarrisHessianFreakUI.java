@@ -6,9 +6,12 @@ import android.os.Environment;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.CheckBox;
+import android.widget.Toast;
 import android.content.res.AssetManager;
 import android.util.Log;
 import android.view.View;
+import android.content.Context;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.FileWriter;
@@ -17,11 +20,12 @@ public class HarrisHessianFreakUI extends Activity
 {
     private static final String STORAGE = "/storage/sdcard0/harris_hessian_freak";
     private static final String TAG = "harris_hessian_freak";
-    Button startButton;
     TextView tv;
     AssetManager mgr = null;
     HarrisHessianFreak hhf;
     ProgressBar pb;
+    CheckBox saveBuffersCheckbox, runIndefCheckbox;
+    
 
     /** Called when the activity is first created. */
     @Override
@@ -32,8 +36,9 @@ public class HarrisHessianFreakUI extends Activity
 
         mgr = getResources().getAssets();
         tv = (TextView)findViewById( R.id.info_v );
-        startButton = (Button)findViewById( R.id.button_id );
         pb = (ProgressBar)findViewById( R.id.progress_bar );
+        saveBuffersCheckbox = (CheckBox)findViewById( R.id.save_buffers );
+        runIndefCheckbox = (CheckBox)findViewById( R.id.run_indef );
         hhf = new HarrisHessianFreak( mgr, tv, pb );
     }
 
@@ -97,24 +102,22 @@ public class HarrisHessianFreakUI extends Activity
     public void onDestroy()
     {
         super.onDestroy();
-        //api.closeLib();
-        //api = null;
         AssetManager mgr = null;
+        hhf.Destroy();
+        hhf = null;
     }
 
-    public void selfDestruct( View view )
+    public void onClickStart( View view )
     {
-        hhf.Run();
-
+        hhf.Run( runIndefCheckbox.isChecked() );
 
         new Thread( new Runnable()
         {  
             public void run()
             {
-
                 try
                 {
-                    FileWriter fw = new FileWriter( STORAGE + "/tempdata.txt" );
+                    FileWriter fw = new FileWriter( STORAGE + "/monitoring_data.txt" );
                     SystemMonitor tm = new SystemMonitor();
                     long start = System.currentTimeMillis();
 
@@ -141,5 +144,18 @@ public class HarrisHessianFreakUI extends Activity
                 }
             }
         }).start();
+    }
+
+    public void onClickStop( View view )
+    {
+        if( hhf.Stop() )
+        {
+            Context context = getApplicationContext();
+            CharSequence text = "Stopping test...";
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(context, text, duration);
+            toast.show(); 
+        }
     }
 }

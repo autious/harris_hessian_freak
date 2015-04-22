@@ -4,18 +4,38 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-    <TextView
-        android:id="@+id/info_v"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Hello World, HarrisHessianFreak"
-        />
-    <Button 
-        android:id="@+id/button_id"
-        android:layout_height="wrap_content"
+    <CheckBox
+        android:id="@+id/save_buffers"
         android:layout_width="wrap_content"
-        android:text="@string/self_destruct"
-        android:onClick="selfDestruct" />
+        android:layout_height="wrap_content"
+        android:text="@string/save_buffers_label"
+    />
+    <CheckBox
+        android:id="@+id/run_indef"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/run_indef"
+    />
+    <LinearLayout 
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+        <Button 
+            android:id="@+id/button_start"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/button_start"
+            android:onClick="onClickStart" 
+        />
+        <Button 
+            android:id="@+id/button_stop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/button_stop"
+            android:onClick="onClickStop" 
+        />
+    </LinearLayout>
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_height="wrap_content"
@@ -23,5 +43,10 @@
         android:max="100"
         style="@android:style/Widget.ProgressBar.Horizontal"
     />
+    <TextView
+        android:id="@+id/info_v"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Hello World, HarrisHessianFreak"
+    />
 </LinearLayout>
-
