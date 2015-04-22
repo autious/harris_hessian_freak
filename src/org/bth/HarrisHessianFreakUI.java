@@ -20,7 +20,7 @@ public class HarrisHessianFreakUI extends Activity
 {
     private static final String STORAGE = "/storage/sdcard0/harris_hessian_freak";
     private static final String TAG = "harris_hessian_freak";
-    TextView tv;
+    TextView tv, monitoringDataTextView;
     AssetManager mgr = null;
     HarrisHessianFreak hhf;
     ProgressBar pb;
@@ -36,6 +36,7 @@ public class HarrisHessianFreakUI extends Activity
 
         mgr = getResources().getAssets();
         tv = (TextView)findViewById( R.id.info_v );
+        monitoringDataTextView = (TextView)findViewById( R.id.monitoring_data );
         pb = (ProgressBar)findViewById( R.id.progress_bar );
         saveBuffersCheckbox = (CheckBox)findViewById( R.id.save_buffers );
         runIndefCheckbox = (CheckBox)findViewById( R.id.run_indef );
@@ -121,11 +122,32 @@ public class HarrisHessianFreakUI extends Activity
                     SystemMonitor tm = new SystemMonitor();
                     long start = System.currentTimeMillis();
 
+                    StringBuffer sb = new StringBuffer();
+
+                    final MonitorCallbackMarker mcm = new MonitorCallbackMarker();
                     while( !hhf.IsFinished() )
                     {
+                        sb.setLength(0);
                         for( Temp t : tm.GetTemps() )
                         {
-                            fw.write( System.currentTimeMillis() - start + "." + t.getName() + ":" + t.getTemp() + "\n");
+                            sb.append( System.currentTimeMillis() - start + "." + t.getName() + ":" + t.getTemp() + "\n" );
+                        }
+                        
+                        final String s = sb.toString();
+
+                        fw.write( s );
+
+                        if( mcm.isDone() )
+                        {
+                            mcm.setDone(false);
+                            monitoringDataTextView.post( new Runnable()
+                            {
+                                public void run()
+                                {
+                                    monitoringDataTextView.setText( s );
+                                    mcm.setDone(true);
+                                }
+                            });
                         }
 
                         try
@@ -156,6 +178,21 @@ public class HarrisHessianFreakUI extends Activity
 
             Toast toast = Toast.makeText(context, text, duration);
             toast.show(); 
+        }
+    }
+
+    private class MonitorCallbackMarker
+    {
+        boolean done = true;
+
+        public synchronized boolean isDone()
+        {
+            return done;
+        }
+
+        public synchronized void setDone( boolean value )
+        {
+            done = value; 
         }
     }
 }
