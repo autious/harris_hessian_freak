@@ -330,7 +330,6 @@ static bool do_harris(
         &second_moment_elements 
     );
 
-    CL_RELEASE_EVENT( derivate_event );
 
     SI( save_path, "second_moment_xx", sigmaI, mem.xx, 1, &second_moment_elements );
     SI( save_path, "second_moment_xy", sigmaI, mem.xy, 1, &second_moment_elements );
@@ -429,6 +428,8 @@ static bool do_harris(
         &derivate_event, 
         &second_derivate_events[1] 
     );
+
+    CL_RELEASE_EVENT( derivate_event );
     
     cl_event hessian_event;
     opencl_fd_run_hessian( 

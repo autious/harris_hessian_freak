@@ -23,6 +23,10 @@ debug: CFLAGS += -DDEBUG -DPROFILE -g
 debug: LDFLAGS += -lrt
 debug: all
 
+debug-nprofile: CFLAGS += -DDEBUG -g
+debug-nprofile: LDFLAGS += -lrt
+debug-nprofile: all
+
 debug-half: CFLAGS += -DHH_USE_HALF
 debug-half: debug 
 
