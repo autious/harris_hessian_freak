@@ -543,7 +543,6 @@ void harris_hessian_freak_detection(
     cl_command_queue command_queue = opencl_loader_get_command_queue();
 
     opencl_fd_load_rgba( rgba_data, &state );
-    init_harris_buffers( );
     
     cl_event desaturate_event;
     opencl_fd_desaturate_image( &state, mem.desaturated_image, 0, NULL, &desaturate_event );
