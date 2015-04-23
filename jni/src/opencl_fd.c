@@ -326,16 +326,19 @@ bool opencl_fd_derivate_image( struct FD* state,
     const size_t local_work_size[] = { 8, 4 };
 
     cl_program program_gauss_cl  = opencl_program_load( "derivate.cl" );
-    cl_kernel kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate" );
+    cl_kernel kernel_derivate;
         
     if( ddyout == NULL )
     {
         kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate_x" ); 
     }
-    
-    if( ddxout == NULL )
+    else if( ddxout == NULL )
     {
         kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate_y" );
+    }
+    else
+    {
+        kernel_derivate = opencl_loader_load_kernel( program_gauss_cl, "derivate" );
     }
 
     cl_command_queue command_queue = opencl_loader_get_command_queue();
