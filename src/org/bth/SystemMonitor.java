@@ -23,24 +23,24 @@ public class SystemMonitor
         "/sys/devices/virtual/thermal/thermal_zone10/temp",
         "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq",
         "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq",
-//        "/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq",
-//        "/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq",
-//        "/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq"
+        "/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq",
+        "/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq",
+        "/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq"
     };
 
     public static final String[] names = 
     {
+        "CPU0_TEMP",
         "CPU1_TEMP",
         "CPU2_TEMP",
         "CPU3_TEMP",
-        "CPU4_TEMP",
+        "GPU0_TEMP",
         "GPU1_TEMP",
-        "GPU2_TEMP",
         "GPU_FREQ",
         "CPU0_FREQ",
-//        "CPU1_FREQ",
-//        "CPU2_FREQ",
-//        "CPU3_FREQ",
+        "CPU1_FREQ",
+        "CPU2_FREQ",
+        "CPU3_FREQ",
     };
 
     private ArrayList<Pair<String,FileReader>> files = new ArrayList<Pair<String,FileReader>>();

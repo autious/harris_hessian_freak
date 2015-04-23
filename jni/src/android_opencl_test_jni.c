@@ -11,11 +11,16 @@
 #include "harris_hessian_freak.h"
 #include "freak.h"
 #include "opencl_timer.h"
+#include "opencl_error.h"
 #include "stb_image.h"
 #include "opencl_config.h"
 #include "android_io.h"
 
 static char* save_path = NULL;
+static int width = 0;
+static int height = 0;
+static int n;
+static uint8_t *data = NULL;
 
 jboolean Java_org_bth_HarrisHessianFreakJNI_initLib( JNIEnv* env, jobject x, jobject assetManager )
 {
@@ -42,6 +47,16 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_setSaveFolder( JNIEnv* env, jobject 
 jboolean Java_org_bth_HarrisHessianFreakJNI_closeLib( JNIEnv* env, jobject x )
 {
     android_io_set_asset_manager( NULL );
+
+    if( data )
+    {
+        harris_hessian_freak_close( );
+        free( data );
+        data = NULL;
+        width = 0;
+        height = 0;
+    }
+
     return true;
 }
 
@@ -49,6 +64,23 @@ jstring Java_org_bth_HarrisHessianFreakJNI_getLibError( JNIEnv* env, jobject x )
 {
     char *err = "err";
     return (*env)->NewStringUTF( env, err );
+}
+
+jboolean Java_org_bth_HarrisHessianFreakJNI_loadImage( JNIEnv* env, jobject x )
+{
+    if( data == NULL )
+    {
+        FILE* f_handle = android_io_fopen( "test.png", "r" );
+
+        data = stbi_load_from_file( f_handle, &width, &height, &n, 4 );
+
+        harris_hessian_freak_init( width, height ); 
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, jobject callback_object )
@@ -61,20 +93,12 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
     int progress = 0;
     int increment = 100/6;
 
-
 #ifdef PROFILE
     opencl_timer_clear_events();
     int start_marker = PROFILE_PM( full_pass, 0 );
     PROFILE_MM( "full_hh_freak" ); 
 #endif
     
-    int width;
-    int height;
-    int n;
-    uint8_t *data;
-    
-    FILE* f_handle = android_io_fopen( "test.png", "r" );
-    data = stbi_load_from_file( f_handle, &width, &height, &n, 4 );
     (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
     if( data )
@@ -82,7 +106,6 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
         LOGV( "Picture dimensions: (%u,%u)", width, height );
 
         cl_event detection_event;
-        harris_hessian_freak_init( width, height ); 
 
         (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
@@ -99,6 +122,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
             &generate_keypoints_list_event
         );
 
+        CL_RELEASE_EVENT( detection_event );
+
         (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
 
@@ -111,6 +136,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
             &generate_keypoints_list_event, 
             NULL 
         );
+
+        CL_RELEASE_EVENT( generate_keypoints_list_event );
 
         (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
@@ -127,16 +154,15 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
 
         free( keypoints_list );
 
-        harris_hessian_freak_close( );
     }
     else
     {
-        LOGE( "Unable to load image: %s", "file" );
+        LOGE( "No image is loaded: %s", "file" );
+        return false;
     }
 
     (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress = 100) );
 
-    free( data );
 
     return true;
 }

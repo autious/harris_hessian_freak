@@ -152,7 +152,7 @@ public class HarrisHessianFreakUI extends Activity
 
                         try
                         {
-                            Thread.sleep(5); 
+                            Thread.sleep(50); 
                         }
                         catch( InterruptedException ie )
                         {

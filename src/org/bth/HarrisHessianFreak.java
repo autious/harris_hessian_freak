@@ -37,6 +37,7 @@ public class HarrisHessianFreak
             {
                 public void run()
                 {
+                    api.loadImage();
                     do
                     {
                         api.runTest( hhpc );
