@@ -177,11 +177,11 @@ int main( int argc, char * const *argv )
 
         fprintf( stderr, "Picture dimensions: (%u,%u)", width, height );
 
-        cl_event detection_event;
         harris_hessian_freak_init( width, height ); 
 
         for( int i = 0; i < iterations; i++ )
         {
+            cl_event detection_event;
             harris_hessian_freak_detection( data, b_name, 0, NULL, &detection_event );
 
             cl_event generate_keypoints_list_event;
@@ -192,6 +192,8 @@ int main( int argc, char * const *argv )
                 &detection_event,
                 &generate_keypoints_list_event
             );
+
+            CL_RELEASE_EVENT( detection_event );
 
             if( k_name )
             {
@@ -214,6 +216,8 @@ int main( int argc, char * const *argv )
                 &generate_keypoints_list_event, 
                 NULL 
             );
+
+            CL_RELEASE_EVENT( generate_keypoints_list_event );
 
             if( d_name )
             {

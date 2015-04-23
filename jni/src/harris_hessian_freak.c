@@ -312,6 +312,9 @@ static bool do_harris(
         &gauss_event, 
         &derivate_event 
     );
+
+    CL_RELEASE_EVENT( gauss_event );
+
     SI( save_path, "derivate_ddx", sigmaI, mem.ddx, 1, &derivate_event );
     SI( save_path, "derivate_ddy", sigmaI, mem.ddy, 1, &derivate_event );
 
@@ -326,6 +329,8 @@ static bool do_harris(
         &derivate_event, 
         &second_moment_elements 
     );
+
+    CL_RELEASE_EVENT( derivate_event );
 
     SI( save_path, "second_moment_xx", sigmaI, mem.xx, 1, &second_moment_elements );
     SI( save_path, "second_moment_xy", sigmaI, mem.xy, 1, &second_moment_elements );
@@ -365,6 +370,8 @@ static bool do_harris(
         &moment_gauss[2] 
     );
 
+    CL_RELEASE_EVENT( second_moment_elements );
+
     cl_event harris_response_event;
     opencl_fd_run_harris_corner_response( 
         &state, 
@@ -379,6 +386,10 @@ static bool do_harris(
         &harris_response_event 
     );
 
+    CL_RELEASE_EVENT( moment_gauss[0] );
+    CL_RELEASE_EVENT( moment_gauss[1] );
+    CL_RELEASE_EVENT( moment_gauss[2] );
+
     SI( save_path, "harris_response", sigmaI, mem.harris_response, 1, &harris_response_event );
 
     cl_event harris_suppression_event;
@@ -390,6 +401,8 @@ static bool do_harris(
         &harris_response_event, 
         &harris_suppression_event 
     );
+
+    CL_RELEASE_EVENT( harris_response_event );
 
     SI( save_path, "harris_suppression", sigmaI, mem.harris_suppression, 1, &harris_suppression_event );
 
@@ -430,6 +443,9 @@ static bool do_harris(
         &hessian_event
     );
 
+    CL_RELEASE_EVENT( second_derivate_events[0] );
+    CL_RELEASE_EVENT( second_derivate_events[1] );
+
     cl_event harris_corner_count_event;
     opencl_fd_harris_corner_count( 
         &state, 
@@ -441,6 +457,8 @@ static bool do_harris(
         &harris_suppression_event, 
         &harris_corner_count_event
     );
+
+    CL_RELEASE_EVENT( harris_suppression_event );
 
     //Need a gathered event for output.
     cl_int errcode_ret = clEnqueueMarker( opencl_loader_get_command_queue(), event );
@@ -531,6 +549,8 @@ void harris_hessian_freak_detection(
     opencl_fd_desaturate_image( &state, mem.desaturated_image, 0, NULL, &desaturate_event );
 
     SI( save_path, "desaturated_source", 0.0f, mem.desaturated_image, 1, &desaturate_event );
+
+    CL_RELEASE_EVENT( desaturate_event );
     
     cl_int errcode_ret;
 
@@ -582,6 +602,8 @@ void harris_hessian_freak_detection(
         ASSERT_BUF( hessian_corner_counts, errcode_ret );
     }
 
+    CL_RELEASE_EVENT( strong_responses_unmap_event );
+
 
     const int buffer_count = NELEMS( HHSIGMAS );
     //Run harris-hessian on all the standard scalespaces
@@ -597,6 +619,11 @@ void harris_hessian_freak_detection(
                 i == 0 ? NELEMS( HHSIGMAS ) : 1, 
                 i == 0 ? hessian_write_null_events : &harris_hessian_scales[i-1].execution_event,
                 &harris_hessian_scales[i].execution_event );
+    }
+
+    for( int i = 0; i < NELEMS( HHSIGMAS ); i++ )
+    {
+        CL_RELEASE_EVENT( hessian_write_null_events[i] );
     }
 
     int max_corner_count = 0;
@@ -617,6 +644,9 @@ void harris_hessian_freak_detection(
             &harris_hessian_scales[i].execution_event,
             NULL
         );
+
+        CL_RELEASE_EVENT( harris_hessian_scales[i].execution_event );
+        
         ASSERT_READ( harris_hessian_scales[i].corner_count, errcode_ret );
 
         if( read_corner_count > max_corner_count )
@@ -665,6 +695,8 @@ void harris_hessian_freak_detection(
             &event_after 
     );
 
+    CL_RELEASE_EVENT( event_marker );
+    CL_RELEASE_EVENT( event_before );
     //Insert the two new surrounding scales
     harris_hessian_scales[max_corner_count_index] = scale_before;
     harris_hessian_scales[max_corner_count_index+2] = scale_after;
@@ -689,6 +721,7 @@ void harris_hessian_freak_detection(
         &write_indices_event
     );
                
+    CL_RELEASE_EVENT( event_after );
 
     LOGV( "dispatch keypoints search\n" );
     opencl_fd_find_keypoints( 
@@ -702,6 +735,8 @@ void harris_hessian_freak_detection(
         &write_indices_event, 
         event
     );
+
+    CL_RELEASE_EVENT( write_indices_event );
 
     LOGV( "Total count:%d\n", total_corner_count );
     //LOGV( "Characteristic scale:%f\n",  );
@@ -744,7 +779,8 @@ descriptor* harris_hessian_freak_build_descriptor(
 
     errcode_ret = clWaitForEvents( 1, &grayscale_map_event );
     ASSERT_WAIT( grayscale_map_event, errcode_ret );  
-
+    CL_RELEASE_EVENT( grayscale_map_event );
+    
     LOGV( "Starting computation of freak" );
     int _desc_count;
     descriptor* desc = freak_compute(  //This kills the keypoints_list

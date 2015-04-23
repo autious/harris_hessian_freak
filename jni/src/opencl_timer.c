@@ -94,6 +94,7 @@ static double nano_to_milli( cl_ulong nano )
 
 void opencl_timer_push_event( const char* name, cl_event event )
 {
+    clRetainEvent( event ); 
     resize();
 
     snprintf(timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
@@ -316,6 +317,14 @@ void opencl_timer_print_results( )
 
 void opencl_timer_clear_events( )
 {
+    for( int i = 0; i < timer_stack_count; i++ )
+    {
+        if( timer_stack[i].type == EVENT )
+        {
+            CL_RELEASE_EVENT(timer_stack[i].val.event);
+        } 
+    }
+
     timer_stack_count = 0;
 }
 

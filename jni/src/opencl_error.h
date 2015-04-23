@@ -11,6 +11,16 @@ const char* opencl_device_type_codename( cl_device_type devtype );
 
 #define CLERR(string,code)LOGE("%s:%s", string , opencl_error_codename( code ))
 
+#define CL_RELEASE_EVENT( event )\
+    do{\
+        cl_int errcode = clReleaseEvent( event );\
+        if( errcode != CL_SUCCESS )\
+        {\
+            CLERR( "Unable to release event" #event, errcode );\
+            assert(false);\
+        }\
+     } while(0)    
+
 #define ASSERT_BUF(buf, code)\
     if(code != CL_SUCCESS)\
     {\

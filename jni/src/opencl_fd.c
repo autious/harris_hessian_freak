@@ -64,6 +64,8 @@ void opencl_fd_save_buffer_to_image(
 
         ASSERT_WAIT( buffer_read_event, errcode_ret );  
 
+        CL_RELEASE_EVENT(buffer_read_event);
+
         cl_float* output_desaturated_image;
 #ifdef HH_USE_HALF
         output_desaturated_image = (cl_float*)malloc(state->width*state->height*sizeof(cl_float));
@@ -254,6 +256,7 @@ bool opencl_fd_run_gaussxy(
     PROFILE_PE( kernel_gaussy, *event );
 #endif
 
+    CL_RELEASE_EVENT( kernel_gaussx_event );
     clReleaseKernel( kernel_gaussx );
     clReleaseKernel( kernel_gaussy );
     clReleaseProgram( program_gauss_cl );
