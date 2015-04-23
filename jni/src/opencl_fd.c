@@ -64,14 +64,14 @@ void opencl_fd_save_buffer_to_image(
 
         ASSERT_WAIT( buffer_read_event, errcode_ret );  
 
-            cl_float* output_desaturated_image;
-        #ifdef HH_USE_HALF
-            output_desaturated_image = (cl_float*)malloc(state->width*state->height*sizeof(cl_float));
-            halfp2singles( output_desaturated_image, output_desaturated_image_hh_float, state->width*state->height );
-        #else
-            output_desaturated_image = output_desaturated_image_hh_float;
-            output_desaturated_image_hh_float = NULL;
-        #endif
+        cl_float* output_desaturated_image;
+#ifdef HH_USE_HALF
+        output_desaturated_image = (cl_float*)malloc(state->width*state->height*sizeof(cl_float));
+        halfp2singles( output_desaturated_image, output_desaturated_image_hh_float, state->width*state->height );
+#else
+        output_desaturated_image = output_desaturated_image_hh_float;
+        output_desaturated_image_hh_float = NULL;
+#endif
 
             if( output_desaturated_image_hh_float )
                 free( output_desaturated_image_hh_float );
