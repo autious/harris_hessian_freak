@@ -566,7 +566,9 @@ void harris_hessian_freak_detection(
     );
     ASSERT_MAP( strong_responses, errcode_ret  );
     memset( strong_responses_map, 0, sizeof( cl_uint ) * state.width * state.height );
+
     cl_event strong_responses_unmap_event;
+
     errcode_ret = clEnqueueUnmapMemObject( command_queue,
         mem.strong_responses,
         strong_responses_map,

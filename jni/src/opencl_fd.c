@@ -75,8 +75,8 @@ void opencl_fd_save_buffer_to_image(
         output_desaturated_image_hh_float = NULL;
 #endif
 
-            if( output_desaturated_image_hh_float )
-                free( output_desaturated_image_hh_float );
+        if( output_desaturated_image_hh_float )
+            free( output_desaturated_image_hh_float );
 
         uint8_t* output_desaturated_image_l = malloc( sizeof( uint8_t ) * state->width * state->height );
 
