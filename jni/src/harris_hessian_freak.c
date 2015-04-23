@@ -742,7 +742,8 @@ descriptor* harris_hessian_freak_build_descriptor(
     );
     ASSERT_MAP( grayscale_data, errcode_ret );
 
-    clWaitForEvents( 1, &grayscale_map_event );
+    errcode_ret = clWaitForEvents( 1, &grayscale_map_event );
+    ASSERT_WAIT( grayscale_map_event, errcode_ret );  
 
     LOGV( "Starting computation of freak" );
     int _desc_count;

@@ -60,7 +60,9 @@ void opencl_fd_save_buffer_to_image(
 
     if( errcode_ret == CL_SUCCESS )
     {
-        clWaitForEvents( 1, &buffer_read_event );
+        errcode_ret = clWaitForEvents( 1, &buffer_read_event );
+
+        ASSERT_WAIT( buffer_read_event, errcode_ret );  
 
             cl_float* output_desaturated_image;
         #ifdef HH_USE_HALF
@@ -682,7 +684,11 @@ void opencl_fd_free( struct FD* state,
     cl_event *event_wait_list
   )
 {
-    clWaitForEvents( num_events_in_wait_list, event_wait_list );
+    /*
+    cl_int errcode_ret = clWaitForEvents( num_events_in_wait_list, event_wait_list );
+    ASSERT_WAIT( event_wait_list, errcode_ret );  
+    */
+
     clReleaseMemObject( state->image_rgba_char );
 
     state->image_rgba_char = NULL;

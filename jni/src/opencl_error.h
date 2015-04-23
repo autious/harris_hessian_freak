@@ -44,3 +44,9 @@ const char* opencl_device_type_codename( cl_device_type devtype );
         CLERR( "Unable to memmap" #buf, code );\
         assert( false );\
     }
+#define ASSERT_WAIT(event,code)\
+    if(code != CL_SUCCESS)\
+    {\
+        CLERR( "Unable to wait for events" #event, code );\
+        assert( false );\
+    }
