@@ -381,6 +381,7 @@ bool opencl_fd_derivate_image( struct FD* state,
     PROFILE_PE( kernel_derivate, *event );
 #endif
 
+    clReleaseProgram( program_gauss_cl );
     clReleaseKernel( kernel_derivate );
 
     return true;
