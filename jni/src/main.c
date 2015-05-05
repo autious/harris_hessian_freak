@@ -196,15 +196,15 @@ int main( int argc, char * const *argv )
 
     if( data )
     {
-#ifdef PROFILE
-        opencl_timer_clear_events();
-        PROFILE_MM( "full_hh_freak" ); 
-        int start_marker = PROFILE_PM( full_pass, 0 );
-#endif
-
         fprintf( stderr, "Picture dimensions: (%u,%u)", width, height );
 
         harris_hessian_freak_init( width, height ); 
+
+#ifdef PROFILE
+        opencl_timer_clear_events();
+        PROFILE_MM( "program_walltime" ); 
+        int start_marker = PROFILE_PM( full_pass, 0 );
+#endif
 
         for( int i = 0; i < iterations; i++ )
         {
@@ -259,8 +259,9 @@ int main( int argc, char * const *argv )
 
 #ifdef PROFILE 
         int end_marker = PROFILE_PM( full_pass, 0 );
-        PROFILE_MM( "full_hh_freak" ); 
-        opencl_timer_push_segment( "full_pass", start_marker, end_marker );
+        opencl_timer_push_segment( "first_to_last_kernel", start_marker, end_marker );
+
+        PROFILE_MM( "program_walltime" ); 
 
         if( opencl_timer_enable_profile )
         {

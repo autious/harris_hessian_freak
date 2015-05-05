@@ -122,8 +122,8 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
 
 #ifdef PROFILE
     opencl_timer_clear_events();
+    PROFILE_MM( "program_walltime" ); 
     int start_marker = PROFILE_PM( full_pass, 0 );
-    PROFILE_MM( "full_hh_freak" ); 
 #endif
     
     (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
@@ -169,11 +169,11 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
         (*env)->CallVoidMethod( env, callback_object, callback_method_id, (progress += increment) );
 
 #ifdef PROFILE 
-        PROFILE_MM( "full_hh_freak" ); 
         int end_marker = PROFILE_PM( full_pass, 0 );
 
         LOGV("Printing timing data");
-        opencl_timer_push_segment( "full_pass", start_marker, end_marker );
+        opencl_timer_push_segment( "first_to_last_kernel", start_marker, end_marker );
+        PROFILE_MM( "program_walltime" ); 
         opencl_timer_print_results();
 #endif
 

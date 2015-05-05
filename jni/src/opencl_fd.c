@@ -257,9 +257,8 @@ bool opencl_fd_run_gaussxy(
     );
     ASSERT_ENQ( kernel_gaussx, errcode_ret );
 #ifdef PROFILE
-    PROFILE_PE( kernel_gaussx, kernel_gaussx_event );
+    PROFILE_PE_FORMAT( kernel_gaussx, kernel_gaussx_event, "sigma: %f", sigma );
 #endif
-
 
     clSetKernelArg( kernel_gaussy, 0, sizeof( cl_mem ), &gauss_kernel_buffer );
     clSetKernelArg( kernel_gaussy, 1, sizeof( cl_int ), &kernel_radius );
@@ -280,7 +279,7 @@ bool opencl_fd_run_gaussxy(
     );
     ASSERT_ENQ( kernel_gaussy, errcode_ret );
 #ifdef PROFILE
-    PROFILE_PE( kernel_gaussy, *event );
+    PROFILE_PE_FORMAT( kernel_gaussy, *event, "sigma: %f", sigma );
 #endif
 
     CL_RELEASE_EVENT( kernel_gaussx_event );

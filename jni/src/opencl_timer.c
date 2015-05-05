@@ -38,6 +38,7 @@
 #include "_commit_data.h"
 
 #define TIMER_EVENT_NAME_LENGTH 32
+#define TIMER_EVENT_INFO_LENGTH 32
 
 static const int TIMER_STACK_SIZE_INCREASE = 256;
 
@@ -52,6 +53,8 @@ enum TimerEventType
 struct TimerEvent
 {
     char name[TIMER_EVENT_NAME_LENGTH];
+    char info[TIMER_EVENT_INFO_LENGTH];
+
     enum TimerEventType type;
 
     union 
@@ -119,12 +122,14 @@ static double nano_to_milli( cl_ulong nano )
     return ((double)nano / 1000.0 / 1000.0);
 }
 
-void opencl_timer_push_event( const char* name, cl_event event )
+void opencl_timer_push_event( const char* name, const char* info, cl_event event )
 {
     clRetainEvent( event ); 
     resize();
 
     snprintf(timer_stack[timer_stack_count].name, TIMER_EVENT_NAME_LENGTH, "%s", name );
+    snprintf(timer_stack[timer_stack_count].info, TIMER_EVENT_INFO_LENGTH, "%s", info );
+
     timer_stack[timer_stack_count].val.event = event;
     timer_stack[timer_stack_count].type = EVENT;
     timer_stack_count++;
@@ -201,6 +206,7 @@ void opencl_timer_push_segment( const char* name, int start, int end )
 
 void opencl_timer_print_results( )
 {
+    const char ET_FORMAT[] = "__TIMER__ %-10s %32s: %fms \"%s\"";
     const char T_FORMAT[] = "__TIMER__ %-10s %32s: %fms";
     const char M_FORMAT[] = "__TIMER__ %-10s %32s: %d";
     const char E_FORMAT[] = "__TIMER__ %-10s %32s:";
@@ -242,10 +248,11 @@ void opencl_timer_print_results( )
                 );
                 ASSERT_PROF( time_end, errcode_ret );
                 tmp = nano_to_milli(time_end-time_start);
-                LOGV( T_FORMAT,
+                LOGV( ET_FORMAT,
                     "EVENT",
                     timer_stack[i].name,
-                    tmp
+                    tmp,
+                    timer_stack[i].info
                 );
                 mapstringdouble_add( &event_sum, timer_stack[i].name, tmp );
                 break;
@@ -334,7 +341,7 @@ void opencl_timer_print_results( )
         cur = cur->next;
     }
 
-    LOGV( T_FORMAT, "SUMEVENT", "", event_sum_total2 );
+    LOGV( T_FORMAT, "SUMEVENT", "total_sum_in_kernels", event_sum_total2 );
     
     mapstringdouble_clear( event_sum );
     event_sum = NULL;

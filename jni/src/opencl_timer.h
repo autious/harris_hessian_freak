@@ -34,14 +34,22 @@
 
 #include <CL/opencl.h>
 
-void opencl_timer_push_event( const char* name, cl_event event );
+void opencl_timer_push_event( const char* name, const char* info, cl_event event );
 int opencl_timer_push_marker( const char* name, int reoccurance );
 void opencl_timer_push_segment( const char* name, int start, int end );
 int opencl_timer_push_monotonic( const char* name );
 void opencl_timer_print_results();
 void opencl_timer_clear_events();
 
-#define PROFILE_PE(kernel,event) opencl_timer_push_event(#kernel,event)
+#define PROFILE_PE(kernel,event) opencl_timer_push_event(#kernel,"",event)
 #define PROFILE_PM(kernel,o) opencl_timer_push_marker(#kernel,o)
 #define PROFILE_MM(name) opencl_timer_push_monotonic(name)
+
+#define PROFILE_PE_FORMAT(kernel,o,...)\
+    do{\
+        char buf[32];\
+        snprintf( buf, 32, __VA_ARGS__ );\
+        opencl_timer_push_event( #kernel, buf, o );\
+    }while(0)
+
 #endif
