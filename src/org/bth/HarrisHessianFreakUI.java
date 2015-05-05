@@ -42,16 +42,18 @@ import android.content.Context;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.io.FileWriter;
+import java.io.File;
 
 public class HarrisHessianFreakUI extends Activity
 {
-    private static final String STORAGE = "/storage/sdcard0/harris_hessian_freak";
+    private static final String SUBFOLDER = "harris_hessian_freak";
+    private static String STORAGE = "";
     private static final String TAG = "harris_hessian_freak";
     TextView tv, monitoringDataTextView;
     AssetManager mgr = null;
     HarrisHessianFreak hhf;
     ProgressBar pb;
-    CheckBox saveBuffersCheckbox, runIndefCheckbox;
+    CheckBox saveBuffersCheckbox, runIndefCheckbox, logPerformanceCheckbox;
     
 
     /** Called when the activity is first created. */
@@ -67,6 +69,7 @@ public class HarrisHessianFreakUI extends Activity
         pb = (ProgressBar)findViewById( R.id.progress_bar );
         saveBuffersCheckbox = (CheckBox)findViewById( R.id.save_buffers );
         runIndefCheckbox = (CheckBox)findViewById( R.id.run_indef );
+        logPerformanceCheckbox = (CheckBox)findViewById( R.id.log_perf );
         hhf = new HarrisHessianFreak( mgr, tv, pb );
     }
 
@@ -75,6 +78,17 @@ public class HarrisHessianFreakUI extends Activity
     {
         super.onStart();
 
+        //Create folder that the program will use.
+        
+        STORAGE = Environment.getExternalStorageDirectory() + "/" + SUBFOLDER;
+
+        File folder = new File( STORAGE );
+
+        if( !folder.exists() )
+        {
+            folder.mkdirs();
+        }
+         
 
         /*
         if( api == null )
@@ -139,60 +153,63 @@ public class HarrisHessianFreakUI extends Activity
     {
         hhf.Run( runIndefCheckbox.isChecked() );
 
-        new Thread( new Runnable()
-        {  
-            public void run()
-            {
-                try
+        if( logPerformanceCheckbox.isChecked() )
+        {
+            new Thread( new Runnable()
+            {  
+                public void run()
                 {
-                    FileWriter fw = new FileWriter( STORAGE + "/monitoring_data.txt" );
-                    SystemMonitor tm = new SystemMonitor();
-                    long start = System.currentTimeMillis();
-
-                    StringBuffer sb = new StringBuffer();
-
-                    final MonitorCallbackMarker mcm = new MonitorCallbackMarker();
-                    while( !hhf.IsFinished() )
+                    try
                     {
-                        sb.setLength(0);
-                        for( Temp t : tm.GetTemps() )
-                        {
-                            sb.append( System.currentTimeMillis() - start + "." + t.getName() + ":" + t.getTemp() + "\n" );
-                        }
-                        
-                        final String s = sb.toString();
+                        FileWriter fw = new FileWriter( STORAGE + "/monitoring_data.txt" );
+                        SystemMonitor tm = new SystemMonitor();
+                        long start = System.currentTimeMillis();
 
-                        fw.write( s );
+                        StringBuffer sb = new StringBuffer();
 
-                        if( mcm.isDone() )
+                        final MonitorCallbackMarker mcm = new MonitorCallbackMarker();
+                        while( !hhf.IsFinished() )
                         {
-                            mcm.setDone(false);
-                            monitoringDataTextView.post( new Runnable()
+                            sb.setLength(0);
+                            for( Temp t : tm.GetTemps() )
                             {
-                                public void run()
+                                sb.append( System.currentTimeMillis() - start + "." + t.getName() + ":" + t.getTemp() + "\n" );
+                            }
+                            
+                            final String s = sb.toString();
+
+                            fw.write( s );
+
+                            if( mcm.isDone() )
+                            {
+                                mcm.setDone(false);
+                                monitoringDataTextView.post( new Runnable()
                                 {
-                                    monitoringDataTextView.setText( s );
-                                    mcm.setDone(true);
-                                }
-                            });
-                        }
+                                    public void run()
+                                    {
+                                        monitoringDataTextView.setText( s );
+                                        mcm.setDone(true);
+                                    }
+                                });
+                            }
 
-                        try
-                        {
-                            Thread.sleep(50); 
-                        }
-                        catch( InterruptedException ie )
-                        {
+                            try
+                            {
+                                Thread.sleep(50); 
+                            }
+                            catch( InterruptedException ie )
+                            {
 
+                            }
                         }
+                        fw.close();
                     }
-                    fw.close();
+                    catch( IOException ioe )
+                    {
+                    }
                 }
-                catch( IOException ioe )
-                {
-                }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     public void onClickStop( View view )
