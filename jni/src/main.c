@@ -170,8 +170,8 @@ int main( int argc, char * const *argv )
     }
 
 
-    int width = 32 * 25;
-    int height = 32 * 18;
+    int width = 800;
+    int height = 600;
     int n;
     uint8_t *data = NULL;
 
