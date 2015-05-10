@@ -35,6 +35,7 @@
 #include <time.h>
 
 #include "opencl_error.h"
+#include "opencl_config.h"
 #include "_commit_data.h"
 
 #define TIMER_EVENT_NAME_LENGTH 32
@@ -226,6 +227,7 @@ void opencl_timer_print_results( )
     char * t_s = ctime( &t );
     LOGV( "__TIMER__ %s", t_s ? t_s : "" );
     LOGV( "__TIMER__ %s", git_commit_info );
+    LOGV( "__TIMER__ reference_mode: %s",  opencl_run_reference_mode ? "true" : "false" );
 
     for( int i = 0; i < timer_stack_count; i++ )
     {
