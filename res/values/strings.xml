@@ -7,4 +7,5 @@
     <string name="button_stop">Stop</string>
     <string name="run_indef">Run Indefinitely</string>
     <string name="log_perf">Log Performance</string>
+    <string name="button_workgroup_test">Workgroup Test</string>
 </resources>

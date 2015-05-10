@@ -193,3 +193,15 @@ jboolean Java_org_bth_HarrisHessianFreakJNI_runTest( JNIEnv* env, jobject x, job
 
     return true;
 }
+
+void Java_org_bth_HarrisHessianFreakJNI_setGaussXWorkgroup( JNIEnv* env, jint x, jint y )
+{
+   local_work_size_gaussx[0] = x; 
+   local_work_size_gaussx[1] = y; 
+}
+
+void Java_org_bth_HarrisHessianFreakJNI_setGaussYWorkgroup( JNIEnv* env, jint x, jint y )
+{
+   local_work_size_gaussy[0] = x; 
+   local_work_size_gaussy[1] = y; 
+}

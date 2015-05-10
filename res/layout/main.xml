@@ -41,6 +41,13 @@
             android:text="@string/button_stop"
             android:onClick="onClickStop" 
         />
+        <Button
+            android:id="@+id/workgroup_test"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="@string/button_workgroup_test"
+            android:onClick="onClickWorkgroupTest"
+        />
     </LinearLayout>
     <ProgressBar
         android:id="@+id/progress_bar"

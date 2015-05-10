@@ -34,6 +34,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "opencl_config.h"
 #include "opencl_error.h"
 #include "_commit_data.h"
 
@@ -226,6 +227,13 @@ void opencl_timer_print_results( )
     char * t_s = ctime( &t );
     LOGV( "__TIMER__ %s", t_s ? t_s : "" );
     LOGV( "__TIMER__ %s", git_commit_info );
+
+    LOGV( "__TIMER__ local_work_size_gaussx: (%u, %u)", 
+        (unsigned)local_work_size_gaussx[0], 
+        (unsigned)local_work_size_gaussx[1] );
+    LOGV( "__TIMER__ local_work_size_gaussy: (%u, %u)", 
+        (unsigned)local_work_size_gaussy[0], 
+        (unsigned)local_work_size_gaussy[1] );
 
     for( int i = 0; i < timer_stack_count; i++ )
     {

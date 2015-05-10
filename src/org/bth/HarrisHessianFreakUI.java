@@ -225,6 +225,11 @@ public class HarrisHessianFreakUI extends Activity
         }
     }
 
+    public void onClickWorkgroupTest( View view )
+    {
+
+    }
+
     private class MonitorCallbackMarker
     {
         boolean done = true;

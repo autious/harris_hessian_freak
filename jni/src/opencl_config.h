@@ -33,6 +33,9 @@
 //Set to run kernel variants that are reference implementations.
 extern bool opencl_run_reference_mode;
 
+extern size_t local_work_size_gaussx[];
+extern size_t local_work_size_gaussy[];
+
 #ifdef HH_USE_HALF
 typedef cl_half hh_float;
 #else

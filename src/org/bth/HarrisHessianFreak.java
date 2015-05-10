@@ -54,7 +54,7 @@ public class HarrisHessianFreak
         api.initLib(mgr);
     }
 
-    public synchronized void Run( boolean endless_run )
+    public synchronized void Run( boolean endless_run, boolean workgroup_test_run )
     {
         stop_endless_run = !endless_run;
         
@@ -64,11 +64,52 @@ public class HarrisHessianFreak
             {
                 public void run()
                 {
+                    static int[] workgroup_list = {
+                        2,2,
+                        4,4,
+                        8,8,
+                        1,32,
+                        2,16,
+                        4,8,
+                        8,4,
+                        16,2,
+                        32,1};
+
+                    int size = workgroup_list.length/2;
+                    int count = 0;
+                    boolean repeat_run = false;
+                    int rep_count = 0;
+                    int rep_limit = 10;
+
                     api.loadImage();
                     do
                     {
+                        if( workgroup_test_run )
+                        {
+                            api.setGaussXWorkgroup( workgroup_list[count*2], workgroup_list[count*2+1] );
+                            api.setGaussYWorkgroup( workgroup_list[count*2], workgroup_list[count*2+1] );
+                            
+                            if( rep_count >= rep_limit )
+                            {
+                                count++;
+                                rep_count = 0;
+                            }
+                            else
+                            {
+                                rep_count++;
+                            }
+
+                            if( count < size )
+                            {
+                                repeat_run = true;
+                            }
+                            else
+                            {
+                                repeat_run = false;
+                            }
+                        }
                         api.runTest( hhpc );
-                    } while( !IsStopped() );
+                    } while( !IsStopped() && repeat_run );
 
                     tv.post( new Runnable()
                     {
