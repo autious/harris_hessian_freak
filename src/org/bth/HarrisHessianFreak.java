@@ -54,7 +54,7 @@ public class HarrisHessianFreak
         api.initLib(mgr);
     }
 
-    public synchronized void Run( boolean endless_run, boolean workgroup_test_run )
+    public synchronized void Run( boolean endless_run, final boolean workgroup_test_run )
     {
         stop_endless_run = !endless_run;
         
@@ -64,18 +64,25 @@ public class HarrisHessianFreak
             {
                 public void run()
                 {
-                    static int[] workgroup_list = {
+                    //The two following have to be the same length
+                    int[] workgroup_list_gaussx = {
                         2,2,
                         4,4,
-                        8,8,
-                        1,32,
-                        2,16,
                         4,8,
                         8,4,
                         16,2,
                         32,1};
 
-                    int size = workgroup_list.length/2;
+                    int[] workgroup_list_gaussy = {
+                         2,2,
+                         4,4,
+                         4,8,
+                         8,4,
+                         2,16,
+                         1,32
+                    };
+
+                    int size = workgroup_list_gaussx.length/2;
                     int count = 0;
                     boolean repeat_run = false;
                     int rep_count = 0;
@@ -86,10 +93,10 @@ public class HarrisHessianFreak
                     {
                         if( workgroup_test_run )
                         {
-                            api.setGaussXWorkgroup( workgroup_list[count*2], workgroup_list[count*2+1] );
-                            api.setGaussYWorkgroup( workgroup_list[count*2], workgroup_list[count*2+1] );
+                            api.setGaussXWorkgroup( workgroup_list_gaussx[count*2], workgroup_list_gaussx[count*2+1] );
+                            api.setGaussYWorkgroup( workgroup_list_gaussy[count*2], workgroup_list_gaussy[count*2+1] );
                             
-                            if( rep_count >= rep_limit )
+                            if( rep_count >= rep_limit-1 )
                             {
                                 count++;
                                 rep_count = 0;

@@ -255,7 +255,11 @@ bool opencl_fd_run_gaussxy(
         event_wait_list,
         &kernel_gaussx_event
     );
+    if( errcode_ret != CL_SUCCESS )
+        LOGE( "Tried to run kernel with WG: (%d,%d)", (int)local_work_size_gaussx[0], (int)local_work_size_gaussx[1] );
+
     ASSERT_ENQ( kernel_gaussx, errcode_ret );
+
 #ifdef PROFILE
     PROFILE_PE_FORMAT( kernel_gaussx, kernel_gaussx_event, "sigma: %f", sigma );
 #endif
@@ -277,6 +281,8 @@ bool opencl_fd_run_gaussxy(
         &kernel_gaussx_event,
         event
     );
+    if( errcode_ret != CL_SUCCESS )
+        LOGE( "Tried to run kernel gaussy with WG: (%d,%d)", (int)local_work_size_gaussy[0], (int)local_work_size_gaussy[1] );
     ASSERT_ENQ( kernel_gaussy, errcode_ret );
 #ifdef PROFILE
     PROFILE_PE_FORMAT( kernel_gaussy, *event, "sigma: %f", sigma );

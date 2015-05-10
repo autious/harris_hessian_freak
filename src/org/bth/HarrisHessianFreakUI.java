@@ -151,7 +151,7 @@ public class HarrisHessianFreakUI extends Activity
 
     public void onClickStart( View view )
     {
-        hhf.Run( runIndefCheckbox.isChecked() );
+        hhf.Run( runIndefCheckbox.isChecked(), false );
 
         if( logPerformanceCheckbox.isChecked() )
         {
@@ -227,7 +227,7 @@ public class HarrisHessianFreakUI extends Activity
 
     public void onClickWorkgroupTest( View view )
     {
-
+        hhf.Run( true, true );
     }
 
     private class MonitorCallbackMarker

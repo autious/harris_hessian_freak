@@ -42,6 +42,6 @@ public class HarrisHessianFreakJNI
     public native boolean loadImage();
     public native boolean runTest( HarrisHessianProgressCallbackInterface hhpci );
     public native boolean setSaveFolder( byte[] path );
-    public native void setGaussXWorkgroup( int x, int y);
-    public native void setGaussYWorkgroup( int x, int y);
+    public native void setGaussXWorkgroup( int x, int y );
+    public native void setGaussYWorkgroup( int x, int y );
 }
