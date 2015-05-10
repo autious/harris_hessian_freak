@@ -219,6 +219,10 @@ static void generate_device_list()
                             cl_ulong max_constant_buffer_size;
                             cl_uint max_constant_args;
                             cl_bool image_support;
+                            size_t max_compute_units;
+                            size_t max_work_group_size;
+                            cl_uint max_work_item_dimensions;
+                            size_t max_work_item_sizes[3];
 
                             cl_device_info device_param_names[] = {
                                 CL_DEVICE_VENDOR,
@@ -229,7 +233,11 @@ static void generate_device_list()
                                 CL_DEVICE_COMPILER_AVAILABLE,
                                 CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,
                                 CL_DEVICE_MAX_CONSTANT_ARGS,
-                                CL_DEVICE_IMAGE_SUPPORT
+                                CL_DEVICE_IMAGE_SUPPORT,
+                                CL_DEVICE_MAX_COMPUTE_UNITS,
+                                CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                                CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                                CL_DEVICE_MAX_WORK_ITEM_SIZES
                             };
 
                             void* device_param_values[] = {
@@ -241,7 +249,11 @@ static void generate_device_list()
                                 &compiler_available,
                                 &max_constant_buffer_size,
                                 &max_constant_args,
-                                &image_support
+                                &image_support,
+                                &max_compute_units,
+                                &max_work_group_size,
+                                &max_work_item_dimensions,
+                                max_work_item_sizes
                             };
 
                             size_t device_param_size[] = {
@@ -253,10 +265,18 @@ static void generate_device_list()
                                 sizeof( cl_bool ),
                                 sizeof( cl_ulong ),
                                 sizeof( cl_uint ),
-                                sizeof( cl_bool )
+                                sizeof( cl_bool ),
+                                sizeof( size_t ),
+                                sizeof( size_t ),
+                                sizeof( cl_uint ),
+                                sizeof( size_t ) * 3
                             };
 
                             bool device_param_print[] = {
+                                true,
+                                true,
+                                true,
+                                true,
                                 true,
                                 true,
                                 true,
@@ -273,6 +293,8 @@ static void generate_device_list()
                             const int N_BOOL = 2;
                             const int N_ULONG = 3;
                             const int N_UINT = 4;
+                            const int N_SIZE_T = 5;
+                            const int N_SIZE_T_3 = 6;
 
                             int print_type[] = {
                                 N_STRING,
@@ -283,7 +305,11 @@ static void generate_device_list()
                                 N_BOOL,
                                 N_ULONG,
                                 N_UINT,
-                                N_BOOL
+                                N_BOOL,
+                                N_SIZE_T,
+                                N_SIZE_T,
+                                N_UINT,
+                                N_SIZE_T_3
                             };
 
                             LOGV( "Device index %d", l );
@@ -357,6 +383,28 @@ static void generate_device_list()
                                             "%s:%u", 
                                             opencl_device_info_codename( device_param_names[m] ), 
                                             cast_val 
+                                        );
+                                    }
+                                    else if( print_type[m] == N_SIZE_T )
+                                    {
+                                        unsigned int cast_val = *(size_t*)d;
+                                        LOGV( 
+                                            "%s:%u", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            cast_val 
+                                        );
+                                    }
+                                    else if( print_type[m] == N_SIZE_T_3 )
+                                    {
+                                        unsigned int cast_val1 = ((size_t*)d)[0];
+                                        unsigned int cast_val2 = ((size_t*)d)[1];
+                                        unsigned int cast_val3 = ((size_t*)d)[2];
+                                        LOGV( 
+                                            "%s:(%u,%u,%u)", 
+                                            opencl_device_info_codename( device_param_names[m] ), 
+                                            cast_val1,
+                                            cast_val2,
+                                            cast_val3
                                         );
                                     }
 
