@@ -40,7 +40,7 @@ public class SystemMonitor
 {
     private static final String TAG = "harris_hessian_freak";
 
-    public static final String[] sensors =
+    public static final String[] xperia_z3_sensors =
     {
         "/sys/devices/virtual/thermal/thermal_zone5/temp",
         "/sys/devices/virtual/thermal/thermal_zone6/temp",
@@ -55,7 +55,7 @@ public class SystemMonitor
         "/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq"
     };
 
-    public static final String[] names = 
+    public static final String[] xperia_z3_names = 
     {
         "CPU0_TEMP",
         "CPU1_TEMP",
@@ -69,6 +69,69 @@ public class SystemMonitor
         "CPU2_FREQ",
         "CPU3_FREQ",
     };
+
+    public static final String[] xperia_xz_sensors =
+    {
+        "/sys/devices/virtual/thermal/thermal_zone5/temp",
+        "/sys/devices/virtual/thermal/thermal_zone6/temp",
+        "/sys/devices/virtual/thermal/thermal_zone7/temp",
+        "/sys/devices/virtual/thermal/thermal_zone8/temp",
+        "/sys/devices/virtual/thermal/thermal_zone9/temp",
+        "/sys/devices/virtual/thermal/thermal_zone4/temp",
+        "/sys/devices/virtual/thermal/thermal_zone11/temp",
+        "/sys/devices/virtual/thermal/thermal_zone12/temp",
+        "/sys/devices/virtual/thermal/thermal_zone13/temp",
+        "/sys/devices/virtual/thermal/thermal_zone14/temp",
+        "/sys/devices/virtual/thermal/thermal_zone15/temp",
+        "/sys/devices/virtual/thermal/thermal_zone16/temp",
+        "/sys/devices/virtual/thermal/thermal_zone17/temp",
+        "/sys/devices/virtual/thermal/thermal_zone18/temp",
+        "/sys/devices/virtual/thermal/thermal_zone19/temp",
+        "/sys/devices/virtual/thermal/thermal_zone20/temp",
+        "/sys/devices/virtual/thermal/thermal_zone21/temp",
+        "/sys/devices/virtual/thermal/thermal_zone22/temp",
+        "/sys/devices/virtual/thermal/thermal_zone23/temp",
+        "/sys/devices/virtual/thermal/thermal_zone24/temp",
+        "/sys/devices/virtual/thermal/thermal_zone10/temp",
+        "/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq",
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq",
+        "/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq",
+        "/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq",
+        "/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq"
+    };
+
+    public static final String[] xperia_xz_names = 
+    {
+        "tsens_tz_sensor1",
+        "tsens_tz_sensor2",
+        "tsens_tz_sensor3",
+        "tsens_tz_sensor4",
+        "tsens_tz_sensor5",
+        "tsens_tz_sensor0",
+        "tsens_tz_sensor7",
+        "tsens_tz_sensor8",
+        "tsens_tz_sensor9",
+        "tsens_tz_sensor10",
+        "tsens_tz_sensor11",
+        "tsens_tz_sensor12",
+        "tsens_tz_sensor13",
+        "tsens_tz_sensor14",
+        "tsens_tz_sensor15",
+        "tsens_tz_sensor16",
+        "tsens_tz_sensor17",
+        "tsens_tz_sensor18",
+        "tsens_tz_sensor19",
+        "tsens_tz_sensor20",
+        "tsens_tz_sensor6",
+        "GPU_FREQ",
+        "CPU0_FREQ",
+        "CPU1_FREQ",
+        "CPU2_FREQ",
+        "CPU3_FREQ",
+    };
+
+    public static final String[] sensors = xperia_xz_sensors;
+    public static final String[] names = xperia_xz_names;
 
     private ArrayList<Pair<String,FileReader>> files = new ArrayList<Pair<String,FileReader>>();
 

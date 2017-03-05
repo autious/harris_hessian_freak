@@ -84,7 +84,7 @@ public class HarrisHessianFreak
 
                     int size = workgroup_list_gaussx.length/2;
                     int count = 0;
-                    boolean repeat_run = false;
+                    boolean repeat_run = true;
                     int rep_count = 0;
                     int rep_limit = 10;
 

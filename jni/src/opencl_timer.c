@@ -179,9 +179,9 @@ static void mapstringdouble_add( struct MapStringDouble** start, const char* nam
         *cur = (struct MapStringDouble*)malloc( sizeof( struct MapStringDouble ) );
 
         (**cur).next = NULL; 
+        (**cur).value = 0;
         snprintf( (**cur).name, MAP_STRING_DOUBLE_NAME_SIZE, "%s", name );
     }
-
     (**cur).value += value;
 }
 
@@ -213,6 +213,8 @@ void opencl_timer_print_results( )
     const char M_FORMAT[] = "__TIMER__ %-10s %32s: %d";
     const char E_FORMAT[] = "__TIMER__ %-10s %32s:";
     cl_ulong time_start, time_end;
+    time_start = 0;
+    time_end = 0;
     cl_int errcode_ret;
 
     int segment_start, segment_end;
