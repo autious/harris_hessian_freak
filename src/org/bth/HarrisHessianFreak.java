@@ -151,6 +151,10 @@ public class HarrisHessianFreak
                             {
                                 repeat_run = false;
                             }
+                        } else {
+                            //Setting what we believe is the optimal for the given phone, these values are for XZ.
+                            api.setGaussXWorkgroup( 128, 8 );
+                            api.setGaussYWorkgroup( 2, 256 );
                         }
                         api.runTest( hhpc );
                     } while( !IsStopped() && repeat_run );
